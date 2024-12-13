@@ -766,13 +766,13 @@ sup > a::before,
   padding: 3rem 0;
 }
 html {
-  font-size: 16px;
+  font-size: 18px;
   letter-spacing: 0.02em;
 }
 html,
 body {
   height: 100%;
-  font-family: var(--font-family-sans-serif);
+  font-family: Noto Sans SC;
   overflow-wrap: break-word;
 }
 body {
@@ -845,7 +845,7 @@ i.iconfont {
   --link-hover-color: #30a9de;
   --link-hover-bg-color: #f8f9fa;
   --line-color: #eaecef;
-  --navbar-bg-color: #FFC125;
+  --navbar-bg-color: #FFB90F;
   --navbar-text-color: #F8F8FF;
   --subtitle-color: #fff;
   --scrollbar-color: #c4c6c9;
@@ -1393,7 +1393,7 @@ figure.highlight td.code > pre {
 .markdown-body {
   font-size: 1rem;
   line-height: 1.6;
-  font-family: var(--font-family-sans-serif);
+  font-family: Noto Sans SC;
   margin-bottom: 2rem;
   color: var(--post-text-color);
 }
