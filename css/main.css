@@ -564,10 +564,10 @@ sup > a::before,
 }
 #nprogress .bar {
   height: 3px !important;
-  background-color: #FFC125 !important;
+  background-color: #F9B002 !important;
 }
 #nprogress .peg {
-  box-shadow: 0 0 14px #FFC125, 0 0 8px #FFC125 !important;
+  box-shadow: 0 0 14px #F9B002, 0 0 8px #F9B002 !important;
 }
 @media (max-width: 575px) {
   #nprogress .bar {
@@ -872,7 +872,7 @@ i.iconfont {
     --link-hover-color: #FFD726;
     --link-hover-bg-color: #30343A;
     --line-color: #435266;
-    --navbar-bg-color: #FFB90F;
+    --navbar-bg-color: #E8A501;
     --navbar-text-color: #F8F8FF;
     --subtitle-color: #F8F8FF;
     --scrollbar-color: #5e6975;
@@ -910,7 +910,7 @@ i.iconfont {
     --link-hover-color: #FFD726;
     --link-hover-bg-color: #30343A;
     --line-color: #435266;
-    --navbar-bg-color: #FFB90F;
+    --navbar-bg-color: #E8A501;
     --navbar-text-color: #F8F8FF;
     --subtitle-color: #F8F8FF;
     --scrollbar-color: #5e6975;
