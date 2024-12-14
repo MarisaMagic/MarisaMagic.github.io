@@ -864,24 +864,24 @@ i.iconfont {
   :root:not([data-user-color-scheme]) {
     --body-bg-color: #11131A;
     --board-bg-color: #2F2F31;
-    --text-color: #c4c6c9;
-    --sec-text-color: #a7a9ad;
-    --post-text-color: #c4c6c9;
-    --post-heading-color: #c4c6c9;
+    --text-color: #C7C7C8;
+    --sec-text-color: #F8F8FF;
+    --post-text-color: #D5D6D6;
+    --post-heading-color: #E0E0E1;
     --post-link-color: #EBBE01;
     --link-hover-color: #FFD726;
     --link-hover-bg-color: #30343A;
     --line-color: #435266;
     --navbar-bg-color: #FFB90F;
     --navbar-text-color: #F8F8FF;
-    --subtitle-color: #d0d0d0;
+    --subtitle-color: #F8F8FF;
     --scrollbar-color: #687582;
     --scrollbar-hover-color: #9da8b3;
     --button-bg-color: transparent;
     --button-hover-bg-color: #46647e;
     --highlight-bg-color: #2b2b2b;
     --inlinecode-bg-color: rgba(99,110,123,0.4);
-    --fold-title-color: #c4c6c9;
+    --fold-title-color: #C7C7C8;
     --fold-border-color: #435266;
   }
   :root:not([data-user-color-scheme]) img {
@@ -902,24 +902,24 @@ i.iconfont {
   [data-user-color-scheme="dark"] {
     --body-bg-color: #11131A;
     --board-bg-color: #2F2F31;
-    --text-color: #c4c6c9;
-    --sec-text-color: #a7a9ad;
-    --post-text-color: #c4c6c9;
-    --post-heading-color: #c4c6c9;
+    --text-color: #C7C7C8;
+    --sec-text-color: #F8F8FF;
+    --post-text-color: #D5D6D6;
+    --post-heading-color: #E0E0E1;
     --post-link-color: #EBBE01;
     --link-hover-color: #FFD726;
     --link-hover-bg-color: #30343A;
     --line-color: #435266;
     --navbar-bg-color: #FFB90F;
     --navbar-text-color: #F8F8FF;
-    --subtitle-color: #d0d0d0;
+    --subtitle-color: #F8F8FF;
     --scrollbar-color: #687582;
     --scrollbar-hover-color: #9da8b3;
     --button-bg-color: transparent;
     --button-hover-bg-color: #46647e;
     --highlight-bg-color: #2b2b2b;
     --inlinecode-bg-color: rgba(99,110,123,0.4);
-    --fold-title-color: #c4c6c9;
+    --fold-title-color: #C7C7C8;
     --fold-border-color: #435266;
   }
   [data-user-color-scheme="dark"] img {
