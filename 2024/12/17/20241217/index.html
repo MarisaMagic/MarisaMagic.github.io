@@ -19,28 +19,26 @@
   <meta name="author" content="MarisaMagic">
   <meta name="keywords" content="">
   
-    <meta name="description" content="Ubuntu 环境下在 VS Code 中运行 C++ 多线程程序">
+    <meta name="description" content="「C++ 多线程学习」 进程与线程，并发的含义以及简单的C++多线程程序创建">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Ubuntu 下 VS Code 运行 C++ 多线程程序">
-<meta property="og:url" content="http://example.com/2024/12/15/20241215/index.html">
+<meta property="og:title" content="「C++ 多线程」并发与多线程">
+<meta property="og:url" content="http://example.com/2024/12/17/20241217/index.html">
 <meta property="og:site_name" content="MarisaMagic&#39;s Blog">
-<meta property="og:description" content="Ubuntu 环境下在 VS Code 中运行 C++ 多线程程序">
+<meta property="og:description" content="「C++ 多线程学习」 进程与线程，并发的含义以及简单的C++多线程程序创建">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://sukicdn.com/wyx/i/2024/12/15/wno.png">
-<meta property="article:published_time" content="2024-12-15T13:26:17.796Z">
-<meta property="article:modified_time" content="2024-12-15T15:43:45.799Z">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2024/12/17/w578.jpg">
+<meta property="article:published_time" content="2024-12-17T05:47:11.277Z">
+<meta property="article:modified_time" content="2024-12-17T07:53:51.870Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="C++">
 <meta property="article:tag" content="多线程">
-<meta property="article:tag" content="Ubuntu">
-<meta property="article:tag" content="Linux">
-<meta property="article:tag" content="VS Code">
+<meta property="article:tag" content="std::thread">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2024/12/15/wno.png">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2024/12/17/w578.jpg">
   
   
   
-  <title>Ubuntu 下 VS Code 运行 C++ 多线程程序 - MarisaMagic&#39;s Blog</title>
+  <title>「C++ 多线程」并发与多线程 - MarisaMagic&#39;s Blog</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -223,13 +221,13 @@
   
 
 <div id="banner" class="banner" parallax=true
-     style="background: url('https://sukicdn.com/wyx/i/2024/12/15/wno.png') no-repeat center center; background-size: cover;">
+     style="background: url('https://sukicdn.com/wyx/i/2024/12/17/w578.jpg') no-repeat center center; background-size: cover;">
   <div class="full-bg-img">
     <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="Ubuntu 下 VS Code 运行 C++ 多线程程序"></span>
+            <span id="subtitle" data-typed-text="「C++ 多线程」并发与多线程"></span>
           
         </div>
 
@@ -245,8 +243,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2024-12-15 21:26" pubdate>
-          2024年12月15日 晚上
+        <time datetime="2024-12-17 13:47" pubdate>
+          2024年12月17日 下午
         </time>
       </span>
     
@@ -257,7 +255,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          768 字
+          1.5k 字
         
       </span>
     
@@ -268,7 +266,7 @@
         
         
         
-          7 分钟
+          13 分钟
         
       </span>
     
@@ -305,57 +303,76 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">Ubuntu 下 VS Code 运行 C++ 多线程程序</h1>
+            <h1 id="seo-header">「C++ 多线程」并发与多线程</h1>
             
             
               <div class="markdown-body">
                 
-                <p>文章大图来源: <a target="_blank" rel="noopener" href="https://www.pixiv.net/artworks/105845465">pixiv_id=105845465</a></p>
-<h2 id="Ubuntu-下-VS-Code-运行-C-多线程报错">Ubuntu 下 VS Code 运行 C++ 多线程报错</h2>
-<p>假设写了如下 C++ 多线程程序:</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">()</span></span>&#123;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;foo() start, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;Hello, this is Alice Margatroid.&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;foo() end, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;main() start, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;Hello, this is MarisaMagic.&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>    <span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo)</span></span>;<br>    t.<span class="hljs-built_in">join</span>();<br><br>    std::cout &lt;&lt; <span class="hljs-string">&quot;main(), end, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
-<p>在 Ubuntu 环境下用 VS Code 中的 <strong>Code Runner 插件运行</strong> C++ 代码会出现如下报错:</p>
-<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs txt">In function `std::thread::thread&lt;void (&amp;)()&gt;(void (&amp;)())&#x27;:<br>test.cpp:(.text._ZNSt6threadC2IRFvvEJEEEOT_DpOT0_[_ZNSt6threadC5IRFvvEJEEEOT_DpOT0_]+0x2f): <br>undefined reference to `pthread_create&#x27;<br>collect2: error: ld returned 1 exit status<br></code></pre></td></tr></table></figure>
-<p>如果选择 <strong>生成 C/C++ g++ 生成活动文件</strong> 也会报错:</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/uhb.png" srcset="/img/marisad.gif" lazyload alt=""></p>
-<h2 id="报错原因">报错原因</h2>
-<p>在 Ubuntu 平台下创建线程时会调用 pthread_create() 函数，但是 pthread 库不是 Linux 系统默认的库，需要链接到 pthread 库。因此在使用 g++ 编译时，加上链接 pthread 库命令，即可编译成功:</p>
-<p>故我们可以打开终端，或者在 VS Code 中打开终端输入如下编译命令:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">g++ test.cpp -o <span class="hljs-built_in">test</span> -lpthread <br></code></pre></td></tr></table></figure>
-<p>运行生成可执行文件，发现多线程程序运行成功:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">./test<br></code></pre></td></tr></table></figure>
-<p>可是我们还没有成功解决如何在 VS Code 中使用 <strong>Code Runner 插件</strong> 或者 <strong>生成 C/C++ g++ 生成活动文件</strong> 运行 C++ 多线程程序。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/61yn.png" srcset="/img/marisad.gif" lazyload alt=""></p>
-<h2 id="解决方法">解决方法</h2>
-<h3 id="Code-Runner-插件配置修改">Code Runner 插件配置修改</h3>
-<p>打开 Code Runner 扩展设置，输入关键词 Executor Map，点击第一个选项中“在 settings.json 中编辑”。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/88x9b.png" srcset="/img/marisad.gif" lazyload alt=""></p>
-<p>打开之后，看到如下界面。然后在 “cpp” 那一行的编译命令中，增加 -lpthread 链接命令并保存即可。</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-attr">&quot;cpp&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;cd $dir &amp;&amp; g++ $fileName -o $fileNameWithoutExt -lpthread &amp;&amp; $dir$fileNameWithoutExt&quot;</span><br></code></pre></td></tr></table></figure>
-<p>修改后大致如下图所示:</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/16ezi.png" srcset="/img/marisad.gif" lazyload alt=""></p>
-<p>之后点击右上角 <strong>Code Runner 插件</strong> 运行代码的按钮就可以运行成功 DA⭐ZE~</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/175xp.png" srcset="/img/marisad.gif" lazyload alt=""></p>
-<h3 id="生成-C-C-g-生成活动文件配置修改">生成 C/C++ g++ 生成活动文件配置修改</h3>
-<p>键盘按下 “Ctrl + Shift + P”，打开命令面板。输入关键词 “Tasks” 找到 “Tasks: Configure Default Build Task” 点开。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/8ewil.png" srcset="/img/marisad.gif" lazyload alt=""></p>
-<p>点开之后选择 “C/C++: g++ 生成活动文件”，会自动生成一个编译配置文件 tasks.json 。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/179mu.png" srcset="/img/marisad.gif" lazyload alt=""></p>
-<p>在编译配置文件中找到 “args”，也就是执行编译命令时加入的参数。增加一条 “-lpthread”，保存文件即可。</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-attr">&quot;tasks&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><br>    <span class="hljs-punctuation">&#123;</span><br>        <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;cppbuild&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;label&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;C/C++: g++ 生成活动文件&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;command&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;/usr/bin/g++&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;args&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><br>            <span class="hljs-string">&quot;-fdiagnostics-color=always&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-string">&quot;-g&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-string">&quot;$&#123;file&#125;&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-string">&quot;-o&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-string">&quot;$&#123;fileDirname&#125;/$&#123;fileBasenameNoExtension&#125;&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-string">&quot;-lpthread&quot;</span><br>        <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;options&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>            <span class="hljs-attr">&quot;cwd&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;$&#123;fileDirname&#125;&quot;</span><br>        <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;problemMatcher&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><br>            <span class="hljs-string">&quot;$gcc&quot;</span><br>        <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;group&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>            <span class="hljs-attr">&quot;kind&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;build&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-attr">&quot;isDefault&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><br>        <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;detail&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;编译器: /usr/bin/g++&quot;</span><br>    <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">]</span><br></code></pre></td></tr></table></figure>
-<p>修改配置后如下图所示:</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/8ewft.png" srcset="/img/marisad.gif" lazyload alt=""></p>
-<p>之后使用 <strong>生成 C/C++ g++ 生成活动文件</strong> 也可以运行成功 DA⭐ZE ~</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/67gs.png" srcset="/img/marisad.gif" lazyload alt=""></p>
-<h2 id="参考">参考</h2>
-<ol>
+                <p>文章大图来源: <a target="_blank" rel="noopener" href="https://www.pixiv.net/artworks/122609228">pixiv_id=122609228</a></p>
+<h2 id="1-进程与线程">1 进程与线程</h2>
+<h3 id="1-1-进程">1.1 进程</h3>
+<p>进程（Process）是计算机中程序关于某数据集合上的一次运行活动，是 <strong>系统进行资源分配和调度的基本单位</strong>。可以把进程看作是一个正在运行的程序的实例。例如我打开了 Edge 浏览器，操作系统会为其创建一个进程，进程中包含了运行程序的代码、所使用的数据、以及内存空间等各种系统资源。</p>
+<p>从微观上来看，<strong>一个传统单核 CPU 在某一个特定时刻只能处理一个进程</strong>。</p>
+<h3 id="1-2-线程">1.2 线程</h3>
+<p>线程是进程中的一个小的执行单元，是 <strong>CPU 调度和分派的基本单位</strong>。<strong>一个进程可以包含多个线程</strong>，这些线程 <strong>共享进程的资源</strong>（如代码段、数据段、文件资源等）</p>
+<h3 id="1-3-进程与线程的区别">1.3 进程与线程的区别</h3>
+<h4 id="1-3-1-资源分配">1.3.1 资源分配</h4>
+<ul>
 <li>
-<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/afgqwjgfjqwgfg/article/details/115737489">VS Code在ubuntu中执行多线程程序时报错：undefined reference to `pthread_create</a></p>
+<p><strong>进程是资源分配的基本单位</strong>。每个进程拥有独立的内存空间、文件等资源。一个进程无法直接访问其他进程的资源，此时需要借助进程通信。</p>
 </li>
 <li>
-<p><a target="_blank" rel="noopener" href="https://worktile.com/kb/ask/402685.html">编译多线程程序linux命令</a></p>
+<p><strong>线程是共享进程资源的执行单位</strong>。线程除了拥有自己独立的栈空间、程序计数器等少量资源外，还共享进程的大部分资源。线程之间可以方便地共享数据。</p>
 </li>
-</ol>
+</ul>
+<h4 id="1-3-2-调度开销">1.3.2 调度开销</h4>
+<ul>
+<li>
+<p><strong>进程的调度开销较大</strong>。需要切换整个地址空间，保存和恢复大量的寄存器和其他上下文信息。</p>
+</li>
+<li>
+<p><strong>线程的调度开销较小</strong>。由于线程共享进程的地址空间，线程切换时只需要保存和恢复少量的寄存器和栈指针等信息。</p>
+</li>
+</ul>
+<h4 id="1-3-3-独立性和健壮性">1.3.3 独立性和健壮性</h4>
+<ul>
+<li>
+<p><strong>进程具有较高的独立性</strong>。一个进程的崩溃通常不会影响其他进程的运行，比较安全。</p>
+</li>
+<li>
+<p><strong>线程的独立性相对较弱</strong>。由于线程共享进程的资源，如果一个线程出现错误（如访问非法内存地址），可能会导致整个进程崩溃。</p>
+</li>
+</ul>
+<h2 id="2-什么是并发">2 什么是并发</h2>
+<h3 id="2-1-并发的含义">2.1 并发的含义</h3>
+<p>并发（Concurrency）是指计算机系统中多个计算或处理过程同时进行的能力。并发现象在我们日常生活中也很常见，我可以边听东方同人音乐边写博客，也可以边上课边看篮球比赛（</p>
+<h3 id="2-2-并发的方式">2.2 并发的方式</h3>
+<h4 id="2-2-1-多核机的并发执行">2.2.1 多核机的并发执行</h4>
+<p>在多核机上，<strong>每个核心都可以独立地执行不同的线程或进程</strong>，从而真正地同时处理多个任务，实现真正的 <strong>并行</strong>。</p>
+<h4 id="2-2-2-单核机的任务切换">2.2.2 单核机的任务切换</h4>
+<p>单核机上往往通过 <strong>时间分片</strong> 和 <strong>上下文切换</strong> 实现任务的切换，每个任务被分配一个小的时间段执行，任务执行结束后，会从当前任务切换到下一个任务。可以实现宏观上的同时处理任务。</p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/17/tt9u.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p>现在大部分的电脑 CPU 都是多核的，但即使在多核环境中，当线程数超过核心数时（电脑都会有线程限制数量，有时会大于核心数量，一切以实际测试结果为准），也需要在每个单核上进行时间片轮转和上下文切换。此时两种并发的方式是混合进行的。</p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/17/tt94.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<h3 id="2-3-并发的途径">2.3 并发的途径</h3>
+<h4 id="2-3-1-多进程并发">2.3.1 多进程并发</h4>
+<p>运用独立的进程实现并发。</p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/17/4c73.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<h4 id="2-3-2-一个进程内多线程并发">2.3.2 一个进程内多线程并发</h4>
+<p>同一个进程内的所有线程共享进程的大部分资源，但是这种方式往往比较复杂。</p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/17/mbb.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<h2 id="3-并发的意义">3 并发的意义</h2>
+<p>并发技术通常能够 <strong>提高资源利用率、增强系统的响应能力、支持复杂任务的分解与处理</strong>，适用于多用户交互、计算较为密集的任务等场景。</p>
+<p>当然，有时候也不适合使用并发技术。当对于 <strong>一些简单的、顺序依赖很强的</strong> 程序，或者 <strong>对执行顺序有严格要求</strong> 的任务，并发可能会引入不必要的复杂性反而造成多余的开销，此时就不如使用传统的串行编程方式了。</p>
+<h2 id="4-简单C-多线程程序">4 简单C++多线程程序</h2>
+<p>我们有一个非常简单的单线程C++程序：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123; <br>    std::cout &lt;&lt; <span class="hljs-string">&quot;Hello, this is MarisaMagic.&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>可以将其改写多线程程序：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">()</span></span>&#123;<br>	std::cout &lt;&lt; <span class="hljs-string">&quot;Hello, this is MarisaMagic.&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;  <span class="hljs-comment">// 主线程从 main() 开始执行</span><br>	<span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo)</span></span>; <span class="hljs-comment">// 新的子线程 t 从 foo() 开始执行</span><br>	t.<span class="hljs-built_in">join</span>();           <span class="hljs-comment">// 等待 t 线程执行完成</span><br><br>	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/17/vol3.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p>每个线程需要一个 <strong>线程接口函数</strong>，例如上面代码中的 <code>foo()</code>。实际上，主函数也是一个线程，我们可以看作是主线程。为了输出 <code>Hello, this is MarisaMagic.</code> ，我们启动了一个新的线程 <code>t</code>（通过 <code>std::thread</code> 创建）来执行输出，此时该程序就有两个线程存在，一个是主线程从 <code>main()</code> 开始执行，另一个就是新的子线程从 <code>foo()</code> 开始执行。</p>
+<p>当新线程启动之后，主线程也在同步执行。主线程有可能执行地比较快，如果不等待子线程执行完，会直接执行到 <code>main()</code> 结束，可能会在子线程 <code>foo()</code> 还未执行结束就结束整个程序。因此，我们需要调用 <code>join()</code> 使得主线程等待子线程。</p>
+<p>这是个很简答的程序，实际上使用多线程是比较多余的。但是后面会遇到很多比较经典、复杂的程序。具体的基本 C++ 多线程（std::thread）工具的用法，进阶的并发程序以及高级线程管理等知识都会在后续慢慢更新 DA⭐ZE ~</p>
 
                 
               </div>
@@ -379,7 +396,7 @@
   
     <span>></span>
     
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/C-%E5%B0%8F%E6%8A%80%E5%B7%A7/" class="category-chain-item">C++ 小技巧</a>
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/C-%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%AD%A6%E4%B9%A0/" class="category-chain-item">C++ 多线程学习</a>
   
   
 
@@ -400,11 +417,7 @@
       
         <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" class="print-no-link">#多线程</a>
       
-        <a href="/tags/Ubuntu/" class="print-no-link">#Ubuntu</a>
-      
-        <a href="/tags/Linux/" class="print-no-link">#Linux</a>
-      
-        <a href="/tags/VS-Code/" class="print-no-link">#VS Code</a>
+        <a href="/tags/std-thread/" class="print-no-link">#std::thread</a>
       
     </div>
   
@@ -416,8 +429,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>Ubuntu 下 VS Code 运行 C++ 多线程程序</div>
-      <div>http://example.com/2024/12/15/20241215/</div>
+      <div>「C++ 多线程」并发与多线程</div>
+      <div>http://example.com/2024/12/17/20241217/</div>
     </div>
     <div class="license-meta">
       
@@ -429,7 +442,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2024年12月15日</div>
+          <div>2024年12月17日</div>
         </div>
       
       
@@ -461,18 +474,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2024/12/16/2024YZUGPLT/" title="2024 扬州大学与南通大学 GPLT 联谊选拔赛题解">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">2024 扬州大学与南通大学 GPLT 联谊选拔赛题解</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2024/12/14/YAC_Round_13/" title="2024 YAC Round 13 题解">
-                        <span class="hidden-mobile">2024 YAC Round 13 题解</span>
+                      <a href="/2024/12/16/2024YZUastar/" title="2024 扬州大学百度之星、码蹄杯校内选拔赛题解">
+                        <span class="hidden-mobile">2024 扬州大学百度之星、码蹄杯校内选拔赛题解</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
