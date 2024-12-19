@@ -1,0 +1,792 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=dark>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/logo.png">
+  <link rel="icon" href="/img/logo.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="std::thread 线程函数的参数传递，包括按值传递参数、按引用传递参数（std::ref）、传递指针作为参数（含智能指针 std::shared_ptr、std::unique_ptr）、传递临时对象作为参数（含显式、隐式调用移动语义）">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「C++ 多线程」std::thread 线程函数参数传递">
+<meta property="og:url" content="http://example.com/2024/12/19/20241219/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="std::thread 线程函数的参数传递，包括按值传递参数、按引用传递参数（std::ref）、传递指针作为参数（含智能指针 std::shared_ptr、std::unique_ptr）、传递临时对象作为参数（含显式、隐式调用移动语义）">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2024/12/19/1zo.jpg">
+<meta property="article:published_time" content="2024-12-19T04:06:15.615Z">
+<meta property="article:modified_time" content="2024-12-19T10:10:32.312Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="多线程">
+<meta property="article:tag" content="std::thread">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2024/12/19/1zo.jpg">
+  
+  
+  
+  <title>「C++ 多线程」std::thread 线程函数参数传递 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/marisad.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 70vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2024/12/19/1zo.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「C++ 多线程」std::thread 线程函数参数传递"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2024-12-19 12:06" pubdate>
+          2024年12月19日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          30 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「C++ 多线程」std::thread 线程函数参数传递</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>文章大图来源: <a target="_blank" rel="noopener" href="https://www.pixiv.net/artworks/122153784">pixiv_id=122153784</a></p>
+<h2 id="1-参数传递基本形式">1 参数传递基本形式</h2>
+<p>在 C++ 多线程中创建一个线程，我们需要让 std::thread 构造函数接收一个线程接口函数的 <strong>函数指针</strong> 以及该线程接口函数需要的多个参数。大致形式如下:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 伪代码。第一个参数 foo 即函数指针，后面的a,b,...参数依次为线程接口函数所需参数</span><br><span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo, a, b, ...)</span></span>; <br></code></pre></td></tr></table></figure>
+<h2 id="2-按值传递参数">2 按值传递参数</h2>
+<h3 id="2-1-基本原理">2.1 基本原理</h3>
+<p>使用按值传递参数传递给线程接口函数时，线程接口函数收到的是 <strong>拷贝的参数的副本</strong>。</p>
+<p>按值传递的方式非常简单直观，而且这种参数传递方式的安全性是比较高的，线程函数内部对参数的操作不会影响原始数据。</p>
+<p>但对于大型的数据结构，拷贝的操作往往会消耗较多的时间和空间。</p>
+<h3 id="2-2-示例">2.2 示例</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><br><span class="hljs-comment">// 线程接口函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span> a, std::string s)</span></span>&#123; <br>    std::cout &lt;&lt; a &lt;&lt; <span class="hljs-string">&quot; &quot;</span> &lt;&lt; s &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-type">int</span> num = <span class="hljs-number">520</span>;<br>    std::string str = <span class="hljs-string">&quot;Marisa&quot;</span>;<br><br>    <span class="hljs-comment">// 按值传递参数</span><br>    <span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo, num, str)</span></span>; <br>    t.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/19/t6l7.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<h2 id="3-按引用传递参数（std-ref）">3 按引用传递参数（std::ref）</h2>
+<h3 id="3-1-基本原理">3.1 基本原理</h3>
+<p>在 C++ 多线程中，std::thread 构造函数在传递参数时 <strong>默认是按值传递的</strong>。这样设定的原因是为了避免一些潜在的问题，比如线程函数意外地修改外部变量导致难以追踪的错误，以及数据竞争等问题。</p>
+<p>因此，在 C++ 多线程中，如果我们想要在线程函数内部去修改原始变量的值，<strong>传统的传递引用方式是不奏效的</strong>。故在线程函数中操作原始变量（通过引用）时，就 <strong>需要使用</strong> <a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/utility/functional/ref">std::ref</a></p>
+<p>使用 std::ref 之后，我们确实能够对原属数据进行修改等操作，但是我们也改变了 C++ 多线程默认的函数传递参数机制。很多时候，多个线程（包括主线程和子线程）可能同时访问和修改同一个变量或对象，这样的传递方式一定程度上增加了数据竞争的风险。</p>
+<h3 id="3-2-示例">3.2 示例</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><br><span class="hljs-comment">// 线程接口函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span>&amp; a, std::string&amp; s)</span></span>&#123; <br>    a ++ ;<br>    s += <span class="hljs-string">&quot;Magic&quot;</span>;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;foo(): &quot;</span> &lt;&lt; a &lt;&lt; <span class="hljs-string">&quot; &quot;</span> &lt;&lt; s &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-type">int</span> num = <span class="hljs-number">520</span>;<br>    std::string str = <span class="hljs-string">&quot;Marisa&quot;</span>;<br><br>    <span class="hljs-comment">// 按引用传递参数</span><br>    <span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo, std::ref(num), std::ref(str))</span></span>; <br>    t.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-comment">// 成功修改了原始数据</span><br>    std::cout &lt;&lt; <span class="hljs-string">&quot;main(): &quot;</span> &lt;&lt; num &lt;&lt; <span class="hljs-string">&#x27; &#x27;</span> &lt;&lt; str &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>; <br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/19/5svex.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<h2 id="4-传递指针作为参数">4 传递指针作为参数</h2>
+<h3 id="4-1-基本原理">4.1 基本原理</h3>
+<p>在 C++ 多线程中，我们也可以指向数据的指针传递给线程函数。在线程函数中，我们可以通过指针来访问和修改数据（有点类似于按引用传递）。</p>
+<p>与按引用传递同样的，这也存在着一定的数据竞争风险。</p>
+<h3 id="4-2-普通指针示例">4.2 普通指针示例</h3>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><br><span class="hljs-comment">// 线程接口函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span>* p)</span></span>&#123; <br>    *p += <span class="hljs-number">1</span>; <span class="hljs-comment">// 注意 *p ++ 是先 p ++ 再取值。*p += 1 是先取值再 += 1</span><br>    std::cout &lt;&lt; <span class="hljs-string">&quot;foo(): &quot;</span> &lt;&lt; *p &lt;&lt; <span class="hljs-string">&quot; Marisa&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-type">int</span> num = <span class="hljs-number">520</span>;<br><br>    <span class="hljs-comment">// 传递指针作为参数</span><br>    <span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo, &amp;num)</span></span>; <br>    t.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-comment">// 成功修改了原始数据</span><br>    std::cout &lt;&lt; <span class="hljs-string">&quot;main(): &quot;</span> &lt;&lt; num &lt;&lt; <span class="hljs-string">&quot; Marisa&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>; <br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/19/15pz9r.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<h3 id="4-3-智能指针示例">4.3 智能指针示例</h3>
+<h4 id="4-3-1-std-shared-ptr">4.3.1 std::shared_ptr</h4>
+<p><a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/memory/shared_ptr">std::shared_ptr</a> 是一种 <strong>引用计数的智能指针</strong>。当传递 std::shared_ptr 给线程函数时，多个线程可以共享同一个对象的所有权。这样的机制能够确保对象在所有引用（包括线程中的引用）都释放后才被销毁。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;memory&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">(std::shared_ptr&lt;<span class="hljs-type">int</span>&gt; p)</span> </span>&#123;<br>    *p += <span class="hljs-number">1</span>;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;foo(): &quot;</span> &lt;&lt; *p &lt;&lt; <span class="hljs-string">&quot; Marisa&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span> </span>&#123;<br>    <span class="hljs-comment">// shared_ptr 智能指针</span><br>    std::shared_ptr&lt;<span class="hljs-type">int</span>&gt; ptr = std::<span class="hljs-built_in">make_shared</span>&lt;<span class="hljs-type">int</span>&gt;(<span class="hljs-number">520</span>);<br><br>    <span class="hljs-comment">// 传递 shared_ptr 智能指针</span><br>    <span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo, ptr)</span></span>;<br>    t.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-comment">// 成功修改了原始数据</span><br>    std::cout &lt;&lt; <span class="hljs-string">&quot;main(): &quot;</span> &lt;&lt; *ptr &lt;&lt; <span class="hljs-string">&quot; Marisa&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/19/4fyg.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<h4 id="4-3-2-std-unique-ptr">4.3.2 std::unique_ptr</h4>
+<p><a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/memory/unique_ptr">std::unique_ptr</a> 是一种独占式的智能指针。它强调对象的所有权是唯一的，不能被复制。只能调用移动语义，即 <a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/utility/move">std::move</a></p>
+<p>注意在调用了 std::move 之后，主线程中的智能指针 ptr 就失去了所有权，所以不能再在主函数中访问数据了。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;memory&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">(std::unique_ptr&lt;<span class="hljs-type">int</span>&gt; p)</span> </span>&#123;<br>    *p += <span class="hljs-number">1</span>;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;foo(): &quot;</span> &lt;&lt; *p &lt;&lt; <span class="hljs-string">&quot; Marisa&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span> </span>&#123;<br>    <span class="hljs-comment">// unique_ptr 智能指针</span><br>    std::unique_ptr&lt;<span class="hljs-type">int</span>&gt; ptr = std::<span class="hljs-built_in">make_unique</span>&lt;<span class="hljs-type">int</span>&gt;(<span class="hljs-number">520</span>);<br><br>    <span class="hljs-comment">// 传递 unique_ptr 智能指针</span><br>    <span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo, std::move(ptr))</span></span>;<br>    t.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-comment">// 调用 std::move 后，ptr 失去了所有权，因此不能再访问</span><br>    <span class="hljs-comment">// std::cout &lt;&lt; &quot;main(): &quot; &lt;&lt; *ptr &lt;&lt; &quot; Marisa&quot; &lt;&lt; &quot;\n&quot;;</span><br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/19/n60.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<h3 id="4-4-使用-detach-的风险">4.4 使用 detach 的风险</h3>
+<p>当调用 std::thread::detach 时，子线程会在后台独立运行，与创建它的主线程分离。但在函数参数转递指针的情况下，使用 <code>detach()</code> 往往会造成很多问题。</p>
+<ul>
+<li>
+<p>普通指针</p>
+<p>在使用 <code>detach()</code> 情况下，主线程可能先于子线程结束，那么子线程会尝试访问已经销毁的内存，进而导致程序崩溃。</p>
+</li>
+<li>
+<p>std::shared_ptr</p>
+<p>假如主线程创建了一个 std::shared_ptr 并传递给一个被 detach 的线程。主线程先于子线程结束，并且主线程是最后一个持有该智能指针 std::shared_ptr 的地方，那么在主线程结束时，引用计数减少到零，这时候共享对象被销毁了。此时分离的子线程也会尝试访问已销毁的内存，进而导致程序崩溃。</p>
+</li>
+<li>
+<p>std::unique_ptr</p>
+<p>std::unique_ptr 独占所有权，当传递 std::unique_ptr 给一个 detach 的线程时，实际上是将对象的所有权转移到了子线程。如果主线程在子线程完成之前就结束了，这时候也会出现错误（可能丢失对对象生命周期的跟踪，进而产生内存泄漏等复杂问题）</p>
+</li>
+</ul>
+<h2 id="5-传递临时变量作为参数">5 传递临时变量作为参数</h2>
+<h3 id="5-1-按值传递临时变量示例">5.1 按值传递临时变量示例</h3>
+<p>当按值传递临时变量给线程函数时，编译器会为线程函数 <strong>创建一个临时变量的副本</strong>。线程函数可以对这个副本进行各种操作，而 <strong>原始的临时变量在传递后就被销毁</strong>。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><br><span class="hljs-comment">// 线程接口函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span> a, std::string s)</span></span>&#123; <br>    std::cout &lt;&lt; <span class="hljs-string">&quot;foo(): &quot;</span> &lt;&lt; a &lt;&lt; <span class="hljs-string">&quot; &quot;</span> &lt;&lt; s &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-comment">// 按值传递临时变量</span><br>    <span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo, <span class="hljs-number">520</span>, <span class="hljs-string">&quot;Marisa&quot;</span>)</span></span>; <br>    t.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/19/4w6i.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<h3 id="5-2-按引用传递临时变量示例（std-ref）">5.2 按引用传递临时变量示例（std::ref）</h3>
+<p>一般情况下我们无法通过 std::ref 来传递临时变量的引用，即便是临时变量是个表达式，还是会导致报错。因此，<strong>通常我们不按引用传递临时变量</strong>。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><br><span class="hljs-comment">// 线程接口函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span>&amp; a, std::string s)</span></span>&#123; <br>    std::cout &lt;&lt; <span class="hljs-string">&quot;foo(): &quot;</span> &lt;&lt; a &lt;&lt; <span class="hljs-string">&quot; &quot;</span> &lt;&lt; s &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-comment">// 按引用传递临时变量 </span><br>    <span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo, std::ref(<span class="hljs-number">520</span> + <span class="hljs-number">1</span>), <span class="hljs-string">&quot;Marisa&quot;</span>)</span></span>; <span class="hljs-comment">// ERROR</span><br>    t.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/19/yce3.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<h3 id="5-3-传递临时对象示例">5.3 传递临时对象示例</h3>
+<p>当传递临时类对象给线程函数时，会涉及到 <strong>对象的拷贝</strong> 或者 <strong>对象的移动</strong>:</p>
+<ul>
+<li>
+<p>如果线程函数 <strong>按值传递对象</strong>，并且 <strong>没有移动构造函数</strong> 或者 <strong>不适合调用移动语义</strong> 时，那么会调用对象的 <strong>拷贝构造函数</strong> 来拷贝创建一个副本。</p>
+</li>
+<li>
+<p>如果对象支持移动语义，或者这个对象中显式地声明了移动构造函数，那么会通过调用 <strong>移动语义 std::move</strong> 来传递对象。这样避免了不必要地拷贝。</p>
+</li>
+</ul>
+<h4 id="5-3-1-调用拷贝构造函数传递">5.3.1 调用拷贝构造函数传递</h4>
+<p>在下面的程序中，定义了一个类（Class），显式地定义类中的构造函数、析构函数以及拷贝构造函数。在各个函数中，使用 <code>std::this_thread::get_id()</code> 来打印线程的 id，以辅助理解程序。<a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/thread/get_id">std::this_thread::get_id()</a></p>
+<p>创建线程采用了通过 <strong>类成员函数指针创建线程</strong> 的方式。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">MyClass</span> &#123;<br>    <span class="hljs-type">int</span> val;<br><span class="hljs-keyword">public</span>:<br>    <span class="hljs-comment">// 构造函数</span><br>    <span class="hljs-built_in">MyClass</span>(<span class="hljs-type">int</span> n) : <span class="hljs-built_in">val</span>(n)&#123;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;Build():&quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;Build function called&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    &#125; <br><br>    <span class="hljs-comment">// 析构函数</span><br>    ~<span class="hljs-built_in">MyClass</span>()&#123;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;~():&quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;~ function called&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    &#125;<br><br>    <span class="hljs-comment">// 拷贝构造函数</span><br>    <span class="hljs-built_in">MyClass</span>(<span class="hljs-type">const</span> MyClass&amp; other)&#123; <br>        val = other.val;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;Copy():&quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;Copy function called&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    &#125;<br><br>    <span class="hljs-comment">// 线程接口函数</span><br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">print_val</span><span class="hljs-params">()</span></span>&#123;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;print_val():&quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>        std::cout &lt;&lt; val &lt;&lt; <span class="hljs-string">&quot; Marisa&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    &#125;<br>&#125;;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;main():&quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>    <span class="hljs-comment">// 传递一个临时 MyClass 对象（通过类成员函数指针创建线程）</span><br>    <span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(&amp;MyClass::print_val, MyClass(<span class="hljs-number">520</span>))</span></span>; <br>    t.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>运行结果如下:</p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/19/ds.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p>发现，主线程 id、构造函数 id 以及拷贝构造函数 id 均为 <code>0x58</code>；一次析构函数 id 为 <code>0x58</code>。而子线程 id 和 另一次析构函数 id 为 <code>0xb4</code>。</p>
+<p>创建线程调用了一次构造函数，并调用了一次拷贝构造函数。<strong>两个不同构造函数的调用都是在主线程中就执行的</strong>，因此两个函数中的线程 id 一样且和主线程 id 也一样。</p>
+<p><strong>构造函数对应地调用一次析构函数</strong>，这一次调用析构函数也是在主线程中执行的，因此 <strong>线程 id 和主线程一样</strong>。</p>
+<p><strong>拷贝构造函数对应地调用一次析构函数</strong>，而此次调用析构函数是在线程接口函数访问完 <strong>拷贝的 Myclass 对象</strong> 之后进行调用的，因此，此时的析构函数 <strong>线程 id 和线程接口函数的线程 id 一样</strong>。</p>
+<h4 id="5-3-2-调用移动构造函数传递">5.3.2 调用移动构造函数传递</h4>
+<p>接下来，我们在 MyClass 对象中显式声明移动构造函数，这样就 <strong>会优先去调用移动构造函数</strong>，而 <strong>不会去调用拷贝构造函数</strong>。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;chrono&gt;</span></span><br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">MyClass</span> &#123;<br>    <span class="hljs-type">int</span> val;<br><span class="hljs-keyword">public</span>:<br>    <span class="hljs-comment">// 构造函数</span><br>    <span class="hljs-built_in">MyClass</span>(<span class="hljs-type">int</span> n) : <span class="hljs-built_in">val</span>(n)&#123;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;Build() thread id: &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;Build function called&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    &#125; <br><br>    <span class="hljs-comment">// 析构函数</span><br>    ~<span class="hljs-built_in">MyClass</span>()&#123;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;~() thread id: &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;~ function called&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    &#125;<br><br>    <span class="hljs-comment">// 拷贝构造函数</span><br>    <span class="hljs-built_in">MyClass</span>(<span class="hljs-type">const</span> MyClass&amp; other)&#123; <br>        val = other.val;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;Copy() thread id: &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;Copy function called&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    &#125;<br><br>    <span class="hljs-comment">// 移动构造函数（&amp;&amp; 传递一个右值引用）</span><br>    <span class="hljs-built_in">MyClass</span>(MyClass&amp;&amp; other)&#123;<br>        val = other.val;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;Move() thread id: &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>; <br>        std::cout &lt;&lt; <span class="hljs-string">&quot;Move funtion called&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    &#125;<br><br>    <span class="hljs-comment">// 线程接口函数</span><br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">print_val</span><span class="hljs-params">()</span></span>&#123;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;print_val() thread id: &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>        std::this_thread::<span class="hljs-built_in">sleep_for</span>(std::chrono::<span class="hljs-built_in">seconds</span>(<span class="hljs-number">1</span>));<br>        std::cout &lt;&lt; val &lt;&lt; <span class="hljs-string">&quot; Marisa&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    &#125;<br>&#125;;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;main() thread id: &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>    <span class="hljs-comment">// 传递一个临时 MyClass 对象（通过类成员函数指针创建线程）</span><br>    <span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(&amp;MyClass::print_val, MyClass(<span class="hljs-number">520</span>))</span></span>; <br>    t.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>运行结果如下:</p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/19/470p.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p>发现，主线程 id、构造函数 id 以及拷贝构造函数 id 均为 <code>0xd0</code>；一次析构函数 id 为 <code>0xd0</code>。而子线程 id 和 另一次析构函数 id 为 <code>0xd4</code>。</p>
+<p>和调用拷贝构造函数的情况部分地方类似。</p>
+<p><strong>构造函数对应地调用一次析构函数</strong>，这一次调用析构函数也是在主线程中执行的，因此 <strong>线程 id 和主线程一样</strong>。</p>
+<p><strong>移动构造函数对应地调用一次析构函数</strong>，此次调用析构函数是在线程接口函数访问完 <strong>移动过来的 Myclass 对象</strong> 之后进行调用的，因此，此时的析构函数 <strong>线程 id 和线程接口函数的线程 id 一样</strong>。</p>
+<p>有所区别的是，在移动构造函数被调用后，这个临时对象就会被析构（构造函数对应地一次析构函数调用），因为它的资源已经被移动到了另一个线程执行的对象中。</p>
+<h4 id="5-3-3-传递-STL-临时对象">5.3.3 传递 STL 临时对象</h4>
+<p>在 C++ 标准模板库（STL）中，许多容器和类都定义了移动构造函数。例如，std::vector、std::string 等常见的 STL 类型都有移动构造函数。可见移动语义在提高性能方面有重要作用。</p>
+<p>因此，当传递临时 STL 对象给创建的 std::thread 线程的接口函数时，会优先调用移动构造函数。</p>
+<p>需要注意的是代码中 std::string 对象，如果使用 <code>std::string(&quot;Marisa&quot;)</code> 这种形式传递参数时，会 <strong>自动触发移动语义</strong>；</p>
+<p>但是如果单纯写成 <code>&quot;Marisa&quot;</code> 的形式，那么会会被 <strong>隐式地转换为std::string类型</strong>，但这个过程通常会 <strong>调用 std::string 的构造函数</strong> 来创建一个新的std::string对象，<strong>而不是移动语义</strong>。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;vector&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">(std::vector&lt;<span class="hljs-type">int</span>&gt; v, std::string s)</span></span>&#123;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;I love &quot;</span> &lt;&lt; s &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">const</span> <span class="hljs-keyword">auto</span> &amp;x : v) std::cout &lt;&lt; x &lt;&lt; <span class="hljs-string">&quot; &quot;</span>;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-comment">// 传递 stl 临时对象（优先调用移动构造函数）</span><br>    <span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo, std::vector&lt;<span class="hljs-type">int</span>&gt;&#123;<span class="hljs-number">520</span>, <span class="hljs-number">1314</span>&#125;, std::string(<span class="hljs-string">&quot;Marisa&quot;</span>))</span></span>;<br>    t.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/19/3e8.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/C-%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%AD%A6%E4%B9%A0/" class="category-chain-item">C++ 多线程学习</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/C/" class="print-no-link">#C++</a>
+      
+        <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" class="print-no-link">#多线程</a>
+      
+        <a href="/tags/std-thread/" class="print-no-link">#std::thread</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「C++ 多线程」std::thread 线程函数参数传递</div>
+      <div>http://example.com/2024/12/19/20241219/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2024年12月19日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/12/18/20241218/" title="「C++ 多线程」join(), detach(), joinable()">
+                        <span class="hidden-mobile">「C++ 多线程」join(), detach(), joinable()</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
