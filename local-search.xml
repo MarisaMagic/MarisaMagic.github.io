@@ -4,6 +4,37 @@
   
   
   <entry>
+    <title>「C++ 多线程」std::thread scoped_thread 实现</title>
+    <link href="/2024/12/22/20241222/"/>
+    <url>/2024/12/22/20241222/</url>
+    
+    <content type="html"><![CDATA[<p>文章大图来源：<a href="https://www.pixiv.net/artworks/104139863">pixiv_id=104139863</a></p><h2 id="scoped-thread-定义">scoped_thread 定义</h2><p>scoped_thread 是一种资源管理类，用于确保线程在适当的时候被正确地加入（join）或分离（detach），更好地管理线程资源。scoped_thread 利用了 <strong>RAII</strong>（Resource Acquisition Is Initialization）机制，也可以称为 <strong>资源获取即初始化</strong>。</p><h2 id="scoped-thread-实现及作用">scoped_thread 实现及作用</h2><h3 id="std-thread-成员">std::thread 成员</h3><p>通常我们在 scoped_thread 类中定义一个私有 std::thread 对象成员变量，用于存储实际的线程对象。scoped_thread 类可以对这个 std::thread 线程进行管理，控制其生命周期等操作。</p><h3 id="构造函数的编写">构造函数的编写</h3><ul><li><p>explicit 关键字</p><p>使用 explicit 关键字修饰构造函数，是为了防止隐式转换。这意味着该构造函数只能通过显式地传入 std::thread 对象来进行调用，而不可以通过一些其他类型隐式地转换为 std::thread 对象传入构造函数。</p></li><li><p>std::move 移动语义</p><p>当 scoped_thread 对象被创建时，获取一个 std::thread 线程对象 <code>t_</code> ，并且通过 std::move 移动语义将这个 std::thread 对象的线程 <code>t_</code> 归属权转移到 scoped_thread 对象的成员变量 <code>t</code> 中。</p><p>采用移动语义，也更加符合线程的资源管理方式，符合线程具有独占性所有权的特点，高效实现线程归属权的转移，能够避免不必要的拷贝操作。</p></li><li><p>线程是否有效</p><p>在构造函数体中，通过 <code>if(!t.joinable())&#123;...&#125;</code> 语句来检查接收到的线程对象是否关联了函数且有效（joinable）。</p><p>有可能传入的 std::thread 对象是一个空线程（没有关联任何线程接口函数），或者已经 <code>join()</code> 或 <code>detach()</code> 过了。如果出现这些情况，需要抛出异常。</p></li></ul><h3 id="析构函数的编写">析构函数的编写</h3><p>在析构函数中，首先通过 <code>if(t.joinable())&#123;...&#125;</code> 再次检查 std::thread 成员变量 <code>t</code> 所代表的线程对象是否是有效可连接的。如果已经 <code>join()</code> 或 <code>detach()</code> 过了，就不需要再进行后续的操作了。</p><p>如果线程 <code>t</code> 确定是 joinable 的，那么调用 <code>join()</code> 函数。这使得 scoped_thread 对象的线程 <code>t</code> 在主线程 <code>main</code> 执行结束时调用析构函数，进而自动调用 <code>join()</code>，让主线程等待  scoped_thread 对象的线程 <code>t</code>（也即子线程）直到其执行完成。</p><p>通过在析构函数中执行 <code>join()</code> 操作，利用了 <strong>RAII</strong> 机制，保证了无论在什么情况下，线程都能被正确地结束，避免了线程被意外中断等结果。</p><h3 id="禁用拷贝与拷贝赋值">禁用拷贝与拷贝赋值</h3><p>众所周知，std::thread 是不可以拷贝和拷贝赋值的，因此我们定义的 scoped_thread 类也需要禁用拷贝构造函数和拷贝赋值函数（声明为 <code>= delete</code>），避免出现多个 scoped_thread 对象同时管理一个线程的混乱情况（一个 std::thread 同一时刻只能拥有一个线程的归属权）。</p><h2 id="scoped-thread-简单代码实现">scoped_thread 简单代码实现</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">scoped_thread</span>&#123;<br>std::thread t;<br><span class="hljs-keyword">public</span>:<br><span class="hljs-comment">// 构造函数，采用移动语义（防止隐式转换）</span><br><span class="hljs-function"><span class="hljs-keyword">explicit</span> <span class="hljs-title">scoped_thread</span><span class="hljs-params">(std::thread t_)</span>: t(std::move(t_))&#123;</span><br><span class="hljs-keyword">if</span>(!t.<span class="hljs-built_in">joinable</span>())&#123; <span class="hljs-comment">// 检查线程是否有效</span><br><span class="hljs-keyword">throw</span> std::<span class="hljs-built_in">logic_error</span>(<span class="hljs-string">&quot;thread is unjoinable.&quot;</span>);<br>&#125;<br>&#125;<br><span class="hljs-comment">// 析构函数</span><br>~<span class="hljs-built_in">scoped_thread</span>()&#123;<br><span class="hljs-keyword">if</span>(t.<span class="hljs-built_in">joinable</span>())&#123;<br>t.<span class="hljs-built_in">join</span>();  <span class="hljs-comment">// 析构时自动 join</span><br>&#125;<br>&#125;<br><span class="hljs-comment">// 禁用拷贝构造函数</span><br><span class="hljs-built_in">scoped_thread</span>(scoped_thread <span class="hljs-type">const</span>&amp;) = <span class="hljs-keyword">delete</span>;<br><span class="hljs-comment">// 禁用拷贝赋值函数</span><br>scoped_thread&amp; <span class="hljs-keyword">operator</span>=(scoped_thread <span class="hljs-type">const</span>&amp;) = <span class="hljs-keyword">delete</span>;<br>&#125;;<br><br><span class="hljs-comment">// 线程接口函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span> cnt)</span></span>&#123;<br><span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">1</span>; i &lt;= cnt; i ++ )&#123;<br>std::cout &lt;&lt; <span class="hljs-string">&quot;Kirisame Marisa.&quot;</span> &lt;&lt; i &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br><span class="hljs-function">scoped_thread <span class="hljs-title">st</span><span class="hljs-params">(std::thread(foo, <span class="hljs-number">10</span>))</span></span>;<br><br><span class="hljs-comment">// 主线程中模拟做些其他事情</span><br><span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">1</span>; i &lt;= <span class="hljs-number">3</span>; i ++ )&#123;<br>std::cout &lt;&lt; <span class="hljs-string">&quot;Alice Margatroid. &quot;</span> &lt;&lt; i &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure><p>运行结果如下:</p><p><img src="https://sukicdn.com/wyx/i/2024/12/22/483fe.png" alt=""></p><p>可以看出，scoped_thread 对象的子线程正常执行完毕。</p><p>当主线程结束时，我们定义的 scoped_thread 对象 st 也超出了作用域，此时会自动调用析构函数。在我们实现的 scoped_thread 类的析构函数中，会自动执行 <code>join()</code> 操作，等待关联的线程（关联函数 <code>foo()</code>）执行完成，确保线程资源被正确处理。之后 <code>main</code> 函数才会真正结束，整个程序正常退出。</p><h2 id="参考">参考</h2><ol><li><a href="https://nj.gitbooks.io/c/content/content/chapter2/chapter2-chinese.html">C++ 并发编程实战 第 2 章 线程管理</a></li></ol>]]></content>
+    
+    
+    <categories>
+      
+      <category>追逐繁星</category>
+      
+      <category>C++ 多线程学习</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>C++</tag>
+      
+      <tag>多线程</tag>
+      
+      <tag>std::thread</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>「C++ 多线程」线程归属权及其转移</title>
     <link href="/2024/12/21/20241221/"/>
     <url>/2024/12/21/20241221/</url>
@@ -261,13 +292,13 @@
       
       <tag>C++</tag>
       
-      <tag>多线程</tag>
-      
       <tag>Ubuntu</tag>
       
       <tag>Linux</tag>
       
       <tag>VS Code</tag>
+      
+      <tag>多线程</tag>
       
     </tags>
     
