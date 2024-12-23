@@ -19,28 +19,26 @@
   <meta name="author" content="MarisaMagic">
   <meta name="keywords" content="">
   
-    <meta name="description" content="Ubuntu 环境下在 VS Code 中运行 C++ 多线程程序">
+    <meta name="description" content="硬件支持线程数 hardware_concurrency()、线程识别 get_id()">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Ubuntu 下 VS Code 运行 C++ 多线程程序">
-<meta property="og:url" content="http://example.com/2024/12/15/20241215/index.html">
+<meta property="og:title" content="「C++ 多线程」硬件支持线程数、线程识别">
+<meta property="og:url" content="http://example.com/2024/12/23/20241223/index.html">
 <meta property="og:site_name" content="MarisaMagic&#39;s Blog">
-<meta property="og:description" content="Ubuntu 环境下在 VS Code 中运行 C++ 多线程程序">
+<meta property="og:description" content="硬件支持线程数 hardware_concurrency()、线程识别 get_id()">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://sukicdn.com/wyx/i/2024/12/15/wno.png">
-<meta property="article:published_time" content="2024-12-15T13:26:17.796Z">
-<meta property="article:modified_time" content="2024-12-15T15:43:45.799Z">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2024/12/23/13p6xg.png">
+<meta property="article:published_time" content="2024-12-23T06:10:53.429Z">
+<meta property="article:modified_time" content="2024-12-23T06:38:30.033Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="C++">
 <meta property="article:tag" content="多线程">
-<meta property="article:tag" content="Ubuntu">
-<meta property="article:tag" content="Linux">
-<meta property="article:tag" content="VS Code">
+<meta property="article:tag" content="std::thread">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2024/12/15/wno.png">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2024/12/23/13p6xg.png">
   
   
   
-  <title>Ubuntu 下 VS Code 运行 C++ 多线程程序 - MarisaMagic&#39;s Blog</title>
+  <title>「C++ 多线程」硬件支持线程数、线程识别 - MarisaMagic&#39;s Blog</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -223,13 +221,13 @@
   
 
 <div id="banner" class="banner" parallax=true
-     style="background: url('https://sukicdn.com/wyx/i/2024/12/15/wno.png') no-repeat center center; background-size: cover;">
+     style="background: url('https://sukicdn.com/wyx/i/2024/12/23/13p6xg.png') no-repeat center center; background-size: cover;">
   <div class="full-bg-img">
     <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="Ubuntu 下 VS Code 运行 C++ 多线程程序"></span>
+            <span id="subtitle" data-typed-text="「C++ 多线程」硬件支持线程数、线程识别"></span>
           
         </div>
 
@@ -245,8 +243,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2024-12-15 21:26" pubdate>
-          2024年12月15日 晚上
+        <time datetime="2024-12-23 14:10" pubdate>
+          2024年12月23日 下午
         </time>
       </span>
     
@@ -257,7 +255,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          768 字
+          679 字
         
       </span>
     
@@ -268,7 +266,7 @@
         
         
         
-          7 分钟
+          6 分钟
         
       </span>
     
@@ -305,56 +303,37 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">Ubuntu 下 VS Code 运行 C++ 多线程程序</h1>
+            <h1 id="seo-header">「C++ 多线程」硬件支持线程数、线程识别</h1>
             
             
               <div class="markdown-body">
                 
-                <p>文章大图来源: <a target="_blank" rel="noopener" href="https://www.pixiv.net/artworks/105845465">pixiv_id=105845465</a></p>
-<h2 id="Ubuntu-下-VS-Code-运行-C-多线程报错">Ubuntu 下 VS Code 运行 C++ 多线程报错</h2>
-<p>假设写了如下 C++ 多线程程序:</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">()</span></span>&#123;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;foo() start, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;Hello, this is Alice Margatroid.&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;foo() end, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;main() start, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;Hello, this is MarisaMagic.&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>    <span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo)</span></span>;<br>    t.<span class="hljs-built_in">join</span>();<br><br>    std::cout &lt;&lt; <span class="hljs-string">&quot;main(), end, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
-<p>在 Ubuntu 环境下用 VS Code 中的 <strong>Code Runner 插件运行</strong> C++ 代码会出现如下报错:</p>
-<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs txt">In function `std::thread::thread&lt;void (&amp;)()&gt;(void (&amp;)())&#x27;:<br>test.cpp:(.text._ZNSt6threadC2IRFvvEJEEEOT_DpOT0_[_ZNSt6threadC5IRFvvEJEEEOT_DpOT0_]+0x2f): <br>undefined reference to `pthread_create&#x27;<br>collect2: error: ld returned 1 exit status<br></code></pre></td></tr></table></figure>
-<p>如果选择 <strong>生成 C/C++ g++ 生成活动文件</strong> 也会报错:</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/uhb.png" srcset="/img/marisad.gif" lazyload alt=""></p>
-<h2 id="报错原因">报错原因</h2>
-<p>在 Ubuntu 平台下创建线程时会调用 pthread_create() 函数，但是 pthread 库不是 Linux 系统默认的库，需要链接到 pthread 库。因此在使用 g++ 编译时，加上链接 pthread 库命令，即可编译成功:</p>
-<p>故我们可以打开终端，或者在 VS Code 中打开终端输入如下编译命令:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">g++ test.cpp -o <span class="hljs-built_in">test</span> -lpthread <br></code></pre></td></tr></table></figure>
-<p>运行生成可执行文件，发现多线程程序运行成功:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">./test<br></code></pre></td></tr></table></figure>
-<p>可是我们还没有成功解决如何在 VS Code 中使用 <strong>Code Runner 插件</strong> 或者 <strong>生成 C/C++ g++ 生成活动文件</strong> 运行 C++ 多线程程序。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/61yn.png" srcset="/img/marisad.gif" lazyload alt=""></p>
-<h2 id="解决方法">解决方法</h2>
-<h3 id="Code-Runner-插件配置修改">Code Runner 插件配置修改</h3>
-<p>打开 Code Runner 扩展设置，输入关键词 Executor Map，点击第一个选项中“在 settings.json 中编辑”。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/88x9b.png" srcset="/img/marisad.gif" lazyload alt=""></p>
-<p>打开之后，看到如下界面。然后在 “cpp” 那一行的编译命令中，增加 -lpthread 链接命令并保存即可。</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-attr">&quot;cpp&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;cd $dir &amp;&amp; g++ $fileName -o $fileNameWithoutExt -lpthread &amp;&amp; $dir$fileNameWithoutExt&quot;</span><br></code></pre></td></tr></table></figure>
-<p>修改后大致如下图所示:</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/16ezi.png" srcset="/img/marisad.gif" lazyload alt=""></p>
-<p>之后点击右上角 <strong>Code Runner 插件</strong> 运行代码的按钮就可以运行成功 DA⭐ZE~</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/175xp.png" srcset="/img/marisad.gif" lazyload alt=""></p>
-<h3 id="生成-C-C-g-生成活动文件配置修改">生成 C/C++ g++ 生成活动文件配置修改</h3>
-<p>键盘按下 “Ctrl + Shift + P”，打开命令面板。输入关键词 “Tasks” 找到 “Tasks: Configure Default Build Task” 点开。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/8ewil.png" srcset="/img/marisad.gif" lazyload alt=""></p>
-<p>点开之后选择 “C/C++: g++ 生成活动文件”，会自动生成一个编译配置文件 tasks.json 。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/179mu.png" srcset="/img/marisad.gif" lazyload alt=""></p>
-<p>在编译配置文件中找到 “args”，也就是执行编译命令时加入的参数。增加一条 “-lpthread”，保存文件即可。</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-attr">&quot;tasks&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><br>    <span class="hljs-punctuation">&#123;</span><br>        <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;cppbuild&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;label&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;C/C++: g++ 生成活动文件&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;command&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;/usr/bin/g++&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;args&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><br>            <span class="hljs-string">&quot;-fdiagnostics-color=always&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-string">&quot;-g&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-string">&quot;$&#123;file&#125;&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-string">&quot;-o&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-string">&quot;$&#123;fileDirname&#125;/$&#123;fileBasenameNoExtension&#125;&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-string">&quot;-lpthread&quot;</span><br>        <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;options&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>            <span class="hljs-attr">&quot;cwd&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;$&#123;fileDirname&#125;&quot;</span><br>        <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;problemMatcher&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><br>            <span class="hljs-string">&quot;$gcc&quot;</span><br>        <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;group&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>            <span class="hljs-attr">&quot;kind&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;build&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-attr">&quot;isDefault&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><br>        <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;detail&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;编译器: /usr/bin/g++&quot;</span><br>    <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">]</span><br></code></pre></td></tr></table></figure>
-<p>修改配置后如下图所示:</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/8ewft.png" srcset="/img/marisad.gif" lazyload alt=""></p>
-<p>之后使用 <strong>生成 C/C++ g++ 生成活动文件</strong> 也可以运行成功 DA⭐ZE ~</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/67gs.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+                <p>文章大图来源: <a target="_blank" rel="noopener" href="https://www.pixiv.net/artworks/104200866">pixiv_id=104200866</a></p>
+<h2 id="1-CPU核心数和支持线程数">1 CPU核心数和支持线程数</h2>
+<h3 id="1-1-物理核心">1.1 物理核心</h3>
+<p><strong>物理核心</strong> 是 CPU 中实际存在的处理单元，每个物理核心可以独立地执行指令。例如，我的电脑的 CPU 是 24 核的，那么就有 24 个物理核心。</p>
+<h3 id="1-2-硬件支持线程数量（逻辑核心）">1.2 硬件支持线程数量（逻辑核心）</h3>
+<p>如果 <strong>不支持超线程技术</strong>，一个 24 核的 CPU，理想情况下可以支持 24 个线程并发（并行）执行。</p>
+<p>如果 <strong>支持超线程技术</strong>，一个物理核心可以被模拟成两个逻辑核心来处理线程，从而使 CPU 能够同时处理更多的线程。例如一个 32 核的 CPU，如果支持超线程技术，理想情况下，可以支持 64 个线程并发（并行）执行。</p>
+<h3 id="1-3-std-thread-hardware-concurrency">1.3 std::thread::hardware_concurrency()</h3>
+<p><code>std::thread::hardware_concurrency()</code> 是 std::thread 中的一个成员函数，用于确定系统硬件的并发度。该函数返回一个 std::size_t 类型的值，表示 <strong>硬件支持的并发线程数</strong>。</p>
+<p><code>std::thread::hardware_concurrency()</code> 函数返回的值可能不是一个准确的值，只能作为一个线程支持数量的参考。在某些情况下，它可能返回 0，此时就无法确定硬件的并发度。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-type">size_t</span> n = std::thread::<span class="hljs-built_in">hardware_concurrency</span>();<br><br>    <span class="hljs-keyword">if</span>(n == <span class="hljs-number">0</span>)&#123;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;The number of threads cannot be determined.&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    &#125;<span class="hljs-keyword">else</span>&#123;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;The system supports approximately &quot;</span> &lt;&lt; n &lt;&lt; <span class="hljs-string">&quot; threads.&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>在我的电脑上运行出来结果是 <code>The system supports approximately 24 threads.</code>，这与我电脑的 CPU 核心数量相同，也表明我的电脑是不支持超线程技术的。</p>
+<h2 id="2-线程识别">2 线程识别</h2>
+<h3 id="2-1">2.1</h3>
+<p>线程标识符（thread id）是一个对象，用于在程序中区分不同的线程。每个线程都有一个独一无二的标识符。</p>
+<h3 id="2-2-std-this-thread-get-id">2.2 std::this_thread::get_id()</h3>
+<p>在 C++ 多线程编程中，<code>std::this_thread::get_id()</code> 可以获取当前线程的唯一标识符。</p>
+<p><code>std::this_thread::get_id()</code> 函数返回一个 <code>std::thread::id</code> 类型的值。<code>std::thread::id</code> 类型是一个类，用于表示线程的标识符。</p>
+<p>不同的线程会返回不同的 <code>std::thread::id</code> 值。如果一个线程结束后，其 <code>std::thread::id</code> 可能会被系统重新分配给新创建的线程。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;vector&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">()</span></span>&#123;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-function">std::vector&lt;std::thread&gt; <span class="hljs-title">pv</span><span class="hljs-params">(<span class="hljs-number">10</span>)</span></span>;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">auto</span>&amp; t : pv) t = std::<span class="hljs-built_in">thread</span>(foo);<br>    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">auto</span>&amp; t : pv)&#123;<br>        <span class="hljs-keyword">if</span>(t.<span class="hljs-built_in">joinable</span>())&#123;<br>            t.<span class="hljs-built_in">join</span>();<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>运行结果如下:</p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/23/sxlh.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p>所有线程并发执行，且线程 id 各不相同。</p>
 <h2 id="参考">参考</h2>
 <ol>
-<li>
-<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/afgqwjgfjqwgfg/article/details/115737489">VS Code在ubuntu中执行多线程程序时报错：undefined reference to `pthread_create</a></p>
-</li>
-<li>
-<p><a target="_blank" rel="noopener" href="https://worktile.com/kb/ask/402685.html">编译多线程程序linux命令</a></p>
-</li>
+<li><a target="_blank" rel="noopener" href="https://nj.gitbooks.io/c/content/content/chapter2/chapter2-chinese.html">C++ 并发编程实战 第 2 章 线程管理</a></li>
 </ol>
 
                 
@@ -379,7 +358,7 @@
   
     <span>></span>
     
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/C-%E5%B0%8F%E6%8A%80%E5%B7%A7/" class="category-chain-item">C++ 小技巧</a>
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/C-%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%AD%A6%E4%B9%A0/" class="category-chain-item">C++ 多线程学习</a>
   
   
 
@@ -400,11 +379,7 @@
       
         <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" class="print-no-link">#多线程</a>
       
-        <a href="/tags/Ubuntu/" class="print-no-link">#Ubuntu</a>
-      
-        <a href="/tags/Linux/" class="print-no-link">#Linux</a>
-      
-        <a href="/tags/VS-Code/" class="print-no-link">#VS Code</a>
+        <a href="/tags/std-thread/" class="print-no-link">#std::thread</a>
       
     </div>
   
@@ -416,8 +391,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>Ubuntu 下 VS Code 运行 C++ 多线程程序</div>
-      <div>http://example.com/2024/12/15/20241215/</div>
+      <div>「C++ 多线程」硬件支持线程数、线程识别</div>
+      <div>http://example.com/2024/12/23/20241223/</div>
     </div>
     <div class="license-meta">
       
@@ -429,7 +404,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2024年12月15日</div>
+          <div>2024年12月23日</div>
         </div>
       
       
@@ -461,18 +436,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2024/12/16/2024YZUGPLT/" title="2024 扬州大学与南通大学 GPLT 联谊选拔赛题解">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">2024 扬州大学与南通大学 GPLT 联谊选拔赛题解</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2024/12/14/YAC_Round_13/" title="2024 YAC Round 13 题解">
-                        <span class="hidden-mobile">2024 YAC Round 13 题解</span>
+                      <a href="/2024/12/22/20241222/" title="「C++ 多线程」std::thread scoped_thread 实现">
+                        <span class="hidden-mobile">「C++ 多线程」std::thread scoped_thread 实现</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
