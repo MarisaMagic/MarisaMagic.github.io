@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2024/12/26/4in1.jpg">
 <meta property="article:published_time" content="2024-12-26T02:01:32.333Z">
-<meta property="article:modified_time" content="2024-12-26T07:39:22.417Z">
+<meta property="article:modified_time" content="2024-12-27T05:52:59.846Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="C++">
 <meta property="article:tag" content="多线程">
@@ -256,7 +256,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          3.7k 字
+          3.8k 字
         
       </span>
     
@@ -320,6 +320,7 @@
 <h3 id="1-2-对比-lock-guard">1.2 对比 lock_guard</h3>
 <p>相比于 <code>std::lock_guard</code>，<code>std::unique_lock</code> 更加灵活。默认情况下， <code>std::unique_lock</code> 和 <code>std::lock_guard</code> 是一样的，会自动地进行加锁和解锁。</p>
 <p>除此以外，<code>std::unique_lock</code> 允许在对象的生命周期内手动对互斥量的加锁和解锁。可以在定义 <code>std::unique_lock</code> 对象稍后的某个时间点显式地调用 <code>lock()</code>（需要配合 <code>std::defer_lock</code>）；可以在之后的某个时间点显式地调用 <code>unlock()</code>，用于提前或者暂时解锁。而 <code>std::lock_guard</code> 是无法执行这些操作的。</p>
+<p>但是，由于 <code>std::unique_lock</code> 支持了复杂的操作，相对于 <code>std::lock_guard</code> 来说 <strong>开销</strong> 是 <strong>比较大</strong> 的。因此，对于比较简单的自动加锁解锁的情形，我们尽量优先使用 <code>std::lock_guard</code>；对于比较复杂的，需要支持暂时解锁、重新加锁等手动操作的情形，我们可以考虑使用 <code>std::unque_lock</code>。</p>
 <h2 id="2-unique-lock-构造">2 unique_lock 构造</h2>
 <h3 id="2-1-构造-unique-lock-对象">2.1 构造 unique_lock 对象</h3>
 <p>假如当前有一个线程执行 <code>foo()</code> 函数，有一个共享变量 <code>count</code> 和一个 <code>std::mutex</code> 互斥量 <code>mtx</code>，在对共享数据进行访问和修改前，构造一个 unique_lock 对象，尝试对互斥量 <code>mtx</code> 加锁。如果当前可以获得锁，那么进行加锁，然后访问和修改数据，最后进行自动解锁；如果当前无法获得锁（被其他线程占用），那么当前线程会被阻塞，直到可以获得锁。</p>
