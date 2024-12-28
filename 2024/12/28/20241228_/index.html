@@ -19,27 +19,27 @@
   <meta name="author" content="MarisaMagic">
   <meta name="keywords" content="">
   
-    <meta name="description" content="std::timed_mutex 基本使用方法；std::timed_mutex::try_lock_for() 和 std::timed_mutex::try_lock_until()。">
+    <meta name="description" content="std::recursive_mutex 基本使用方法。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="「C++ 多线程」std::timed_mutex 基本用法">
-<meta property="og:url" content="http://example.com/2024/12/28/20241228/index.html">
+<meta property="og:title" content="「C++ 多线程」std::recursive_mutex 基本用法">
+<meta property="og:url" content="http://example.com/2024/12/28/20241228_/index.html">
 <meta property="og:site_name" content="MarisaMagic&#39;s Blog">
-<meta property="og:description" content="std::timed_mutex 基本使用方法；std::timed_mutex::try_lock_for() 和 std::timed_mutex::try_lock_until()。">
+<meta property="og:description" content="std::recursive_mutex 基本使用方法。">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://sukicdn.com/wyx/i/2024/12/28/4sxa9.jpg">
-<meta property="article:published_time" content="2024-12-28T01:39:08.664Z">
-<meta property="article:modified_time" content="2024-12-28T06:32:59.636Z">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2024/12/28/13cqpi.jpg">
+<meta property="article:published_time" content="2024-12-28T05:47:16.589Z">
+<meta property="article:modified_time" content="2024-12-28T06:32:34.078Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="C++">
 <meta property="article:tag" content="多线程">
 <meta property="article:tag" content="std::thread">
 <meta property="article:tag" content="std::mutex">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2024/12/28/4sxa9.jpg">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2024/12/28/13cqpi.jpg">
   
   
   
-  <title>「C++ 多线程」std::timed_mutex 基本用法 - MarisaMagic&#39;s Blog</title>
+  <title>「C++ 多线程」std::recursive_mutex 基本用法 - MarisaMagic&#39;s Blog</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -222,13 +222,13 @@
   
 
 <div id="banner" class="banner" parallax=true
-     style="background: url('https://sukicdn.com/wyx/i/2024/12/28/4sxa9.jpg') no-repeat center center; background-size: cover;">
+     style="background: url('https://sukicdn.com/wyx/i/2024/12/28/13cqpi.jpg') no-repeat center center; background-size: cover;">
   <div class="full-bg-img">
     <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="「C++ 多线程」std::timed_mutex 基本用法"></span>
+            <span id="subtitle" data-typed-text="「C++ 多线程」std::recursive_mutex 基本用法"></span>
           
         </div>
 
@@ -244,8 +244,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2024-12-28 09:39" pubdate>
-          2024年12月28日 上午
+        <time datetime="2024-12-28 13:47" pubdate>
+          2024年12月28日 下午
         </time>
       </span>
     
@@ -256,7 +256,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.3k 字
+          801 字
         
       </span>
     
@@ -267,7 +267,7 @@
         
         
         
-          11 分钟
+          7 分钟
         
       </span>
     
@@ -308,41 +308,36 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">「C++ 多线程」std::timed_mutex 基本用法</h1>
+            <h1 id="seo-header">「C++ 多线程」std::recursive_mutex 基本用法</h1>
             
             
               <div class="markdown-body">
                 
-                <p>文章大图来源：<a target="_blank" rel="noopener" href="https://www.pixiv.net/artworks/52826716">pixiv_id=52826716</a></p>
-<h2 id="1-std-timed-mutex-基本概念">1 std::timed_mutex 基本概念</h2>
-<p><code>std::timed_mutex</code> 是自 C++ 11 引入的互斥量（mutex）类型，用于 C++ 多线程编程中控制对共享数据资源的并发互斥访问。<code>std::timed_mutex</code> 是独占且非递归的。</p>
-<p><code>std::timed_mutex</code> 包含了 <code>std::mutex</code> 的基本功能，包括 <code>lock()</code> 和 <code>unlock()</code> 函数进行加锁和解锁、<code>try_lock()</code> 以非阻塞的方式尝试获得锁等。除此以外，<code>std::timed_mutex</code> 还提供了成员函数 <code>try_lock_for()</code> 和 <code>try_lock_until</code>，用于支持 <strong>超时放弃</strong> 的尝试获得锁的机制，在避免无限等待、避免出现死锁等方面有着中重要作用。</p>
-<h2 id="2-std-timed-mutex-try-lock-for">2 std::timed_mutex::try_lock_for()</h2>
-<p><code>std::timed_mutex::try_lock_for()</code> 用于尝试在指定的时间期限内获取互斥量的锁。这个函数接受一个 <code>std::chrono::duration</code> 类型的参数，表示获取锁的最长等待时间。如果在这个时间期限内获得了锁，函数返回 <code>true</code>，线程继续执行下去；否则，函数返回 <code>false</code>，线程会采取超时放弃的策略，直接返回。</p>
-<p>当 <code>std::timed_mutex::try_lock_for()</code> 接受的参数接近 <code>0</code> 时，那么函数的功能基本就等于 <code>std::timed_mutex::try_lock()</code>。</p>
-<p>这个函数所造成的等待（阻塞）时间可能会略微超过设置的最长等待时间，主要原因在于会有调度或资源争用的延迟。</p>
-<p>以下是一个简单的示例：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;mutex&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;vector&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;chrono&gt;</span></span><br><br>std::timed_mutex t_mtx;<br><span class="hljs-type">int</span> count;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span> id)</span></span>&#123;<br>    <span class="hljs-comment">// 最长等待时间期限设置为 100 ms </span><br>    std::<span class="hljs-function">chrono::milliseconds <span class="hljs-title">timeout</span><span class="hljs-params">(<span class="hljs-number">100</span>)</span></span>;<br>    <span class="hljs-keyword">auto</span> start = std::chrono::steady_clock::<span class="hljs-built_in">now</span>();<br>    <span class="hljs-keyword">if</span>(t_mtx.<span class="hljs-built_in">try_lock_for</span>(timeout))&#123; <span class="hljs-comment">// 100ms 期限内成功获得锁</span><br>        <span class="hljs-comment">// 打印获得锁的等待时间（可能略超 100ms）</span><br>        <span class="hljs-keyword">auto</span> end = std::chrono::steady_clock::<span class="hljs-built_in">now</span>();<br>        std::chrono::duration&lt;<span class="hljs-type">double</span>, std::milli&gt; dura = end - start;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;thread &quot;</span> &lt;&lt; id &lt;&lt; <span class="hljs-string">&quot;: Successfully get the lock. &quot;</span>;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;waiting duration = &quot;</span> &lt;&lt; dura.<span class="hljs-built_in">count</span>() &lt;&lt; <span class="hljs-string">&quot;ms.&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>        <span class="hljs-comment">// 以下模拟一些互斥操作</span><br>        std::this_thread::<span class="hljs-built_in">sleep_for</span>(std::chrono::<span class="hljs-built_in">milliseconds</span>(<span class="hljs-number">15</span>));<br>        count ++ ;     <span class="hljs-comment">// 对共享数据变量进行访问和修改</span><br>        t_mtx.<span class="hljs-built_in">unlock</span>();  <span class="hljs-comment">// 解锁</span><br>    &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-function">std::vector&lt;std::thread&gt; <span class="hljs-title">threads</span><span class="hljs-params">(<span class="hljs-number">10</span>)</span></span>;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">size_t</span> i = <span class="hljs-number">0</span>; i &lt; threads.<span class="hljs-built_in">size</span>(); i ++ )&#123;<br>        threads[i] = std::<span class="hljs-built_in">thread</span>(foo, i);<br>    &#125;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">auto</span>&amp; t : threads) t.<span class="hljs-built_in">join</span>();<br><br>    std::cout &lt;&lt; <span class="hljs-string">&quot;final count = &quot;</span> &lt;&lt; count &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
-<p>在上面的代码中，创建了 <code>10</code> 个线程。在线程函数 <code>foo()</code> 中，设置最长等待时间为 <code>100ms</code>，并且借助了 <code>std::chrono::steady_clock::now()</code> 来进行线程阻塞时长的记录。如果线程成功在等待的时间期限内获得了锁，那么会继续执行下去，模拟一些互斥操作（休息了 <code>15ms</code>），在作用域结束时手动进行解锁。</p>
+                <p>文章大图来源：<a target="_blank" rel="noopener" href="https://www.pixiv.net/artworks/123093870">pixiv_id=123093870</a></p>
+<h2 id="1-std-recursive-mutex-基本概念">1 std::recursive_mutex 基本概念</h2>
+<p><code>std::recursive_mutex</code> 是 C++ 11 引入的一种 <strong>独占</strong> 且 <strong>递归</strong> 的互斥量类型，用于控制多个线程对共享资源的并发互斥访问。</p>
+<p><code>std::recursive_mutex</code> 包含了 <code>std::mutex</code> 的基本功能，包括 <code>lock()</code> 和 <code>unlock()</code> 函数进行加锁和解锁、<code>try_lock()</code> 以非阻塞的方式尝试获得锁。</p>
+<p>与 <code>std::mutex</code> 不同的是，<code>std::recursive_mutex</code> 允许线程拥有当前互斥锁的期限内，<strong>可以重复进行尝试加锁</strong>（调用 <code>lock()</code> 或 <code>try_lock()</code> 函数）。需要注意的是，线程 <strong>需要进行对应数量次数的解锁</strong>（调用 <code>unlock()</code>）才可以完全释放当前互斥量的锁。</p>
+<p><code>std::recursive_mutex</code> 提供了可以重复加锁的机制，通常也可以称之为 <strong>递归锁</strong>。</p>
+<p>由于提供了重复（递归）加锁的特性，<code>std::recursive_mutex</code> 的效率是比较低的。当使用了递归锁时，我们通常要考虑代码是否还有优化空间，尽量避免使用递归锁。递归次数通常有限制（爆栈），但在 C++ 中一般较少出现此情况。</p>
+<h2 id="2-std-mutex-重复加锁出错">2 std::mutex 重复加锁出错</h2>
+<p>我们如果采用普通的 <code>std::mutex</code>，进行重复尝试加锁，一般会出现死锁的状况，出现未定义行为。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;mutex&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;vector&gt;</span></span><br><br>std::mutex mtx;<br><span class="hljs-type">int</span> count;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">dfs</span><span class="hljs-params">(<span class="hljs-type">int</span> k)</span></span>&#123;<br>    <span class="hljs-keyword">if</span>(k == <span class="hljs-number">0</span>) <span class="hljs-keyword">return</span>;<br>    mtx.<span class="hljs-built_in">lock</span>();     <span class="hljs-comment">// 加锁</span><br>    count ++ ;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>();<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;, count = &quot;</span> &lt;&lt; count &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    <span class="hljs-built_in">dfs</span>(k - <span class="hljs-number">1</span>);     <span class="hljs-comment">// 递归</span><br>    mtx.<span class="hljs-built_in">unlock</span>();   <span class="hljs-comment">// 解锁</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-function">std::vector&lt;std::thread&gt; <span class="hljs-title">threads</span><span class="hljs-params">(<span class="hljs-number">3</span>)</span></span>;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">auto</span>&amp; t : threads) t = std::<span class="hljs-built_in">thread</span>(dfs, <span class="hljs-number">5</span>);<br>    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">auto</span>&amp; t : threads) t.<span class="hljs-built_in">join</span>();<br><br>    std::cout &lt;&lt; <span class="hljs-string">&quot;final count = &quot;</span> &lt;&lt; count &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>在上面的代码中，写了一个递归函数 <code>dfs()</code>，实现了嵌套的重复尝试加锁。创建了 <code>3</code> 个线程，每个线程递归 <code>5</code> 层，递归的每一层需要先进行加锁，然后对共享数据 <code>count</code> 进行 <code>+1</code>，并输出数据的值。递归的每一层结束进行解锁。直到 <code>k</code> 为 <code>0</code> 时退出递归。</p>
+<p>在 Windows 系统中运行可能的结果如下：</p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/28/s9ns.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p>在 Windows 系统中，系统可能会通过采取一些优化策略、线程调度等，看似正确运行起来了，但实际上代码还是错误的。</p>
+<p>在 Linux 系统中运行可能的结果如下：</p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/28/41er.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p>在 Linux 系统中，显然程序运行不动了，表明出现了死锁。</p>
+<h2 id="3-std-recursive-mutex-实现重复加锁">3 std::recursive_mutex 实现重复加锁</h2>
+<p>我们可以将 <a href="#2-stdmutex-%E9%87%8D%E5%A4%8D%E5%8A%A0%E9%94%81%E5%87%BA%E9%94%99">std::mutex 重复加锁出错</a> 代码中的 <code>std::mutex</code> 全部换成 <code>std::recursive_mutex</code> 即可。修改后就可以使得线程对一个互斥量进行重复加锁。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;mutex&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;vector&gt;</span></span><br><br>std::mutex r_mtx;<br><span class="hljs-type">int</span> count;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">dfs</span><span class="hljs-params">(<span class="hljs-type">int</span> k)</span></span>&#123;<br>    <span class="hljs-keyword">if</span>(k == <span class="hljs-number">0</span>) <span class="hljs-keyword">return</span>;<br>    r_mtx.<span class="hljs-built_in">lock</span>();   <span class="hljs-comment">// 加锁</span><br>    count ++ ;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>();<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;, count = &quot;</span> &lt;&lt; count &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    <span class="hljs-built_in">dfs</span>(k - <span class="hljs-number">1</span>);     <span class="hljs-comment">// 递归</span><br>    r_mtx.<span class="hljs-built_in">unlock</span>(); <span class="hljs-comment">// 解锁</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-function">std::vector&lt;std::thread&gt; <span class="hljs-title">threads</span><span class="hljs-params">(<span class="hljs-number">3</span>)</span></span>;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">auto</span>&amp; t : threads) t = std::<span class="hljs-built_in">thread</span>(dfs, <span class="hljs-number">5</span>);<br>    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">auto</span>&amp; t : threads) t.<span class="hljs-built_in">join</span>();<br><br>    std::cout &lt;&lt; <span class="hljs-string">&quot;final count = &quot;</span> &lt;&lt; count &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
 <p>可能的运行结果如下：</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/28/i3sx.png" srcset="/img/marisad.gif" lazyload alt=""></p>
-<p>可以看出，成功获得锁的线程等待时长基本都在期限 <code>100ms</code> 内（也有可能运行出来会有个别线程等待时长略超 <code>100ms</code>）。在我的电脑上最终能够成功获得锁的线程大致在 5 ~ 7 个，表明每个线程执行函数的时间大致在 <code>20ms</code> 左右（模拟一些互斥操作的 <code>15ms</code> 加上一些其他操作消耗的时间）。</p>
-<h2 id="3-std-timed-mutex-try-lock-until">3 std::timed_mutex::try_lock_until()</h2>
-<p><code>std::timed_mutex::try_lock_until()</code> 用于尝试在指定时间之前获取互斥量的锁，其接受的是一个 <code>std::chrono::time_point</code> 类型的参数，表示等待获取锁的截止时间。</p>
-<p>和 <code>try_lock_for()</code> 一样，如果在这个时间期限内获得了锁，<code>std::timed_mutex::try_lock_until()</code> 函数返回 <code>true</code>，线程继续执行下去；否则，函数返回 <code>false</code>，线程会采取超时放弃的策略，直接返回。</p>
-<p>以下是一个简单的示例：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;mutex&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;vector&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;chrono&gt;</span></span><br><br>std::timed_mutex t_mtx;<br><span class="hljs-type">int</span> count;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span> id)</span></span>&#123;<br>    <span class="hljs-comment">// 最长等待时间期限设置为 100 ms </span><br>    std::<span class="hljs-function">chrono::milliseconds <span class="hljs-title">timeout</span><span class="hljs-params">(<span class="hljs-number">100</span>)</span></span>;<br>    <span class="hljs-keyword">auto</span> start = std::chrono::steady_clock::<span class="hljs-built_in">now</span>();<br>    <span class="hljs-comment">// 此 if 判断和 if(t_mtx.try_lock_for(timeout)) 效果几乎一样</span><br>    <span class="hljs-keyword">if</span>(t_mtx.<span class="hljs-built_in">try_lock_until</span>(start + timeout))&#123; <span class="hljs-comment">// 100ms 期限内成功获得锁</span><br>        <span class="hljs-comment">// 打印获得锁的等待时间（可能略超 100ms）</span><br>        <span class="hljs-keyword">auto</span> end = std::chrono::steady_clock::<span class="hljs-built_in">now</span>();<br>        std::chrono::duration&lt;<span class="hljs-type">double</span>, std::milli&gt; dura = end - start;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;thread &quot;</span> &lt;&lt; id &lt;&lt; <span class="hljs-string">&quot;: Successfully get the lock. &quot;</span>;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;waiting duration = &quot;</span> &lt;&lt; dura.<span class="hljs-built_in">count</span>() &lt;&lt; <span class="hljs-string">&quot;ms.&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>        <br>        <span class="hljs-comment">// 以下模拟一些互斥操作</span><br>        std::this_thread::<span class="hljs-built_in">sleep_for</span>(std::chrono::<span class="hljs-built_in">milliseconds</span>(<span class="hljs-number">15</span>));<br>        count ++ ;     <span class="hljs-comment">// 对共享数据变量进行访问和修改</span><br>        t_mtx.<span class="hljs-built_in">unlock</span>();  <span class="hljs-comment">// 解锁</span><br>    &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-function">std::vector&lt;std::thread&gt; <span class="hljs-title">threads</span><span class="hljs-params">(<span class="hljs-number">10</span>)</span></span>;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">size_t</span> i = <span class="hljs-number">0</span>; i &lt; threads.<span class="hljs-built_in">size</span>(); i ++ )&#123;<br>        threads[i] = std::<span class="hljs-built_in">thread</span>(foo, i);<br>    &#125;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">auto</span>&amp; t : threads) t.<span class="hljs-built_in">join</span>();<br><br>    std::cout &lt;&lt; <span class="hljs-string">&quot;final count = &quot;</span> &lt;&lt; count &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
-<p>在上面的代码的线程函数 <code>foo()</code> 中，设置等待的时间截止点为 <code>std::chrono::steady_clock::now()</code> 加上 <code>100ms</code> 的时刻（相当于设置最长等待时间为 <code>100ms</code>）。并且我们用 <code>std::chrono::steady_clock::now()</code> 来进行线程阻塞时长的记录。如果线程成功在等待的时间期限内获得了锁，那么会继续执行下去，模拟一些互斥操作（休息了 <code>15ms</code>），在作用域结束时手动进行解锁。</p>
-<p>可能的运行结果如下：</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/28/q02z9.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/28/139648.png" srcset="/img/marisad.gif" lazyload alt=""></p>
 <h2 id="参考">参考</h2>
 <ol>
-<li>
-<p><a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/thread/timed_mutex/try_lock_for">cppreference.com std::timed_mutex::try_lock_for()</a></p>
-</li>
-<li>
-<p><a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/thread/timed_mutex/try_lock_until">cppreference.com std::timed_mutex::try_lock_until()</a></p>
-</li>
+<li><a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/thread/recursive_mutex">cppreference.com recursive_mutex</a></li>
 </ol>
 
                 
@@ -402,8 +397,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>「C++ 多线程」std::timed_mutex 基本用法</div>
-      <div>http://example.com/2024/12/28/20241228/</div>
+      <div>「C++ 多线程」std::recursive_mutex 基本用法</div>
+      <div>http://example.com/2024/12/28/20241228_/</div>
     </div>
     <div class="license-meta">
       
@@ -447,18 +442,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2024/12/28/20241228_/" title="「C++ 多线程」std::recursive_mutex 基本用法">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">「C++ 多线程」std::recursive_mutex 基本用法</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2024/12/27/20241227/" title="「C++ 多线程」死锁及 C++ 多线程解决死锁方法">
-                        <span class="hidden-mobile">「C++ 多线程」死锁及 C++ 多线程解决死锁方法</span>
+                      <a href="/2024/12/28/20241228/" title="「C++ 多线程」std::timed_mutex 基本用法">
+                        <span class="hidden-mobile">「C++ 多线程」std::timed_mutex 基本用法</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
