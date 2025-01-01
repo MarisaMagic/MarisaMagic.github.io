@@ -22,7 +22,7 @@
     <meta name="description" content="std::unique_lock 的基本概念和使用方法；简单 std::unique_lock 使用代码示例；std::unique_lock 手动加锁解锁；std::defer_lock, std::adopt_lock 等参数的使用：包含搭配 std::unique_lock 的其他成员函数的使用。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="「C++ 多线程」std::unique_lock 基本用法">
-<meta property="og:url" content="http://example.com/2024/12/26/20241226_/index.html">
+<meta property="og:url" content="https://marisamagic.github.io/2024/12/26/20241226_/index.html">
 <meta property="og:site_name" content="MarisaMagic&#39;s Blog">
 <meta property="og:description" content="std::unique_lock 的基本概念和使用方法；简单 std::unique_lock 使用代码示例；std::unique_lock 手动加锁解锁；std::defer_lock, std::adopt_lock 等参数的使用：包含搭配 std::unique_lock 的其他成员函数的使用。">
 <meta property="og:locale" content="zh_CN">
@@ -84,7 +84,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/marisad.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/marisad.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -395,7 +395,7 @@
 <p>可能的运行结果如下：</p>
 <p><img src="https://sukicdn.com/wyx/i/2024/12/26/uqq9.png" srcset="/img/marisad.gif" lazyload alt=""></p>
 <h2 id="4-简单应用实例">4 简单应用实例</h2>
-<p>和之前 <code>std::mutex</code> 文章 <a target="_blank" rel="noopener" href="https://marisamagic.github.io/2024/12/25/20241225/">「C++ 多线程」std::mutex，lock(), unlock()</a> 中的问题相同:</p>
+<p>和之前 <code>std::mutex</code> 文章 <a href="https://marisamagic.github.io/2024/12/25/20241225/">「C++ 多线程」std::mutex，lock(), unlock()</a> 中的问题相同:</p>
 <ol>
 <li>一个线程用来接受用户命令（用数字表示命令），并把命令写入一个队列中</li>
 <li>另一个线程从队列中读取命令，解析命令并执行一系列操作</li>
@@ -464,7 +464,7 @@
   <div class="license-box my-3">
     <div class="license-title">
       <div>「C++ 多线程」std::unique_lock 基本用法</div>
-      <div>http://example.com/2024/12/26/20241226_/</div>
+      <div>https://marisamagic.github.io/2024/12/26/20241226_/</div>
     </div>
     <div class="license-meta">
       
