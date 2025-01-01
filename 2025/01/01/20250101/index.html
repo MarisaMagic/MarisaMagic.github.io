@@ -1,0 +1,879 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=dark>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/logo.png">
+  <link rel="icon" href="/img/logo.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="生产者-消费者问题；仅有互斥锁的生产者-消费者的实现；std::condition_variable 的基本概念；使用 std::condition_variable 的生产者-消费者的实现；生产者-消费者中消费者退出机制优化。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「C++ 多线程」生产者-消费者问题及 std::condition_variable">
+<meta property="og:url" content="http://example.com/2025/01/01/20250101/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="生产者-消费者问题；仅有互斥锁的生产者-消费者的实现；std::condition_variable 的基本概念；使用 std::condition_variable 的生产者-消费者的实现；生产者-消费者中消费者退出机制优化。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/01/01/7hnsg.png">
+<meta property="article:published_time" content="2025-01-01T05:15:40.584Z">
+<meta property="article:modified_time" content="2025-01-01T13:33:15.157Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="多线程">
+<meta property="article:tag" content="std::thread">
+<meta property="article:tag" content="std::mutex">
+<meta property="article:tag" content="std::condition_variable">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2025/01/01/7hnsg.png">
+  
+  
+  
+  <title>「C++ 多线程」生产者-消费者问题及 std::condition_variable - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"example.com","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/marisad.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2025/01/01/7hnsg.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「C++ 多线程」生产者-消费者问题及 std::condition_variable"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-01 13:15" pubdate>
+          2025年1月1日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          6.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          53 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「C++ 多线程」生产者-消费者问题及 std::condition_variable</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>文章大图来源：<a target="_blank" rel="noopener" href="https://www.pixiv.net/artworks/125244936">pixiv_id=125244936</a></p>
+<h2 id="元旦快乐！🎉🤗">元旦快乐！🎉🤗</h2>
+<h2 id="1-问题背景">1 问题背景</h2>
+<h3 id="1-1-生产者-消费者问题">1.1 生产者-消费者问题</h3>
+<p><a id='111'></a></p>
+<h4 id="1-1-1-定义">1.1.1 定义</h4>
+<p><strong>生产者-消费者问题</strong>（Producer - Consumer Problem）是一个经典的多线程并发编程问题。这个问题描述了在一个共享缓冲区环境下，两类线程（分别为 <strong>生产者</strong> 和 <strong>消费者</strong>）之间的协作关系。</p>
+<p><strong>生产者</strong>：负责生成数据，并将数据放入共享缓冲区；</p>
+<p><strong>消费者</strong>：从共享缓冲区中取出数据，并进行一系列操作。</p>
+<p>例如，在一个甜品店中，甜点师（生产者）制作甜点并且将其放在展示架（缓冲区），顾客（消费者）从展示架（缓冲区）上拿走甜点并购买消费。</p>
+<h4 id="1-1-2-问题约束">1.1.2 问题约束</h4>
+<ol>
+<li>
+<p>共享缓冲区通常有一个固定的大小；</p>
+</li>
+<li>
+<p>同步问题：</p>
+<p>生产者和消费者的速度可能不同。生产者可能生产数据的速度比消费者消费数据快，导致缓冲区被填满，此时要等待消费者消费一些数据；反之，消费者可能消费数据的速度更快，缓冲区可能出现空的情况，那么消费者要等待生产者放入数据。</p>
+<ul>
+<li>
+<p>当缓冲区已满时，<strong>生产者</strong> 需要等待 <strong>消费者</strong> 取出数据后，才能继续放入数据；</p>
+</li>
+<li>
+<p>当缓冲区为空时，<strong>消费者</strong> 需要等待 <strong>生产者</strong> 放入数据后，才能继续取出数据；</p>
+</li>
+</ul>
+</li>
+<li>
+<p>互斥问题：</p>
+<p>共享缓冲区同一时刻只能被一个线程访问。两类线程对共享缓冲区需要互斥访问。如果不进行互斥访问，会造成数据竞争、数据不一致等问题。</p>
+</li>
+</ol>
+<h3 id="1-2-仅用互斥锁实现生产者-消费者">1.2 仅用互斥锁实现生产者-消费者</h3>
+<h4 id="1-2-1-实现思路和代码">1.2.1 实现思路和代码</h4>
+<p>对于上面 <a href="#111">1.1.1 生产者-消费者问题 定义</a> 的问题，我们可以考虑使用 <strong>互斥锁</strong> 来确保生产者和消费者对共享缓冲区的互斥访问。</p>
+<p>那么，怎么处理两类线程的同步问题呢？我们可以先考虑一种比较低效的方法：</p>
+<ul>
+<li>
+<p>如果 <strong>生产者</strong> 线程获得锁之后，发现缓冲区已满，那么就先释放锁，休息一段时间。在休息的时间段内，<strong>消费者</strong> 线程有机会获得锁并消费数据；</p>
+</li>
+<li>
+<p>如果 <strong>消费者</strong> 线程获得锁之后，发现缓冲区为空，那么就先释放锁，休息一段时间。在休息的时间段内，<strong>生产者</strong> 线程有机会获得锁并生产数据。</p>
+</li>
+</ul>
+<p>由此，我们可以得到一个简易的 生产者-消费者 代码如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;mutex&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;condition_variable&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;queue&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;chrono&gt;</span></span><br><br>std::mutex mtx;         <span class="hljs-comment">// 互斥量</span><br>std::queue&lt;<span class="hljs-type">int</span>&gt; buffer; <span class="hljs-comment">// 共享缓冲区</span><br><span class="hljs-type">const</span> <span class="hljs-type">int</span> buffer_size = <span class="hljs-number">10</span>; <span class="hljs-comment">// 缓冲区大小限制</span><br><br><span class="hljs-comment">// 生产者函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">producer</span><span class="hljs-params">(<span class="hljs-type">int</span> data_num)</span></span>&#123;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">1</span>; i &lt;= data_num; i ++ )&#123;<br>        <span class="hljs-function">std::unique_lock&lt;std::mutex&gt; <span class="hljs-title">lck</span><span class="hljs-params">(mtx)</span></span>;<br>        <span class="hljs-keyword">if</span>(buffer.<span class="hljs-built_in">size</span>() &lt; buffer_size)&#123; <span class="hljs-comment">// 可以放入数据</span><br>            buffer.<span class="hljs-built_in">push</span>(i);<br>            std::cout &lt;&lt; <span class="hljs-string">&quot;Produced: &quot;</span> &lt;&lt; i &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>        &#125;<span class="hljs-keyword">else</span>&#123; <span class="hljs-comment">// 缓冲区已满</span><br>            lck.<span class="hljs-built_in">unlock</span>(); <span class="hljs-comment">// 先解锁</span><br>            <span class="hljs-comment">// 休息一段时间再尝试</span><br>            std::this_thread::<span class="hljs-built_in">sleep_for</span>(std::chrono::<span class="hljs-built_in">milliseconds</span>(<span class="hljs-number">100</span>)); <br>            i -- ; <span class="hljs-comment">// 回退</span><br>        &#125;<br>    &#125;<br>&#125;<br><br><span class="hljs-comment">// 消费者函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">consumer</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-keyword">while</span>(<span class="hljs-literal">true</span>)&#123;<br>        <span class="hljs-function">std::unique_lock&lt;std::mutex&gt; <span class="hljs-title">lck</span><span class="hljs-params">(mtx)</span></span>;<br>        <span class="hljs-keyword">if</span>(!buffer.<span class="hljs-built_in">empty</span>())&#123; <span class="hljs-comment">// 可以消费数据</span><br>            <span class="hljs-type">int</span> data = buffer.<span class="hljs-built_in">front</span>();<br>            buffer.<span class="hljs-built_in">pop</span>();<br>            std::cout &lt;&lt; <span class="hljs-string">&quot;Consumed: &quot;</span> &lt;&lt; data &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>            lck.<span class="hljs-built_in">unlock</span>(); <span class="hljs-comment">// 提前解锁</span><br>            <span class="hljs-comment">// 模拟与 cv 无关的数据操作</span><br>            std::this_thread::<span class="hljs-built_in">sleep_for</span>(std::chrono::<span class="hljs-built_in">milliseconds</span>(<span class="hljs-number">100</span>));<br>        &#125;<span class="hljs-keyword">else</span>&#123;<br>            lck.<span class="hljs-built_in">unlock</span>(); <span class="hljs-comment">// 先解锁</span><br>            <span class="hljs-comment">// 休息一段时间再尝试</span><br>            std::this_thread::<span class="hljs-built_in">sleep_for</span>(std::chrono::<span class="hljs-built_in">milliseconds</span>(<span class="hljs-number">100</span>)); <br>        &#125;<br>    &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-function">std::thread <span class="hljs-title">producer_thread</span><span class="hljs-params">(producer, <span class="hljs-number">100</span>)</span></span>;<br>    <span class="hljs-function">std::thread <span class="hljs-title">consumer_thread</span><span class="hljs-params">(consumer)</span></span>;<br>    producer_thread.<span class="hljs-built_in">join</span>();<br>    consumer_thread.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>可能的部分运行结果如下：</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/01/01/12xf5o.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p>在上面的代码中，使用 <code>std::queue</code> 来模拟共享缓冲区，缓冲区的大小设定为 <code>10</code>。</p>
+<p>在生产者函数中，进行 <code>data_num</code> 次循环，每次循环生产一个数据。由于需要一些提前解锁然后休息的操作，因此采用了 <code>std::unique_lock</code> 更加灵活地处理加锁、解锁。如果缓冲区未满，那么可以放入数据；否则，先解锁，然后休息一段时间，使得消费者线程有机会获得锁。</p>
+<p>在消费者函数中，消费者不断消费数据。也采用了 <code>std::unique_lock</code> 处理加锁、解锁。如果缓冲区不为空，那么可以取出数据，取出数据后，假设我们需要对数据进行一些处理等操作，并且这些操作不需要互斥量维护，那么可以先提前解锁，然后再进行对数据的一系列操作；否则，先解锁，然后休息一段时间，使得生产者线程有机会获得锁。</p>
+<h4 id="1-2-2-存在的问题">1.2.2 存在的问题</h4>
+<p>可以看出，“休息一段时间” 的做法显然是比较低效的，主要问题在于：</p>
+<ul>
+<li>
+<p><strong>忙等待</strong>：生产者和消费者在无法继续操作时通过休眠来等待缓冲区状态改变，很有可能会休眠很多次，这就导致了资源的浪费。</p>
+</li>
+<li>
+<p><strong>缺少同步机制</strong>：生产者和消费者 <strong>不知道何时</strong> 去 <strong>等待</strong> 或 <strong>继续工作</strong>。缓冲区中有数据了，无法及时通知消费者可以消费数据；缓冲区有空缺了，也无法及时通知生产者可以放入数据。</p>
+</li>
+</ul>
+<p>为了解决这些问题，C++11 引入了 <strong>条件变量</strong> std::condition_variable。</p>
+<p><a id='2'></a></p>
+<h2 id="2-std-condition-variable">2 std::condition_variable</h2>
+<h3 id="2-1-基本概念">2.1 基本概念</h3>
+<p><code>std::condition_variable</code> 是 C++11 引入的一个类，在头文件 <code>&lt;condition_variable&gt;</code> 中，主要用于 <strong>线程间的同步</strong>。<code>std::condition_variable</code> 在多线程编程中实现线程之间的等待和通知机制有着重要作用。</p>
+<h3 id="2-2-成员函数和基本用法">2.2 成员函数和基本用法</h3>
+<p><a id='221'></a></p>
+<h4 id="2-2-1-wait">2.2.1 wait()</h4>
+<p><code>std::condition_variable::wait()</code> 函数是 <code>std::condition_variable</code> 中的一个关键成员函数，主要用于让线程 <strong>等待某个条件成立</strong>，通常配合互斥量（mutex）进和 <code>std::unique_lock</code> 使用，以实现线程的同步。</p>
+<p>其基本的函数原型为：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-keyword">template</span>&lt; <span class="hljs-keyword">class</span> Predicate &gt;</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">wait</span><span class="hljs-params">( std::unique_lock&lt;std::mutex&gt;&amp; lock, Predicate pred )</span></span>;<br></code></pre></td></tr></table></figure>
+<p>其中 <code>lock</code> 是互斥锁；<code>pred</code> 是一个 <code>Predicate</code> 类型，必须是一个 <strong>可调用对象</strong>（例如函数、lambda 表示、函数指针等）。</p>
+<p>基本的使用方法如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 条件变量 和 互斥量</span><br>std::condition_variable cv;<br>std::mutex mtx;<br><br><span class="hljs-comment">// 线程函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">wait_foo</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-function">std::unique_lock&lt;std::mutex&gt; <span class="hljs-title">lck</span><span class="hljs-params">(mtx)</span></span>;<br>    cv.<span class="hljs-built_in">wait</span>(lck, <span class="hljs-built_in">check</span>()); <span class="hljs-comment">// check() 为判断条件是否成立的函数</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<p>当一个线程获得锁之后，调用 <code>wait()</code> 函数时：</p>
+<ul>
+<li>
+<p>如果 <code>check()</code> 函数判断条件为 <code>true</code>，那么线程会继续向下执行；</p>
+</li>
+<li>
+<p>如果 <code>check()</code> 函数判断条件为 <code>false</code>，那么线程会阻塞在 <code>cv.wait(lck, check());</code> 这一行，进入等待，同时 <strong>线程会自动地暂时释放锁</strong>。</p>
+<p>线程进入阻塞（等待）状态，直到判断条件变为 <code>true</code> 时，线程会被唤醒，并重新获得锁继续执行下去。</p>
+<p>而条件成立后，线程的唤醒需要配合另一个 <code>std::condition_variable</code> 中的函数—— <code>std::condition_variable::notify_one()</code>（或者 <code>std::condition_variable::notify_all()</code>）。</p>
+</li>
+</ul>
+<p>如果 <code>wait()</code> 函数不加 <strong>可调用对象</strong> 这个参数，那么 <code>std::condition_variable::wait()</code> <strong>默认条件为 <code>false</code></strong>，线程会进入阻塞状态。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 线程函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">wait_foo</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-function">std::unique_lock&lt;std::mutex&gt; <span class="hljs-title">lck</span><span class="hljs-params">(mtx)</span></span>;<br>    cv.<span class="hljs-built_in">wait</span>(lck); <span class="hljs-comment">// 不加可调用对象参数，默认为 false，进入阻塞状态</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<p><strong>注意：</strong> 在使用 <code>wait()</code> 函数时，只能搭配 <code>std::unique_lock</code> 互斥锁使用，不能使用 <code>std::lock_guard</code>。<code>std::condition_variable::wait()</code> 需要在等待期间自动释放互斥量，然后在被唤醒后重新获取互斥量。但是 <code>std::lock_guard</code> 没有提供这样的功能。</p>
+<h4 id="2-2-2-notify-one">2.2.2 notify_one()</h4>
+<p><code>std::condition_variable::notify_one()</code> 主要用于当某个条件成立，通知 <strong>一个</strong> 处于阻塞状态下（等待该条件成立）的线程，进而唤醒这个线程。</p>
+<p>以下是一个简单的示例：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;mutex&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;condition_variable&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;chrono&gt;</span></span><br><br>std::mutex mtx; <span class="hljs-comment">// 互斥量</span><br>std::condition_variable cv; <span class="hljs-comment">// 条件变量</span><br><span class="hljs-type">bool</span> flag; <span class="hljs-comment">// 判断的条件</span><br><br><span class="hljs-comment">// 等待条件线程函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">wait_foo</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-function">std::unique_lock&lt;std::mutex&gt; <span class="hljs-title">lck</span><span class="hljs-params">(mtx)</span></span>;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;wait_foo(): wating...&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    cv.<span class="hljs-built_in">wait</span>(lck, []&#123; <span class="hljs-keyword">return</span> flag; &#125;);<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;wait_foo(): waiting ends, flag = &quot;</span> &lt;&lt; flag &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-comment">// 通知唤醒线程函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">notify_foo</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-comment">// 第一次尝试唤醒。但是不满足条件，唤醒失败</span><br>    std::this_thread::<span class="hljs-built_in">sleep_for</span>(std::chrono::<span class="hljs-built_in">seconds</span>(<span class="hljs-number">2</span>)); <br>    &#123;<br>        <span class="hljs-function">std::lock_guard&lt;std::mutex&gt; <span class="hljs-title">lck</span><span class="hljs-params">(mtx)</span></span>;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;notify_foo(): notifying...&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    &#125;<br>    cv.<span class="hljs-built_in">notify_one</span>(); <span class="hljs-comment">// 作用域结束解锁后再唤醒更好</span><br><br>    <span class="hljs-comment">// 第二次尝试唤醒。满足条件，成功唤醒。</span><br>    std::this_thread::<span class="hljs-built_in">sleep_for</span>(std::chrono::<span class="hljs-built_in">seconds</span>(<span class="hljs-number">2</span>)); <br>    &#123;<br>        <span class="hljs-function">std::lock_guard&lt;std::mutex&gt; <span class="hljs-title">lck</span><span class="hljs-params">(mtx)</span></span>;<br>        flag = <span class="hljs-literal">true</span>;<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;notify_foo(): notifying again...&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    &#125;<br>    cv.<span class="hljs-built_in">notify_one</span>();<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-function">std::thread <span class="hljs-title">wait_t</span><span class="hljs-params">(wait_foo)</span></span>;<br>    <span class="hljs-function">std::thread <span class="hljs-title">notify_t</span><span class="hljs-params">(notify_foo)</span></span>;<br>    <span class="hljs-type">wait_t</span>.<span class="hljs-built_in">join</span>();<br>    <span class="hljs-type">notify_t</span>.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>在上面的代码中，定义了一个等待条件的线程函数 <code>wait_foo()</code> 和一个通知唤醒的线程函数 <code>notify_foo()</code>。我们创建两个线程分别执行这两个函数，一个线程 <code>wait_t</code> 等待条件成立，一个线程 <code>notify_t</code> 用于唤醒这个等待条件成立的线程。</p>
+<p>在 <code>wait_foo()</code> 中，先尝试获得锁，获得锁之后，判断条件 <code>flag</code> 是否为 <code>true</code>，显然一开始 <code>flag</code> 为 <code>false</code>，所以一开始 <code>wait_t</code> 会进入阻塞状态，同时暂时释放锁。</p>
+<p><code>notify_foo()</code> 中，一开始先尝试唤醒，此时条件 <code>flag</code> 没有进行改变，所以这次唤醒是失败的；然后尝试进行第二次唤醒，这次修改条件 <code>flag</code> 为 <code>true</code>，之后通知唤醒阻塞状态的线程 <code>wait_t</code>。</p>
+<p>处于阻塞态的线程 <code>wait_t</code> 在线程 <code>notify_t</code> 第二次调用 <code>std::condition_variable::notify_one()</code> 函数后（此时条件被修改为 <code>true</code>），成功被唤醒，重新获得锁，然后继续执行下去。</p>
+<p>可能的运行结果如下：</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/01/01/w2oa.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<h4 id="2-2-3-notify-all">2.2.3 notify_all()</h4>
+<p>与 <code>std::condition_variable::notify_one()</code> 不同的是，<code>std::condition_variable::notify_all()</code> 唤醒的是 <strong>所有</strong> 处于阻塞状态下（等待某个条件成立）。</p>
+<p>在线程较多的情况下，<code>std::condition_variable::notify_all()</code> 通常比较高效。</p>
+<p>但是，<code>std::condition_variable::notify_all()</code> 在有多种进行判断条件是否成立的线程时，会出现部分唤醒没有用的情况：</p>
+<p>例如，在多生产者 - 多消费者模型中，当一个生产者调用 <code>std::condition_variable::notify_all()</code> 唤醒所有等待线程时，可能会出现唤醒其他一些处于阻塞态的生产者线程，那么这些唤醒可能暂时是没有用的。</p>
+<p>不过这种影响比较小。当一类线程只有一个时，我们考虑使用 <code>notify_one()</code>（每次唤醒一个处于阻塞态的线程）进行唤醒；当一类线程有很多个时，我们考虑使用 <code>notify_all()</code>。</p>
+<h2 id="3-使用-condition-variable-实现生产者-消费者">3 使用 condition_variable 实现生产者-消费者</h2>
+<p><a id='31'></a></p>
+<h3 id="3-1-实现思路和代码">3.1 实现思路和代码</h3>
+<p>在 <a href="#2">2 std::condition_variable</a> 中，已经介绍了 <code>std::condition_variable</code> 的基本用法。我们可以通过这个条件变量来实现 <strong>生产者-消费者</strong> 问题中的同步机制。</p>
+<p>在生产者函数 <code>producer</code> 中，每次生产并向缓冲区放入数据前，需要等待条件 <code>buffer.size() &lt; BUFFER_SIZE</code> 成立。条件成立时，线程继续执行下去。缓冲区中已经有数据了，此时生产者线程需要尝试唤醒消费者线程。</p>
+<p>在消费者函数 <code>consumer</code> 中，每次消费一个数据之前，需要等待条件 <code>!buffer.empty()</code> 成立。 条件成立后继续执行。此时缓冲区出现空位，消费者线程需要唤醒生产者线程。</p>
+<p>实现代码如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;mutex&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;condition_variable&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;queue&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;chrono&gt;</span></span><br><br>std::mutex mtx; <span class="hljs-comment">// 互斥量</span><br>std::condition_variable cv; <span class="hljs-comment">// 条件变量</span><br>std::queue&lt;<span class="hljs-type">int</span>&gt; buffer; <span class="hljs-comment">// 共享缓冲区</span><br><span class="hljs-type">const</span> <span class="hljs-type">int</span> BUFFER_SIZE = <span class="hljs-number">10</span>; <span class="hljs-comment">// 缓冲区大小</span><br><br><span class="hljs-comment">// 生产者函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">producer</span><span class="hljs-params">(<span class="hljs-type">int</span> data_num)</span></span>&#123;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">1</span>; i &lt;= data_num; i ++ )&#123;<br>        <span class="hljs-function">std::unique_lock&lt;std::mutex&gt; <span class="hljs-title">lck</span><span class="hljs-params">(mtx)</span></span>;<br>        <span class="hljs-comment">// 等待 buffer 有空间可放入数据</span><br>        cv.<span class="hljs-built_in">wait</span>(lck, [&amp;]()&#123; <span class="hljs-keyword">return</span> buffer.<span class="hljs-built_in">size</span>() &lt; BUFFER_SIZE; &#125;);<br>        buffer.<span class="hljs-built_in">push</span>(i);<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;Produced: &quot;</span> &lt;&lt; i &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>        cv.<span class="hljs-built_in">notify_one</span>();  <span class="hljs-comment">// 唤醒等待状态的消费者线程</span><br>    &#125;<br>&#125;<br><br><span class="hljs-comment">// 消费者函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">consumer</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-keyword">while</span>(<span class="hljs-literal">true</span>)&#123;<br>        <span class="hljs-function">std::unique_lock&lt;std::mutex&gt; <span class="hljs-title">lck</span><span class="hljs-params">(mtx)</span></span>;<br>        <span class="hljs-comment">// 等待 buffer 中有数据可消费</span><br>        cv.<span class="hljs-built_in">wait</span>(lck, [&amp;]()&#123; <span class="hljs-keyword">return</span> !buffer.<span class="hljs-built_in">empty</span>(); &#125;);<br>        <span class="hljs-type">int</span> data = buffer.<span class="hljs-built_in">front</span>();<br>        buffer.<span class="hljs-built_in">pop</span>();<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;Consumed: &quot;</span> &lt;&lt; data &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>        lck.<span class="hljs-built_in">unlock</span>();     <span class="hljs-comment">// 提前解锁</span><br>        cv.<span class="hljs-built_in">notify_one</span>();  <span class="hljs-comment">// 唤醒等待状态的生产者线程</span><br>        <span class="hljs-comment">// 模拟与 cv 无关的数据操作</span><br>        std::this_thread::<span class="hljs-built_in">sleep_for</span>(std::chrono::<span class="hljs-built_in">milliseconds</span>(<span class="hljs-number">100</span>));<br>    &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-function">std::thread <span class="hljs-title">producer_thread</span><span class="hljs-params">(producer, <span class="hljs-number">100</span>)</span></span>;<br>    <span class="hljs-function">std::thread <span class="hljs-title">consumer_thread</span><span class="hljs-params">(consumer)</span></span>;<br>    producer_thread.<span class="hljs-built_in">join</span>();<br>    consumer_thread.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>可能的运行结果如下：</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/01/01/3tzo.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p>在上面的代码中，因为只有一个生产者和消费者，所以暂时只要用 <code>notify_one()</code> 就好了。</p>
+<h3 id="3-2-多生产者、消费者问题">3.2 多生产者、消费者问题</h3>
+<h4 id="3-2-1-多生产者、消费者实现">3.2.1 多生产者、消费者实现</h4>
+<p>在 <a href="#31">3.1 condition_variable 实现消费者-生产者代码</a> 中，我们只有一个生产者和一个消费者。</p>
+<p>但实际场景中往往会有多个生产者和消费者，例如 <a href="#111">1.1.1 生产者-消费者问题定义</a> 中的甜点师-顾客的例子，一个店铺里可能有多个甜点师在制作，会有很多个顾客光临这个甜品店。</p>
+<p>我们可以修改 <a href="#31">3.1 生产者-消费者实现代码</a> 中的代码，创建多个生产者线程和多个消费者线程：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;mutex&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;condition_variable&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;queue&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;chrono&gt;</span></span><br><br>std::mutex mtx; <span class="hljs-comment">// 互斥量</span><br>std::condition_variable cv; <span class="hljs-comment">// 条件变量</span><br>std::queue&lt;<span class="hljs-type">int</span>&gt; buffer; <span class="hljs-comment">// 共享缓冲区</span><br><span class="hljs-type">const</span> <span class="hljs-type">int</span> BUFFER_SIZE = <span class="hljs-number">10</span>; <span class="hljs-comment">// 缓冲区大小</span><br><span class="hljs-type">const</span> <span class="hljs-type">int</span> PRODUCER_NUM = <span class="hljs-number">2</span>; <span class="hljs-comment">// 生产者个数</span><br><span class="hljs-type">const</span> <span class="hljs-type">int</span> CONSUMER_NUM = <span class="hljs-number">5</span>; <span class="hljs-comment">// 消费者个数</span><br><br><span class="hljs-comment">// 生产者函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">producer</span><span class="hljs-params">(<span class="hljs-type">int</span> id, <span class="hljs-type">int</span> data_num)</span></span>&#123;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">1</span>; i &lt;= data_num; i ++ )&#123;<br>        <span class="hljs-function">std::unique_lock&lt;std::mutex&gt; <span class="hljs-title">lck</span><span class="hljs-params">(mtx)</span></span>;<br>        <span class="hljs-comment">// 等待 buffer 有空间可放入数据</span><br>        cv.<span class="hljs-built_in">wait</span>(lck, [&amp;]()&#123; <span class="hljs-keyword">return</span> buffer.<span class="hljs-built_in">size</span>() &lt; BUFFER_SIZE; &#125;);<br>        buffer.<span class="hljs-built_in">push</span>(i);<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;producer &quot;</span> &lt;&lt; id &lt;&lt; <span class="hljs-string">&quot; produced data: &quot;</span> &lt;&lt; i &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>        cv.<span class="hljs-built_in">notify_all</span>();  <span class="hljs-comment">// 唤醒等待状态的消费者线程</span><br>    &#125;<br>&#125;<br><br><span class="hljs-comment">// 消费者函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">consumer</span><span class="hljs-params">(<span class="hljs-type">int</span> id)</span></span>&#123;<br>    <span class="hljs-keyword">while</span>(<span class="hljs-literal">true</span>)&#123;<br>        <span class="hljs-function">std::unique_lock&lt;std::mutex&gt; <span class="hljs-title">lck</span><span class="hljs-params">(mtx)</span></span>;<br>        <span class="hljs-comment">// 等待 buffer 中有数据可消费</span><br>        cv.<span class="hljs-built_in">wait</span>(lck, [&amp;]()&#123; <span class="hljs-keyword">return</span> !buffer.<span class="hljs-built_in">empty</span>(); &#125;);<br>        <span class="hljs-type">int</span> data = buffer.<span class="hljs-built_in">front</span>();<br>        buffer.<span class="hljs-built_in">pop</span>();<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;consumer &quot;</span> &lt;&lt; id &lt;&lt; <span class="hljs-string">&quot; consumed data: &quot;</span> &lt;&lt; data &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>        lck.<span class="hljs-built_in">unlock</span>();     <span class="hljs-comment">// 提前解锁</span><br>        cv.<span class="hljs-built_in">notify_all</span>();  <span class="hljs-comment">// 唤醒等待状态的生产者线程</span><br>        <span class="hljs-comment">// 模拟与 cv 无关的数据操作，放在解锁和通知之后</span><br>        std::this_thread::<span class="hljs-built_in">sleep_for</span>(std::chrono::<span class="hljs-built_in">milliseconds</span>(<span class="hljs-number">100</span>));<br>    &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-function">std::vector&lt;std::thread&gt; <span class="hljs-title">producers</span><span class="hljs-params">(PRODUCER_NUM)</span></span>;<br>    <span class="hljs-function">std::vector&lt;std::thread&gt; <span class="hljs-title">consumers</span><span class="hljs-params">(CONSUMER_NUM)</span></span>;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">size_t</span> i = <span class="hljs-number">0</span>; i &lt; producers.<span class="hljs-built_in">size</span>(); i ++ )&#123;<br>        producers[i] = std::<span class="hljs-built_in">thread</span>(producer, i + <span class="hljs-number">1</span>, <span class="hljs-number">100</span>);<br>    &#125;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">size_t</span> i = <span class="hljs-number">0</span>; i &lt; consumers.<span class="hljs-built_in">size</span>(); i ++ )&#123;<br>        consumers[i] = std::<span class="hljs-built_in">thread</span>(consumer, i + <span class="hljs-number">1</span>);<br>    &#125;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">auto</span>&amp; t : producers) t.<span class="hljs-built_in">join</span>();<br>    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">auto</span>&amp; t : consumers) t.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>在上面的代码中，定义了一个生产者个数和一个消费者个数，在线程接口函数中传递了线程编号标记的参数 <code>id</code>（便于表示不同的生产者/消费者）。</p>
+<p>由于现在是多个生产者线程和多个消费者线程，因此将 <code>notify_one()</code> 改为了 <code>notify_all()</code>。其他部分代码大致相同。</p>
+<p>可能的运行结果如下：</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/01/01/zh1i.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p>看似运行起来好像没有什么毛病，但实际上在 <strong>多生产者线程、多消费者线程</strong> 情况下，可能会出现 <strong>虚假唤醒</strong> 的问题。</p>
+<h4 id="3-2-2-虚假唤醒问题">3.2.2 虚假唤醒问题</h4>
+<p><strong>虚假唤醒</strong> 是指线程从等待条件变量 <code>std::condition_variable::wait()</code> 函数中唤醒，但实际上等待的条件并没有真正满足。通常 <strong>虚假唤醒</strong> 的问题是由于多线程环境下 <strong>系统调度、信号传输</strong> 等原因导致的。</p>
+<p>例如，缓冲区为空，当一个生产者线程放入一个数据后（放入后缓冲区就这一个数据），通知唤醒了一个等待的消费者线程的时候，有另一个消费者线程消费了这个唯一的数据。这是线程调度的不确定性所导致的。</p>
+<p>此时，这个消费者线程收到被唤醒的通知，表面上条件成立了，但是实际上 <code>buffer</code> 还是为空。这就出现了 <strong>虚假唤醒</strong>。</p>
+<p>在现实场景中，我想要买草莓蛋糕但是甜点师正在制作中，等待了一会，甜点师通知我展示架上有新的草莓蛋糕了，我正准备去拿的时候却被另一个人给抢先了。这正是太倒霉了！🍓🍰</p>
+<p>虚假唤醒还有很多其他的情况，总之类似上述的条件没有实际满足的情况都属于虚假唤醒。</p>
+<p><a id='323'></a></p>
+<h4 id="3-2-3-虚假唤醒的解决">3.2.3 虚假唤醒的解决</h4>
+<p>我们可以通过线程被唤醒后，<strong>再次检查是否满足条件成立</strong>。再次检查条件如果发现不成立，那么线程需要又一次进入阻塞状态，因此我们需要实现一个 <strong>循环检查</strong>。</p>
+<p>在 <a href="#221">2.2.1 std::condition_variable::wait()</a> 中，如果 <code>wait()</code> 函数不接受 <strong>可调用对象</strong> 的参数，函数默认条件为 <code>false</code>，线程会进入阻塞状态。</p>
+<p>在生产者线程函数中，我们可以写一个 <code>while</code> 循环，循环判断的条件为 <code>buffer.size() &gt;= BUFFER_SIZE</code>，如果条件满足，那么执行 <code>cv.wait(lck)</code>，使得生产者线程进入阻塞状态，同时暂时释放互斥锁。</p>
+<p>生产者线程卡在 <code>cv.wait(lck);</code> 这一行，如果某个消费者线程唤醒了生产者线程，那么会再次进入 <code>while</code> 循环进行条件判断。如果此时 <code>buffer.size() &lt; BUFFER_SIZE</code>，那么会退出循环，然后生产者线程继续执行下去；否则，生产者线程会再次陷入阻塞状态，同时暂时释放互斥锁。</p>
+<p>这样就通过 <code>while</code> 循环实现了再次检查以及循环检查。类似的，消费者线程中也可以写一个 <code>while</code> 循环，确保消费者线程不会被虚假唤醒。</p>
+<p>修改后的代码如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;mutex&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;condition_variable&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;queue&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;chrono&gt;</span></span><br><br>std::mutex mtx; <span class="hljs-comment">// 互斥量</span><br>std::condition_variable cv; <span class="hljs-comment">// 条件变量</span><br>std::queue&lt;<span class="hljs-type">int</span>&gt; buffer; <span class="hljs-comment">// 共享缓冲区</span><br><span class="hljs-type">const</span> <span class="hljs-type">int</span> BUFFER_SIZE = <span class="hljs-number">10</span>; <span class="hljs-comment">// 缓冲区大小</span><br><span class="hljs-type">const</span> <span class="hljs-type">int</span> PRODUCER_NUM = <span class="hljs-number">2</span>; <span class="hljs-comment">// 生产者个数</span><br><span class="hljs-type">const</span> <span class="hljs-type">int</span> CONSUMER_NUM = <span class="hljs-number">5</span>; <span class="hljs-comment">// 消费者个数</span><br><br><span class="hljs-comment">// 生产者函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">producer</span><span class="hljs-params">(<span class="hljs-type">int</span> id, <span class="hljs-type">int</span> data_num)</span></span>&#123;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">1</span>; i &lt;= data_num; i ++ )&#123;<br>        <span class="hljs-function">std::unique_lock&lt;std::mutex&gt; <span class="hljs-title">lck</span><span class="hljs-params">(mtx)</span></span>;<br>        <span class="hljs-comment">// 等待 buffer 有空间可放入数据（循环检查，防止虚假唤醒）</span><br>        <span class="hljs-keyword">while</span>(buffer.<span class="hljs-built_in">size</span>() &gt;= BUFFER_SIZE)&#123;<br>            cv.<span class="hljs-built_in">wait</span>(lck); <span class="hljs-comment">// 默认 false，解锁并进入等待</span><br>        &#125;<br>        buffer.<span class="hljs-built_in">push</span>(i);<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;producer &quot;</span> &lt;&lt; id &lt;&lt; <span class="hljs-string">&quot; produced data: &quot;</span> &lt;&lt; i &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>        cv.<span class="hljs-built_in">notify_all</span>();  <span class="hljs-comment">// 唤醒等待状态的消费者线程</span><br>    &#125;<br>&#125;<br><br><span class="hljs-comment">// 消费者函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">consumer</span><span class="hljs-params">(<span class="hljs-type">int</span> id)</span></span>&#123;<br>    <span class="hljs-keyword">while</span>(<span class="hljs-literal">true</span>)&#123;<br>        <span class="hljs-function">std::unique_lock&lt;std::mutex&gt; <span class="hljs-title">lck</span><span class="hljs-params">(mtx)</span></span>;<br>        <span class="hljs-comment">// 等待 buffer 中有数据可消费（循环检查，防止虚假唤醒）</span><br>        <span class="hljs-keyword">while</span>(buffer.<span class="hljs-built_in">empty</span>())&#123;<br>            cv.<span class="hljs-built_in">wait</span>(lck); <span class="hljs-comment">// 默认 false，解锁并进入等待</span><br>        &#125;<br>        <span class="hljs-type">int</span> data = buffer.<span class="hljs-built_in">front</span>();<br>        buffer.<span class="hljs-built_in">pop</span>();<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;consumer &quot;</span> &lt;&lt; id &lt;&lt; <span class="hljs-string">&quot; consumed data: &quot;</span> &lt;&lt; data &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>        lck.<span class="hljs-built_in">unlock</span>();     <span class="hljs-comment">// 提前解锁</span><br>        cv.<span class="hljs-built_in">notify_all</span>();  <span class="hljs-comment">// 唤醒等待状态的生产者线程</span><br>        <span class="hljs-comment">// 模拟与 cv 无关的数据操作，放在解锁和通知之后</span><br>        std::this_thread::<span class="hljs-built_in">sleep_for</span>(std::chrono::<span class="hljs-built_in">milliseconds</span>(<span class="hljs-number">100</span>));<br>    &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-function">std::vector&lt;std::thread&gt; <span class="hljs-title">producers</span><span class="hljs-params">(PRODUCER_NUM)</span></span>;<br>    <span class="hljs-function">std::vector&lt;std::thread&gt; <span class="hljs-title">consumers</span><span class="hljs-params">(CONSUMER_NUM)</span></span>;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">size_t</span> i = <span class="hljs-number">0</span>; i &lt; producers.<span class="hljs-built_in">size</span>(); i ++ )&#123;<br>        producers[i] = std::<span class="hljs-built_in">thread</span>(producer, i + <span class="hljs-number">1</span>, <span class="hljs-number">100</span>);<br>    &#125;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">size_t</span> i = <span class="hljs-number">0</span>; i &lt; consumers.<span class="hljs-built_in">size</span>(); i ++ )&#123;<br>        consumers[i] = std::<span class="hljs-built_in">thread</span>(consumer, i + <span class="hljs-number">1</span>);<br>    &#125;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">auto</span>&amp; t : producers) t.<span class="hljs-built_in">join</span>();<br>    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">auto</span>&amp; t : consumers) t.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<h3 id="3-3-消费者退出机制编写">3.3 消费者退出机制编写</h3>
+<p>在 <a href="#323">3.2.3 虚假唤醒的解决</a> 中，我们已经解决了 <strong>虚假唤醒</strong> 问题。但是，我们还存在一个问题：消费者一直都在消费数据，没有停止的时候。由于这个问题，我们的程序到最后也没有停止。</p>
+<p>那么，如何写一个合理的消费者退出机制呢？一个比较愚蠢的办法就是，记录数据的数量，达到生产者生产数据的数量上限时，消费者线程函数中退出循环。但是这种写法的局限性比较高，如果生产者生产数据的代码有一点改动就得跟着一起修改。</p>
+<p>我们同样可以借助条件变量来实现一个合理的消费者退出机制。</p>
+<p>我们可以维护一个完成生产工作的生产者计数 <code>produce_finished_count</code>，这个计数 <strong>需要互斥访问和修改</strong>：</p>
+<ul>
+<li>
+<p>在生产者线程函数生产数据循环结束之后，生产者线程再次获得锁，然后修改 <code>produce_finished_count</code>（<code>produce_finished_count ++ </code>）。如果修改之后，<code>produce_finished_count</code> 达到了生产者线程的总数，那么需要尝试唤醒阻塞状态中的消费者线程，通知它们不会再有新的数据了；</p>
+</li>
+<li>
+<p>在消费者线程函数中，如果 <code>buffer.empty() &amp;&amp; produce_finished_count &lt; PRODUCER_NUM</code>，表明缓冲区为空，但是还会有新的数据生产，因此这时消费者线程进入阻塞状态。</p>
+<p>通常情况下，当 <code>!buffer.empty()</code> 成立时（有数据了），线程被唤醒，然后（可能）退出循环，消费者线程继续执行下去。但是，可能会在 <code>produce_finished_count == PRODUCER_NUM</code> 成立的时候，线程被通知唤醒然后退出循环。那么我们需要在判断一下是否是这种情况，如果是这种情况（缓冲区为空，且不会有新的数据再生产），那么消费者线程函数就从 <code>while(true)</code> 中 <code>break</code> 退出。</p>
+<p>当然，在生产者线程函数中，当 <code>produce_finished_count == PRODUCER_NUM</code> 成立时去唤醒消费者线程也不一定表明就是完全没数据了，可能缓冲区还有一些数据，只不过不会有新数据再生产了。这个时候，消费者线程在之后判断 <code>buffer.empty() &amp;&amp; produce_finished_count == PRODUCER_NUM</code> 是否成立时，<code>buffer</code> 并不为空，那么消费者线程会继续执行下去去消费缓冲区的数据。</p>
+</li>
+</ul>
+<p>我们可以将上面的退出机制实现带入现实场景中：甜点师今天工作量达到上限了，不会再制作新的草莓蛋糕了，我正在等待新的草莓蛋糕，但是轮到我的时候，甜点师告诉我已经没有且不再做了，那我只能遗憾地回家了，又是倒霉的一天。🍰😢</p>
+<p>修改后的代码如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;mutex&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;atomic&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;condition_variable&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;queue&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;vector&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;chrono&gt;</span></span><br><br>std::mutex mtx; <span class="hljs-comment">// 互斥量</span><br>std::condition_variable cv; <span class="hljs-comment">// 条件变量</span><br>std::queue&lt;<span class="hljs-type">int</span>&gt; buffer; <span class="hljs-comment">// 共享缓冲区</span><br><span class="hljs-type">const</span> <span class="hljs-type">int</span> BUFFER_SIZE = <span class="hljs-number">10</span>; <span class="hljs-comment">// 缓冲区大小</span><br><span class="hljs-type">const</span> <span class="hljs-type">int</span> PRODUCER_NUM = <span class="hljs-number">2</span>; <span class="hljs-comment">// 生产者个数</span><br><span class="hljs-type">const</span> <span class="hljs-type">int</span> CONSUMER_NUM = <span class="hljs-number">5</span>; <span class="hljs-comment">// 消费者个数</span><br><span class="hljs-type">int</span> produce_finished_count; <span class="hljs-comment">// 生产者完成计数</span><br><span class="hljs-comment">// std::atomic&lt;int&gt; produce_finished_count; // 也可以用原子操作</span><br><br><span class="hljs-comment">// 生产者函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">producer</span><span class="hljs-params">(<span class="hljs-type">int</span> id, <span class="hljs-type">int</span> data_num)</span></span>&#123;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">1</span>; i &lt;= data_num; i ++ )&#123;<br>        <span class="hljs-function">std::unique_lock&lt;std::mutex&gt; <span class="hljs-title">lck</span><span class="hljs-params">(mtx)</span></span>;<br>        <span class="hljs-comment">// 等待 buffer 有空间可放入数据（循环检查，防止虚假唤醒）</span><br>        <span class="hljs-keyword">while</span>(buffer.<span class="hljs-built_in">size</span>() &gt;= BUFFER_SIZE)&#123;<br>            cv.<span class="hljs-built_in">wait</span>(lck); <span class="hljs-comment">// 默认 false，解锁并进入等待</span><br>        &#125;<br>        buffer.<span class="hljs-built_in">push</span>(i);<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;producer &quot;</span> &lt;&lt; id &lt;&lt; <span class="hljs-string">&quot; produced data: &quot;</span> &lt;&lt; i &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>        cv.<span class="hljs-built_in">notify_all</span>();  <span class="hljs-comment">// 唤醒等待状态的消费者线程</span><br>    &#125;<br>    &#123;<br>        <span class="hljs-comment">// 当前生产者生成数据完毕，修改完成数据生成的生产者记数</span><br>        <span class="hljs-function">std::lock_guard&lt;std::mutex&gt; <span class="hljs-title">lck</span><span class="hljs-params">(mtx)</span></span>;<br>        produce_finished_count ++ ;<br>        <span class="hljs-keyword">if</span>(produce_finished_count == PRODUCER_NUM)&#123; <br>            cv.<span class="hljs-built_in">notify_all</span>(); <span class="hljs-comment">// 唤醒等待的消费者线程</span><br>        &#125;<br>    &#125;<br>&#125;<br><br><span class="hljs-comment">// 消费者函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">consumer</span><span class="hljs-params">(<span class="hljs-type">int</span> id)</span></span>&#123;<br>    <span class="hljs-keyword">while</span>(<span class="hljs-literal">true</span>)&#123;<br>        <span class="hljs-function">std::unique_lock&lt;std::mutex&gt; <span class="hljs-title">lck</span><span class="hljs-params">(mtx)</span></span>;<br>        <span class="hljs-comment">// 等待 buffer 中有数据可消费（循环检查，防止虚假唤醒）</span><br>        <span class="hljs-keyword">while</span>(buffer.<span class="hljs-built_in">empty</span>() &amp;&amp; produce_finished_count &lt; PRODUCER_NUM)&#123;<br>            cv.<span class="hljs-built_in">wait</span>(lck); <span class="hljs-comment">// 默认 false，解锁并进入等待</span><br>        &#125;<br>        <span class="hljs-comment">// 上面的检查中，可能因为 produce_finished_count == PRODUCER_NUM 而退出</span><br>        <span class="hljs-comment">// buffer 可能为空，说明没有新的数据再生产，这个时候从 while(true) 退出</span><br>        <span class="hljs-comment">// buffer 也可能还有数据，消费者继续执行下去消费数据。</span><br>        <span class="hljs-keyword">if</span>(buffer.<span class="hljs-built_in">empty</span>() &amp;&amp; produce_finished_count == PRODUCER_NUM)&#123;<br>            <span class="hljs-keyword">break</span>;  <span class="hljs-comment">// 退出</span><br>        &#125;<br>        <span class="hljs-type">int</span> data = buffer.<span class="hljs-built_in">front</span>();<br>        buffer.<span class="hljs-built_in">pop</span>();<br>        std::cout &lt;&lt; <span class="hljs-string">&quot;consumer &quot;</span> &lt;&lt; id &lt;&lt; <span class="hljs-string">&quot; consumed data: &quot;</span> &lt;&lt; data &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>        lck.<span class="hljs-built_in">unlock</span>();     <span class="hljs-comment">// 提前解锁</span><br>        cv.<span class="hljs-built_in">notify_all</span>();  <span class="hljs-comment">// 唤醒等待状态的生产者线程</span><br>        <span class="hljs-comment">// 模拟与 cv 无关的、无需互斥量的数据操作，放在解锁和唤醒之后</span><br>        std::this_thread::<span class="hljs-built_in">sleep_for</span>(std::chrono::<span class="hljs-built_in">milliseconds</span>(<span class="hljs-number">100</span>));<br>    &#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-function">std::vector&lt;std::thread&gt; <span class="hljs-title">producers</span><span class="hljs-params">(PRODUCER_NUM)</span></span>;<br>    <span class="hljs-function">std::vector&lt;std::thread&gt; <span class="hljs-title">consumers</span><span class="hljs-params">(CONSUMER_NUM)</span></span>;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">size_t</span> i = <span class="hljs-number">0</span>; i &lt; producers.<span class="hljs-built_in">size</span>(); i ++ )&#123;<br>        producers[i] = std::<span class="hljs-built_in">thread</span>(producer, i + <span class="hljs-number">1</span>, <span class="hljs-number">100</span>);<br>    &#125;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">size_t</span> i = <span class="hljs-number">0</span>; i &lt; consumers.<span class="hljs-built_in">size</span>(); i ++ )&#123;<br>        consumers[i] = std::<span class="hljs-built_in">thread</span>(consumer, i + <span class="hljs-number">1</span>);<br>    &#125;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">auto</span>&amp; t : producers) t.<span class="hljs-built_in">join</span>();<br>    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">auto</span>&amp; t : consumers) t.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>可能的运行结果如下：</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/01/01/11usl.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p>可以看出，生产者-消费者顺利的执行，并且最后数据全部消费完后程序正常地退出了。</p>
+<p>还有一个小小的可以优化的地方就是，对完成生产工作的生产者计数 <code>produce_finished_count</code> 的互斥访问和修改只有简单的自加操作，那么可以使用 <code>std::atomic</code> 原子操作来实现对 <code>produce_finished_count</code> 互斥，使得程序更加高效。不过，暂时还没有写到有关 <strong>原子操作</strong> 的部分，所以暂时不展开了。😉</p>
+<h2 id="参考">参考</h2>
+<ol>
+<li>
+<p><a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/thread/condition_variable/wait">std::condition_variable::wait</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/thread/condition_variable/notify_one">std::condition_variable::notify_one</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/thread/condition_variable/notify_all">std::condition_variable::notify_all</a></p>
+</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/C-%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%AD%A6%E4%B9%A0/" class="category-chain-item">C++ 多线程学习</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/C/" class="print-no-link">#C++</a>
+      
+        <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" class="print-no-link">#多线程</a>
+      
+        <a href="/tags/std-thread/" class="print-no-link">#std::thread</a>
+      
+        <a href="/tags/std-mutex/" class="print-no-link">#std::mutex</a>
+      
+        <a href="/tags/std-condition-variable/" class="print-no-link">#std::condition_variable</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「C++ 多线程」生产者-消费者问题及 std::condition_variable</div>
+      <div>http://example.com/2025/01/01/20250101/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2024/12/30/20241230/" title="「C++ 多线程」std::call_once, std::once_flag">
+                        <span class="hidden-mobile">「C++ 多线程」std::call_once, std::once_flag</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
