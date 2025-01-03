@@ -1,0 +1,772 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=dark>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/logo.png">
+  <link rel="icon" href="/img/logo.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="std::thread 实现线程通信的缺点；std::promise 跨线程传递数据，实现线程通信；。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「C++ 多线程」std::promise 线程通信">
+<meta property="og:url" content="https://marisamagic.github.io/2025/01/03/20250103/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="std::thread 实现线程通信的缺点；std::promise 跨线程传递数据，实现线程通信；。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/01/03/jja.png">
+<meta property="article:published_time" content="2025-01-03T01:20:35.909Z">
+<meta property="article:modified_time" content="2025-01-03T05:39:12.929Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="多线程">
+<meta property="article:tag" content="std::thread">
+<meta property="article:tag" content="std::future">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2025/01/03/jja.png">
+  
+  
+  
+  <title>「C++ 多线程」std::promise 线程通信 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/marisad.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2025/01/03/jja.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「C++ 多线程」std::promise 线程通信"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-03 09:20" pubdate>
+          2025年1月3日 上午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          20 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「C++ 多线程」std::promise 线程通信</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>文章大图来源：<a target="_blank" rel="noopener" href="https://www.pixiv.net/artworks/104287282">pixiv_id=104287282</a></p>
+<p><a id='1'></a></p>
+<h2 id="1-问题背景">1 问题背景</h2>
+<p>当我们需要实现线程之间的数据传递（线程通信）等操作时，我们通常需要考虑同步机制（互斥锁等）来确保传输数据的正确性。假如一类线程接收结果，另一类线程负责修改并传递结果，在多线程情况下需要互斥访问来确保数据正确，避免数据竞争。</p>
+<p>还有一个关键的问题在于：接收结果的线程 往往需要等待 修改并传递结果的线程 <strong>完全执行完毕</strong> 才能正确地获取数据结果。</p>
+<p>以下是一个简单的线程通信示例：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;chrono&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;future&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span>&amp; res, <span class="hljs-type">int</span> x)</span></span>&#123;<br>	std::cout &lt;&lt; <span class="hljs-string">&quot;foo(): starts running, thread id = &quot;</span>;<br>    std::cout &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>	<br>	<span class="hljs-comment">// 模拟数据操作所需时间</span><br>	std::this_thread::<span class="hljs-built_in">sleep_for</span>(std::chrono::<span class="hljs-built_in">milliseconds</span>(<span class="hljs-number">2000</span>));<br>	x ++ ;<br><br>    <span class="hljs-comment">// 将 res 置为 x，子线程执行完毕后再用于其他线程</span><br>	res = x; <br>	<br>	<span class="hljs-comment">// 模拟线程函数其他操作</span><br>	std::this_thread::<span class="hljs-built_in">sleep_for</span>(std::chrono::<span class="hljs-built_in">milliseconds</span>(<span class="hljs-number">2000</span>)); <br>	<br>	std::cout &lt;&lt; <span class="hljs-string">&quot;foo(): ends running, thread id = &quot;</span>;<br>    std::cout &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>	std::cout &lt;&lt; <span class="hljs-string">&quot;main(): starts running, thread id = &quot;</span>;<br>    std::cout &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>	<br>	<span class="hljs-comment">// 通过 std::promise 实现子线程和主线程之间的线程通信</span><br>    <span class="hljs-type">int</span> res = <span class="hljs-number">0</span>;<br>	<span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo, std::ref(res), <span class="hljs-number">1</span>)</span></span>; <span class="hljs-comment">// 创建子线程</span><br>	<br>	<span class="hljs-comment">// 子线程数据操作需要一段时间，不知道什么时候可以获取正确的数据结果</span><br>    std::this_thread::<span class="hljs-built_in">sleep_for</span>(std::chrono::<span class="hljs-built_in">milliseconds</span>(<span class="hljs-number">1000</span>));<br>	std::cout &lt;&lt; <span class="hljs-string">&quot;may get the wrong res = &quot;</span> &lt;&lt; res &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>	<br>	<span class="hljs-comment">// 调用 join()，等待子线程的其他操作执行完毕</span><br>	t.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-comment">// 等待子线程执行完毕，可以顺利获取正确的数据结果</span><br>    std::cout &lt;&lt; <span class="hljs-string">&quot;finally get the res = &quot;</span> &lt;&lt; res &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>	std::cout &lt;&lt; <span class="hljs-string">&quot;main(): ends running, thread id = &quot;</span>;<br>    std::cout &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>	<br>	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>在上面的代码中，我们创建一个子线程用于修改数据和传递数据，而主线程负责接收修改后的数据结果。</p>
+<ul>
+<li>
+<p><code>foo()</code> 函数：</p>
+<p>在 <code>foo()</code> 子线程函数中，我们通过传递一个整形引用参数来实现子线程内部直接修改在 <code>main()</code> 中定义的 <code>res</code> 变量，用于将子线程处理的结果传递给主线程。</p>
+<p>在 <code>foo()</code> 子线程函数中，我们通过让线程休眠一段时间来模拟数据的长时间操作。然后对传入的参数 <code>x</code> 进行自增操作（<code>x ++</code>），之后将 <code>x</code> 的值赋给 <code>res</code> 变量。</p>
+<p>在后面，我们又通过让线程休眠一段时间模拟其他的一系列操作。</p>
+</li>
+<li>
+<p><code>main()</code> 函数：</p>
+<p>在主线程中，我们创建了一个子线程来执行 <code>foo()</code> 函数。</p>
+<p>在主线程调用 <code>join()</code> 之前，子线程还未完全执行完毕。我们可以尝试获取 <code>res</code> 的结果，但是有可能此时子线程还未执行完数据操作，我们也不知道具体什么时候可以执行完。因此 <strong>很有可能第一次获取 <code>res</code> 的结果是错误的</strong>。</p>
+<p>在主线程调用 <code>join()</code> 之后，子线程 <strong>执行完毕</strong>，我们 <strong>此时获取 <code>res</code> 的结果是正确的</strong>。但是，子线程后面又执行了一段时间的其他操作，我们等待其执行完其他无关的操作后才获取了 <code>res</code> 的值，这就比较低效了。</p>
+</li>
+</ul>
+<p>可能的运行结果如下：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs txt">main(): starts running, thread id = 0xbc<br>foo(): starts running, thread id = 0xc0<br>may get the wrong res = 0<br>foo(): ends running, thread id = 0xc0<br>finally get the res = 2<br>main(): ends running, thread id = 0xbc<br></code></pre></td></tr></table></figure>
+<p>可以看出，第一次获取结果是不符合预期的。等 <code>foo()</code> 执行完毕后再进行第二次获取结果，此时的结果是正确的。</p>
+<p>那么如何能够让主线程在子线程运行的中途顺利获取数据？为此 C++ 11 引入了 <code>std::promise</code> 实现线程之间的通信。</p>
+<h2 id="2-std-promise">2 std::promise</h2>
+<h3 id="2-1-基本概念">2.1 基本概念</h3>
+<p><code>std::promise</code> 是 C++ 11 引入的一个模板类，用于 <strong>在一个线程中设置一个值</strong>（或异常），然后 <strong>在另一个线程中获取这个值</strong>（或处理异常）。它主要用于线程间的同步通信，通常与 <code>std::future</code> 一起使用。</p>
+<p><code>std::promise</code> 提供了一种机制，使得一个线程可以 “承诺” 提供一个结果，而另一个线程可以通过 <code>std::future</code> 来等待这个结果。</p>
+<p><a id='22'></a></p>
+<h3 id="2-2-基本用法">2.2 基本用法</h3>
+<p>假如我们要在主线程中接收一个结果，在一个创建的子线程中修改并提供这个结果。</p>
+<p>首先，在主线程中创建一个 <code>std::promise</code> 对象，我们需要传递的是一个 <code>int</code> 类型的结果，因此使用 <code>std::promist&lt;int&gt; pro</code> 创建一个传递该类型的对象。</p>
+<p>然后，采用 <code>std::future&lt;int&gt; res = pro.get_future()</code>，通过调用 <code>std::promise::get_future()</code> 函数来获取与 <code>pro</code> 关联的 <code>std::future</code> 对象。</p>
+<p>之后启动一个新的子线程，子线程函数需要传递 <code>std::promise&lt;int&gt;</code> 对象的引用。在子线程函数 <code>foo()</code> 中通过调用 <code>std::promise::set_value()</code> 来将 <code>std::promise</code> 设置为我们想要的结果。</p>
+<p>最后，在主线程中我们通过调用 <code>std::future::get()</code> 来获取结果。</p>
+<p>以下是一个简单的示例：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;future&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">(std::promise&lt;<span class="hljs-type">int</span>&gt;&amp; pro)</span> </span>&#123;<br>    <span class="hljs-type">int</span> result = <span class="hljs-number">1314</span>;<br>    pro.<span class="hljs-built_in">set_value</span>(result); <span class="hljs-comment">// 设置我们想要的结果</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span> </span>&#123;<br>    std::promise&lt;<span class="hljs-type">int</span>&gt; pro; <span class="hljs-comment">// 创建 promise 对象</span><br>    std::future&lt;<span class="hljs-type">int</span>&gt; res = pro.<span class="hljs-built_in">get_future</span>(); <span class="hljs-comment">// 获取 pro 关联的 future 对象</span><br>    <span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo, std::ref(pro))</span></span>; <span class="hljs-comment">// 开启子线程，传入 pro</span><br><br>    <span class="hljs-comment">// 调用 future::get() 等待获取结果</span><br>    <span class="hljs-type">int</span> data = res.<span class="hljs-built_in">get</span>();<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;finally the res = &quot;</span> &lt;&lt; data &lt;&lt; std::endl;<br><br>    t.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>运行结果如下：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs txt">finally the res = 1314<br></code></pre></td></tr></table></figure>
+<p>上面的示例缺乏一个场景，看起来比较抽象。接下来我们可以对比 <a href="#1">1 问题背景</a> 中的示例，并实现一个使用 <code>std::promise</code> 的线程通信代码。</p>
+<h3 id="2-3-实现线程通信">2.3 实现线程通信</h3>
+<p>在 <a href="#1">1 问题背景</a> 中的示例中，当子线程还没有处理完数据，我们进行第一次尝试获取结果时，结果是不符合预期的。如果子线程完整地执行完毕，我们方可获取正确的结果。</p>
+<p>但是，子线程中数据处理完之后的操作和我们想要获取结果的部分没有什么关系。我们或许可以尝试在主线程中等待一段时间再中途获取结果，但是 <strong>无法确切地知道什么时候可以获取正确的结果</strong>。</p>
+<p>这时候 <code>std::promise</code> 配合 <code>std::future</code> 的优势就凸显出来了。</p>
+<p>我们可以像 <a href="#22">2.2 std::promise 基本用法</a> 中类似地做法：</p>
+<ul>
+<li>创建一个 <code>std::promise&lt;int&gt;</code> 类型的对象 <code>pro</code>，用于保存传递给当前主线程的数据；</li>
+<li>通过 <code>std::future&lt;int&gt; res = pro.get_future()</code> 来获取与 <code>pro</code> 关联的 <code>std::future</code> 对象，后续主线程可以通过这个 <code>std::future</code> 对象来获取子线程传递过来的数据；</li>
+<li>创建一个子线程 <code>t</code>，线程接口函数为 <code>foo()</code> ，也就是处理数据并设置数据值的函数。同时，通过 <code>std::ref(pro)</code> 来传递 <code>pro</code> 对象的引用，使得子线程可以通过调用 <code>std::promise::set_value()</code> 来设置这个对象中保存的值。</li>
+</ul>
+<p>在主线程中调用 <code>std::future::get()</code> 函数获取结果时：</p>
+<ul>
+<li>如果子线程已经处理数据结束了，那么就可以立即顺利地获得结果；</li>
+<li>如果子线程还没有处理数据结束（还没有运行到 <code>set_value()</code> 设置数值的步骤），那么 <strong>主线程会被阻塞</strong>，等待子线程运行到 <code>set_value()</code> 设置数值，然后获取结果。</li>
+</ul>
+<p>最后调用 <code>t.join()</code> 等待子线程完整地执行完毕（子线程可能还有一些其他操作未完成）。</p>
+<p>这样我们就实现了线程间的通信，而且主线程可以在中途恰当的时机获取想要的结果。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;chrono&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;future&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">(std::promise&lt;<span class="hljs-type">int</span>&gt; &amp;pro, <span class="hljs-type">int</span> x)</span></span>&#123;<br>	std::cout &lt;&lt; <span class="hljs-string">&quot;foo(): starts running, thread id = &quot;</span>;<br>    std::cout &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>	<br>	<span class="hljs-comment">// 模拟数据操作所需时间</span><br>	std::this_thread::<span class="hljs-built_in">sleep_for</span>(std::chrono::<span class="hljs-built_in">milliseconds</span>(<span class="hljs-number">2000</span>));<br>	x ++ ;<br><br>    <span class="hljs-comment">// 中途 set_value 来传递操作后的数据给其他线程</span><br>	pro.<span class="hljs-built_in">set_value</span>(x); <br>	<br>	<span class="hljs-comment">// 模拟线程函数其他操作</span><br>	std::this_thread::<span class="hljs-built_in">sleep_for</span>(std::chrono::<span class="hljs-built_in">milliseconds</span>(<span class="hljs-number">2000</span>)); <br>	<br>	std::cout &lt;&lt; <span class="hljs-string">&quot;foo(): ends running, thread id = &quot;</span>;<br>    std::cout &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>	std::cout &lt;&lt; <span class="hljs-string">&quot;main(): starts running, thread id = &quot;</span>;<br>    std::cout &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>	<br>	<span class="hljs-comment">// 通过 std::promise 实现子线程和主线程之间的线程通信</span><br>	std::promise&lt;<span class="hljs-type">int</span>&gt; pro; <span class="hljs-comment">// 声明一个 promise 对象，保存值类型为 int</span><br>	std::future&lt;<span class="hljs-type">int</span>&gt; res = pro.<span class="hljs-built_in">get_future</span>(); <span class="hljs-comment">// 创建 std::future 获取数据 </span><br>	<span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo, std::ref(pro), <span class="hljs-number">1</span>)</span></span>; <span class="hljs-comment">// 创建子线程</span><br>	<br>	<span class="hljs-comment">// 主线程调用 get() 获取结果。若子线程内部还未 set_value，会阻塞当前主线程 </span><br>	<span class="hljs-type">int</span> data = res.<span class="hljs-built_in">get</span>();<br>	std::cout &lt;&lt; <span class="hljs-string">&quot;finally get the res = &quot;</span> &lt;&lt; data &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>	<br>	<span class="hljs-comment">// 获取结果才 join()，等待子线程的其他操作执行完毕</span><br>	t.<span class="hljs-built_in">join</span>();<br><br>	std::cout &lt;&lt; <span class="hljs-string">&quot;main(): ends running, thread id = &quot;</span>;<br>    std::cout &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>	<br>	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>可能的运行结果如下：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs txt">main(): starts running, thread id = 0xac<br>foo(): starts running, thread id = 0xb4<br>finally get the res = 2<br>foo(): ends running, thread id = 0xb4<br>main(): ends running, thread id = 0xac<br></code></pre></td></tr></table></figure>
+<p>可以看出，在子线程还没完全运行结束时，主线程中已经顺利地获取了想要的结果。主线程和子线程之间的线程通信完美实现了⭐</p>
+<h2 id="参考">参考</h2>
+<ol>
+<li>
+<p><a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/thread/promise/get_future">std::promise<R>::get_future</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/thread/promise/set_value">std::promise<R>::set_value</a></p>
+</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/C-%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%AD%A6%E4%B9%A0/" class="category-chain-item">C++ 多线程学习</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/C/" class="print-no-link">#C++</a>
+      
+        <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" class="print-no-link">#多线程</a>
+      
+        <a href="/tags/std-thread/" class="print-no-link">#std::thread</a>
+      
+        <a href="/tags/std-future/" class="print-no-link">#std::future</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「C++ 多线程」std::promise 线程通信</div>
+      <div>https://marisamagic.github.io/2025/01/03/20250103/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月3日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/02/20250102/" title="「C++ 多线程」std::async 异步任务创建">
+                        <span class="hidden-mobile">「C++ 多线程」std::async 异步任务创建</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
