@@ -19,16 +19,16 @@
   <meta name="author" content="MarisaMagic">
   <meta name="keywords" content="">
   
-    <meta name="description" content="std::thread 实现线程通信的缺点；std::promise 跨线程传递数据，实现线程通信；。">
+    <meta name="description" content="std::thread 实现线程通信的缺点；std::promise 跨线程传递数据，实现线程通信。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="「C++ 多线程」std::promise 线程通信">
 <meta property="og:url" content="https://marisamagic.github.io/2025/01/03/20250103/index.html">
 <meta property="og:site_name" content="MarisaMagic&#39;s Blog">
-<meta property="og:description" content="std::thread 实现线程通信的缺点；std::promise 跨线程传递数据，实现线程通信；。">
+<meta property="og:description" content="std::thread 实现线程通信的缺点；std::promise 跨线程传递数据，实现线程通信。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2025/01/03/jja.png">
 <meta property="article:published_time" content="2025-01-03T01:20:35.909Z">
-<meta property="article:modified_time" content="2025-01-03T05:39:12.929Z">
+<meta property="article:modified_time" content="2025-01-04T01:48:58.433Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="C++">
 <meta property="article:tag" content="多线程">
@@ -256,7 +256,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          2.4k 字
+          2.5k 字
         
       </span>
     
@@ -267,7 +267,7 @@
         
         
         
-          20 分钟
+          21 分钟
         
       </span>
     
@@ -343,15 +343,17 @@
 <h3 id="2-1-基本概念">2.1 基本概念</h3>
 <p><code>std::promise</code> 是 C++ 11 引入的一个模板类，用于 <strong>在一个线程中设置一个值</strong>（或异常），然后 <strong>在另一个线程中获取这个值</strong>（或处理异常）。它主要用于线程间的同步通信，通常与 <code>std::future</code> 一起使用。</p>
 <p><code>std::promise</code> 提供了一种机制，使得一个线程可以 “承诺” 提供一个结果，而另一个线程可以通过 <code>std::future</code> 来等待这个结果。</p>
+<p><code>std::promise</code> 是不可复制的。如果是可复制的，那么就会出现多个对象可以设置同一个 <code>std::future</code> 关联的值的情况，这会导致语义的混乱。</p>
 <p><a id='22'></a></p>
 <h3 id="2-2-基本用法">2.2 基本用法</h3>
 <p>假如我们要在主线程中接收一个结果，在一个创建的子线程中修改并提供这个结果。</p>
 <p>首先，在主线程中创建一个 <code>std::promise</code> 对象，我们需要传递的是一个 <code>int</code> 类型的结果，因此使用 <code>std::promist&lt;int&gt; pro</code> 创建一个传递该类型的对象。</p>
 <p>然后，采用 <code>std::future&lt;int&gt; res = pro.get_future()</code>，通过调用 <code>std::promise::get_future()</code> 函数来获取与 <code>pro</code> 关联的 <code>std::future</code> 对象。</p>
 <p>之后启动一个新的子线程，子线程函数需要传递 <code>std::promise&lt;int&gt;</code> 对象的引用。在子线程函数 <code>foo()</code> 中通过调用 <code>std::promise::set_value()</code> 来将 <code>std::promise</code> 设置为我们想要的结果。</p>
+<p><strong>注意：</strong> <code>std::promise</code> 对象只能成功地 <code>set_value</code> <strong>一次</strong>。通过 <code>set_value</code> 之后，其内部状态就从 “未完成” 变为 “已完成”，这种状态的改变是不可逆的，并且会同步更新与之关联的 <code>std::future</code> 对象的状态。</p>
 <p>最后，在主线程中我们通过调用 <code>std::future::get()</code> 来获取结果。</p>
 <p>以下是一个简单的示例：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;future&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">(std::promise&lt;<span class="hljs-type">int</span>&gt;&amp; pro)</span> </span>&#123;<br>    <span class="hljs-type">int</span> result = <span class="hljs-number">1314</span>;<br>    pro.<span class="hljs-built_in">set_value</span>(result); <span class="hljs-comment">// 设置我们想要的结果</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span> </span>&#123;<br>    std::promise&lt;<span class="hljs-type">int</span>&gt; pro; <span class="hljs-comment">// 创建 promise 对象</span><br>    std::future&lt;<span class="hljs-type">int</span>&gt; res = pro.<span class="hljs-built_in">get_future</span>(); <span class="hljs-comment">// 获取 pro 关联的 future 对象</span><br>    <span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo, std::ref(pro))</span></span>; <span class="hljs-comment">// 开启子线程，传入 pro</span><br><br>    <span class="hljs-comment">// 调用 future::get() 等待获取结果</span><br>    <span class="hljs-type">int</span> data = res.<span class="hljs-built_in">get</span>();<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;finally the res = &quot;</span> &lt;&lt; data &lt;&lt; std::endl;<br><br>    t.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;future&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">(std::promise&lt;<span class="hljs-type">int</span>&gt;&amp; pro)</span> </span>&#123;<br>    <span class="hljs-type">int</span> result = <span class="hljs-number">1314</span>;<br>    pro.<span class="hljs-built_in">set_value</span>(result); <span class="hljs-comment">// 设置我们想要的结果</span><br>	<span class="hljs-comment">// pro.set_value(233); // set_value twice, ERROR </span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span> </span>&#123;<br>    std::promise&lt;<span class="hljs-type">int</span>&gt; pro; <span class="hljs-comment">// 创建 promise 对象</span><br>    std::future&lt;<span class="hljs-type">int</span>&gt; res = pro.<span class="hljs-built_in">get_future</span>(); <span class="hljs-comment">// 获取 pro 关联的 future 对象</span><br>    <span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo, std::ref(pro))</span></span>; <span class="hljs-comment">// 开启子线程，传入 pro</span><br><br>    <span class="hljs-comment">// 调用 future::get() 等待获取结果</span><br>    <span class="hljs-type">int</span> data = res.<span class="hljs-built_in">get</span>();<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;finally the res = &quot;</span> &lt;&lt; data &lt;&lt; std::endl;<br><br>    t.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
 <p>运行结果如下：</p>
 <figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs txt">finally the res = 1314<br></code></pre></td></tr></table></figure>
 <p>上面的示例缺乏一个场景，看起来比较抽象。接下来我们可以对比 <a href="#1">1 问题背景</a> 中的示例，并实现一个使用 <code>std::promise</code> 的线程通信代码。</p>
@@ -487,6 +489,12 @@
                 <div class="post-prevnext my-3">
                   <article class="post-prev col-6">
                     
+                    
+                      <a href="/2025/01/04/20250104/" title="「C++ 多线程」std::packaged_task 异步任务创建">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「C++ 多线程」std::packaged_task 异步任务创建</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
                     
                   </article>
                   <article class="post-next col-6">
