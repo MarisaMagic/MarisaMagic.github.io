@@ -4,6 +4,39 @@
   
   
   <entry>
+    <title>「C++ 多线程」std::shared_future 多线程等待结果</title>
+    <link href="/2025/01/05/20250105/"/>
+    <url>/2025/01/05/20250105/</url>
+    
+    <content type="html"><![CDATA[<p>文章大图来源：<a href="https://www.pixiv.net/artworks/">pixiv_id=</a></p><h2 id="1-std-shared-future">1 std::shared_future</h2><h3 id="1-1-基本概念">1.1 基本概念</h3><p><code>std::shared_future</code> 是 C++11 引入的一个模板类，位于 <code>&lt;future&gt;</code> 头文件中，用于异步任务结果的 <strong>共享获取</strong>。</p><p><code>std::future</code> 对象在获取关联的异步操作结果后就不能再被复用，因为获取结果后其内部的状态改变，且状态是不可逆的。如果我们需要多个线程获取同一个异步任务地结果，那么仅仅使用 <code>std::future</code> 就不可行了。</p><p>而 <code>std::shared_future</code> 可以被多个线程安全地共享，以 <strong>并发地获取相同的异步结果</strong>。<code>std::shared_future</code> 是从 <code>std::future</code> 转换而来，转换的方法是调用 <code>std::future::share()</code> 从而获取相同存储类型的一个 <code>std::shared_future</code> 对象：</p><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// std::future 对象</span><br>std::future&lt;<span class="hljs-type">int</span>&gt; res = std::<span class="hljs-built_in">async</span>(std::launch::async, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>); <br><span class="hljs-comment">// 通过 std::future::share() 获取共享的对象</span><br>std::shared_future&lt;<span class="hljs-type">int</span>&gt; shared_res = res.<span class="hljs-built_in">share</span>(); <span class="hljs-comment">// 涉及 std::move</span><br></code></pre></td></tr></table></figure><p><strong>注意：</strong> 当调用 <code>std::future::share()</code> 函数来获取 <code>std::shared_future</code> 时，内部涉及了 <strong>移动语义</strong> <code>std::move</code>。<code>std::future</code> <strong>只可移动，不可复制。</strong></p><p>在调用 <code>std::future::share()</code> 后，原本的 <code>std::future</code> 对象也不再有对异步任务结果的访问权了。我们也可以用移动语义 <code>std::move</code> 来获取共享的 <code>std::shared_future</code> 对象：</p><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 或者采用移动语义</span><br><span class="hljs-function">std::shared_future&lt;<span class="hljs-type">int</span>&gt; <span class="hljs-title">shared_res</span><span class="hljs-params">(std::move(res))</span></span>;<br></code></pre></td></tr></table></figure>]]></content>
+    
+    
+    <categories>
+      
+      <category>追逐繁星</category>
+      
+      <category>C++ 多线程学习</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>C++</tag>
+      
+      <tag>多线程</tag>
+      
+      <tag>std::thread</tag>
+      
+      <tag>std::future</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>「C++ 多线程」std::packaged_task 异步任务创建</title>
     <link href="/2025/01/04/20250104/"/>
     <url>/2025/01/04/20250104/</url>
@@ -723,13 +756,13 @@
       
       <tag>C++</tag>
       
-      <tag>多线程</tag>
-      
       <tag>Ubuntu</tag>
       
       <tag>Linux</tag>
       
       <tag>VS Code</tag>
+      
+      <tag>多线程</tag>
       
     </tags>
     
