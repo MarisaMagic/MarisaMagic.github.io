@@ -1,0 +1,823 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="/img/logo.png">
+  <link rel="icon" href="/img/logo.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="std::atomic 原子操作的基本概念；std::atomic_flag 最基本原子模型使用方法；std::atomic 的成员函数以及简单操作；std::atomic 在多线程中的简单使用方法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「C++ 多线程」std::atomic 简单操作">
+<meta property="og:url" content="https://marisamagic.github.io/2025/01/06/20250106/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="std::atomic 原子操作的基本概念；std::atomic_flag 最基本原子模型使用方法；std::atomic 的成员函数以及简单操作；std::atomic 在多线程中的简单使用方法。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/01/06/wd08.jpg">
+<meta property="article:published_time" content="2025-01-06T05:50:56.791Z">
+<meta property="article:modified_time" content="2025-01-06T07:56:11.923Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="多线程">
+<meta property="article:tag" content="std::thread">
+<meta property="article:tag" content="std::atomic">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2025/01/06/wd08.jpg">
+  
+  
+  
+  <title>「C++ 多线程」std::atomic 简单操作 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/marisad.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2025/01/06/wd08.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「C++ 多线程」std::atomic 简单操作"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-01-06 13:50" pubdate>
+          2025年1月6日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          24 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「C++ 多线程」std::atomic 简单操作</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>文章大图来源：<a target="_blank" rel="noopener" href="https://www.pixiv.net/artworks/96078807">pixiv_id=96078807</a></p>
+<h2 id="1-原子操作和原子类型">1 原子操作和原子类型</h2>
+<h3 id="1-1-原子操作">1.1 原子操作</h3>
+<p><strong>原子操作</strong> 是一类 <strong>不可分割</strong> 的操作，当这样操作在任意线程中进行一半的时候，你是不能查看的；它的状态要么是完成，要么是未完成。</p>
+<p>如果一个线程执行了一个数据存储操作，其他线程读取这个数据时，要么是存储之前状态的值，要么就是存储完成后的值。</p>
+<p>与其不同的是，<strong>非原子操作</strong> 可能会被视为由一个线程完成一半的操作。如果一个线程执行的是一个存储操作，其他线程读取数据时可能取出的既不是存储前的值，也可能不是已存储的值（可能为一个中间状态的值）。</p>
+<h3 id="1-2-原子类型">1.2 原子类型</h3>
+<p>原子类型是一种特殊的数据类型，在多线程环境下，对原子类型变量的操作不可分割。</p>
+<p>在 C++ 多线程中，引入了 <code>std::atomic</code> 系列类型，提供了原子类型以及原子操作，是构建多线程安全的重要工具之一。</p>
+<h2 id="2-std-atomic-基本概念">2 std::atomic 基本概念</h2>
+<p><code>std::atomic</code> 是 C++11 引入的原子类型，是一个模板类，用于创建 <strong>原子类型</strong> 的变量。它提供了 <strong>原子操作</strong>，确保在多线程环境下对这些变量的操作是线程安全的，不会出现数据竞争。</p>
+<p><code>std::atomic</code> 中有最基本的原子类型 <code>std::atomic_flag</code>，也有很多通过类模板应用于更广泛数据类型的原子类型，例如 <code>std::atomic&lt;int&gt;</code>、<code>std::atomic&lt;bool&gt;</code>、<code>std::atomic&lt;long long&gt;</code> 等。</p>
+<p><code>std::atomic</code> <strong>不可以调用拷贝构造函数和拷贝赋值运算符</strong>。</p>
+<h2 id="3-std-atomic-flag">3 std::atomic_flag</h2>
+<h3 id="3-1-基本概念">3.1 基本概念</h3>
+<p><code>std::atomic_flag</code> 是 C++11 引入的原子类型，用于实现简单的原子操作。</p>
+<p><code>std::atomic_flag</code> 是最基本的原子类型，<strong>提供了一种无锁的原子操作机制</strong>。<code>std::atomic_flag</code> 对象可以处于两种状态：设置状态（true）和清除状态（false）。</p>
+<p>定义一个 <code>std::atomic_flag</code> 对象需要通过 <code>ATOMIC_FLAG_INIT</code> 初始化（源码中 <code>ATOMIC_FLAG_INIT</code> 实际被定义为 0）。</p>
+<h3 id="3-2-test-and-set">3.2 test_and_set()</h3>
+<p><code>std::atomic_flag::test_and_set()</code> 用于将 <code>std::atomic_flag</code> 对象的值设置为 <code>true</code>，并且 <strong>返回该对象之前的值</strong>。</p>
+<p>一个简单的操作示例如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++">std::atomic_flag flag = ATOMIC_FLAG_INIT; <span class="hljs-comment">// 初始化为 0</span><br><span class="hljs-type">bool</span> pre_val = flag.<span class="hljs-built_in">test_and_set</span>(); <span class="hljs-comment">// pre_val == false</span><br></code></pre></td></tr></table></figure>
+<p>在上面的示例中，<code>flag</code> 初始化为清除状态（通过 <code>ATOMIC_FLAG_INIT</code> 初始化，值为 <code>false</code>）。</p>
+<p>当 <code>test_and_set()</code> 被调用，<code>flag</code> 被设置为 <code>true</code>，并且 <code>flag.test_and_set()</code> 返回先前的值（此处为 <code>false</code>），用 <code>pre_val</code> 存储这个先前的值（为 <code>false</code>）。</p>
+<h3 id="3-3-clear">3.3 clear()</h3>
+<p><code>std::atomic_flag::clear()</code> 用于将 <code>std::atomic_flag</code> 对象的值设置为 <code>false</code>。</p>
+<p>一个简单的操作示例如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++">std::atomic_flag flag = ATOMIC_FLAG_INIT;<br>flag.<span class="hljs-built_in">test_and_set</span>();  <span class="hljs-comment">// flag 设置为 true</span><br>flag.<span class="hljs-built_in">clear</span>();  <span class="hljs-comment">// flag 设置为 false</span><br></code></pre></td></tr></table></figure>
+<p>这里先将 <code>flag</code> 设置为 <code>true</code>，然后通过 <code>clear</code> 函数将其设置回 <code>false</code>。</p>
+<h3 id="3-4-std-atomic-flag-实现自旋锁">3.4 std::atomic_flag 实现自旋锁</h3>
+<p><strong>自旋锁</strong>（Spin Lock）是一种锁机制，当一个线程尝试获取锁但锁已经被其他线程持有时，它会 <strong>不断地检查锁是否可用</strong>，而不是进入阻塞状态。</p>
+<p><code>std::atomic_flag</code> 可以用于实现简单的自旋锁。主要的思路如下：</p>
+<p>定义一个 <code>std::atomic_flag</code> 对象 <code>flag</code>，每个线程不断尝试通过调用 <code>test_and_set()</code> 函数循环检查先前的 <code>flag</code> 值，直到 <code>flag</code> 值为 <code>false</code>：</p>
+<ul>
+<li>若 <code>flag</code> 先前值为 <code>false</code>，那么当前可以进一步进行操作（“锁”可用）；</li>
+<li>否则，继续循环检查。</li>
+</ul>
+<p>通过调用 <code>test_and_set()</code> 函数循环检查巧妙之处在于，可以同时获取先前的值并将值设置为 <code>true</code>。如果先前的值为 <code>false</code>，“锁”可用，并且会把值设置为 <code>true</code>，然后进一步进行操作；如果先前的值为 <code>true</code>，“锁”不可用，而且还是会把值设置为 <code>true</code>，还是要继续进行循环检查。</p>
+<p>进行一系列操作完之后，调用 <code>clear()</code> 函数将 <code>flag</code> 状态清除（设置为 <code>false</code>），就好像释放 “锁” 一样。</p>
+<p>实现代码如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;atomic&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;vector&gt;</span></span><br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">spinlock_mutex</span>&#123;<br>    std::atomic_flag flag; <span class="hljs-comment">// 定义一个 atomic::flag 对象</span><br><span class="hljs-keyword">public</span>:<br>    <span class="hljs-built_in">spinlock_mutex</span>(): <span class="hljs-built_in">flag</span>(ATOMIC_FLAG_INIT) &#123;&#125;;<br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">lock</span><span class="hljs-params">()</span></span>&#123;<br>        <span class="hljs-keyword">while</span>(flag.<span class="hljs-built_in">test_and_set</span>()); <span class="hljs-comment">// 循环检查</span><br>    &#125;<br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">unlock</span><span class="hljs-params">()</span></span>&#123;<br>        flag.<span class="hljs-built_in">clear</span>(); <span class="hljs-comment">// 清除 flag 状态</span><br>    &#125;<br>&#125;;<br><br><span class="hljs-type">int</span> count; <span class="hljs-comment">// 共享数据变量</span><br>spinlock_mutex mtx; <br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">()</span></span>&#123;<br>    mtx.<span class="hljs-built_in">lock</span>();<br>    count ++ ;<br>    mtx.<span class="hljs-built_in">unlock</span>();<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-function">std::vector&lt;std::thread&gt; <span class="hljs-title">threads</span><span class="hljs-params">(<span class="hljs-number">10</span>)</span></span>;<br>    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">auto</span>&amp; t : threads) t = std::<span class="hljs-built_in">thread</span>(foo);<br>    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">auto</span>&amp; t : threads) t.<span class="hljs-built_in">join</span>();<br><br>    std::cout &lt;&lt; <span class="hljs-string">&quot;count = &quot;</span> &lt;&lt; count &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>运行结果如下：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs txt">count = 10<br></code></pre></td></tr></table></figure>
+<h2 id="4-std-atomic-简单操作">4 std::atomic 简单操作</h2>
+<h3 id="4-1-变量声明和初始化">4.1 变量声明和初始化</h3>
+<p>声明和初始化原子类型变量的方法如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">std::atomic&lt;<span class="hljs-type">int</span>&gt; <span class="hljs-title">atm</span><span class="hljs-params">(<span class="hljs-number">0</span>)</span></span>;<br><span class="hljs-comment">// std::atomic&lt;int&gt; atm = 0; // 也可以</span><br></code></pre></td></tr></table></figure>
+<p>当然也可以先声明，再初始化：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++">std::atomic&lt;<span class="hljs-type">int</span>&gt; atm;<br>atm = <span class="hljs-number">0</span>;<br></code></pre></td></tr></table></figure>
+<p>在上面的示例中，声明了一个 <code>std::atomic&lt;int&gt;</code> 类型的原子类型变量。初始值为 0。</p>
+<p><code>std::atomic</code> 类型禁止使用拷贝构造函数和拷贝赋值运算符。原子操作的关键在于其不可分割性和原子性，如果允许随意的拷贝操作，就很难保证原子变量在整个生命周期内的操作安全性：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">std::atomic&lt;<span class="hljs-type">int</span>&gt; <span class="hljs-title">atm1</span><span class="hljs-params">(<span class="hljs-number">10</span>)</span></span>;<br>std::atomic&lt;<span class="hljs-type">int</span>&gt; atm2 = a1;  <span class="hljs-comment">// ERROR，试图使用拷贝构造函数</span><br>std::atomic&lt;<span class="hljs-type">int</span>&gt; atm3;<br>atm3 = atm1;  <span class="hljs-comment">// ERROR，试图使用拷贝赋值运算符</span><br></code></pre></td></tr></table></figure>
+<h3 id="4-2-load">4.2 load()</h3>
+<p><code>std::atomic::load()</code> 是 <code>std::atomic</code> 模板类提供的一个成员函数，用于原子地 <strong>读取</strong> <code>std::atomic</code> 类型变量的值。</p>
+<p>这个操作（原子操作）可以确保读取到的值是完整且准确的，不会出现读取到正在被其他线程修改的中间值的情况。</p>
+<p class="note note-warning">
+此处先不考虑内存顺序等的影响，这个之后再在后续新文章中写，本文章只写一些简单的东西。
+</p>
+<p>读取 <code>std::atomic</code> 变量的值方法如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">std::atomic&lt;<span class="hljs-type">int</span>&gt; <span class="hljs-title">atm1</span><span class="hljs-params">(<span class="hljs-number">1</span>)</span></span>;<br><span class="hljs-type">int</span> val = atm<span class="hljs-number">1.l</span>oad(); <span class="hljs-comment">// 读取 atomic 变量的值</span><br></code></pre></td></tr></table></figure>
+<h3 id="4-3-store">4.3 store()</h3>
+<p><code>std::atomic::store()</code> 是 <code>std::atomic</code> 模板类提供的一个成员函数，用于原子地将一个值 <strong>写入</strong> <code>std::atomic</code> 类型的变量。</p>
+<p><code>std::atomic::store()</code> 基本上就相当于用 <code>operator=</code> 进行赋值，效果是一样的。</p>
+<p class="note note-warning">
+此处也先不考虑内存顺序等的影响，这个之后再在后续新文章中写。
+</p>
+<p>存储 <code>std::atomic</code> 变量的值方法如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++">std::atomic&lt;<span class="hljs-type">int</span>&gt; atm1;<br>atm<span class="hljs-number">1.</span><span class="hljs-built_in">store</span>(<span class="hljs-number">2</span>);<br>atm1 = <span class="hljs-number">2</span>; <span class="hljs-comment">// 和上面效果一样</span><br><span class="hljs-type">int</span> val = atm<span class="hljs-number">1.l</span>oad(); <span class="hljs-comment">// val = 2</span><br></code></pre></td></tr></table></figure>
+<h3 id="4-4-exchange">4.4 exchange()</h3>
+<p><code>std::atomic::exchange()</code> 是std::atomic模板类中的一个成员函数。它的主要功能是原子地将 <code>std::atomic</code> 变量的当前值与一个新的值进行 <strong>交换</strong>。</p>
+<p class="note note-warning">
+此处也先不考虑内存顺序等的影响，这个之后再在后续新文章中写。
+</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;atomic&gt;</span></span><br><br><span class="hljs-function">std::atomic&lt;<span class="hljs-type">int</span>&gt; <span class="hljs-title">atm</span><span class="hljs-params">(<span class="hljs-number">1</span>)</span></span>;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">()</span> </span>&#123;<br>    <span class="hljs-type">int</span> old_val = atm.<span class="hljs-built_in">exchange</span>(<span class="hljs-number">2</span>);<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;Old value: &quot;</span> &lt;&lt; old_val &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>; <span class="hljs-comment">// 1</span><br>    std::cout &lt;&lt; <span class="hljs-string">&quot;New value: &quot;</span> &lt;&lt; atm.<span class="hljs-built_in">load</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>; <span class="hljs-comment">// 2</span><br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span> </span>&#123;<br>    <span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo)</span></span>;<br>    t.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>在上面的代码中，<code>atm</code> 的初始值为 <code>1</code>。在线程函数 <code>foo()</code> 中通过 <code>exchange()</code> 操作将 <code>atm</code> 的值与 <code>2</code> 进行交换。</p>
+<p><code>exchange()</code> 函数会返回 <code>atm</code> 原来的初始值 <code>1</code>，并将 <code>atm</code> 的值设置为交换的 <code>2</code>。</p>
+<p>因此最终，<code>old_val</code> 的值为 <code>1</code>，<code>atm</code> 存储的值为 <code>2</code>。</p>
+<p>运行结果如下：</p>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs txt">Old value: 1<br>New value: 2<br></code></pre></td></tr></table></figure>
+<h2 id="5-多线程-std-atomic-简单使用方法">5 多线程 std::atomic 简单使用方法</h2>
+<p><a id='51'></a></p>
+<h3 id="5-1-互斥锁确保数据一致">5.1 互斥锁确保数据一致</h3>
+<p>通常情况下，我们可以通过互斥锁来确保数据的一致性。如果对数据的操作比较复杂，起始采用互斥锁是不错的选择。</p>
+<p>我们都知道加锁有一定的开销。如果对数据的操作很简单，例如仅仅是自加、自减的操作，那么采用互斥锁就显得效率没那么高了。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;mutex&gt;</span></span><br><br><span class="hljs-type">int</span> cnt = <span class="hljs-number">0</span>;<br>std::mutex mtx;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo_use_lock</span><span class="hljs-params">()</span></span>&#123;<br>	<span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">1</span>; i &lt;= <span class="hljs-number">1000000</span>; i ++ )&#123;<br>        <span class="hljs-comment">// 加锁，若不加锁，最终可能输出一个中间值</span><br>		<span class="hljs-function">std::lock_guard&lt;std::mutex&gt; <span class="hljs-title">lck</span><span class="hljs-params">(mtx)</span></span>; <br>		cnt ++ ;<br>		cnt += <span class="hljs-number">2</span>;<br>	&#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>	<span class="hljs-function">std::thread <span class="hljs-title">t1</span><span class="hljs-params">(foo_use_lock)</span></span>;<br>	<span class="hljs-function">std::thread <span class="hljs-title">t2</span><span class="hljs-params">(foo_use_lock)</span></span>;<br>	t<span class="hljs-number">1.</span><span class="hljs-built_in">join</span>();<br>	t<span class="hljs-number">2.</span><span class="hljs-built_in">join</span>();<br><br>	std::cout &lt;&lt; cnt &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>; <span class="hljs-comment">// 6000000</span><br><br>	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>在上面的代码中，我们启动了两个子线程都对共享数据 <code>cnt</code> 进行写入操作，执行的线程函数中将循环 <code>1000000</code> 次对数据先后进行 <code>++</code> 和 <code>+2</code> 的操作。</p>
+<p>为了保证数据的一致性，我们可以考虑在每次循环时 <strong>加锁</strong>，确保多线程对共享数据变量的互斥访问和修改。</p>
+<p>如果不加锁，那么最终输出的可能是一个中间值；通过加锁，我们可以确保最终的答案为 <code>6000000</code>。</p>
+<h3 id="5-2-原子操作确保数据一致">5.2 原子操作确保数据一致</h3>
+<p>在 <a href="#51">互斥锁确保数据一致</a> 的示例中，我们通过互斥锁来确保数据的一致性。我们的数据操作仅仅涉及自增（先后一次 <code>++</code>，一次 <code>+2</code>），却进行了多达 <code>2000000</code> 次加锁的操作，这毫无疑问开销是比较大的。</p>
+<p>对于简单的数据操作，我们可以用 <code>std::atomic</code> <strong>原子操作</strong> 来确保数据的一致性（原子操作不会被打断），同时又能避免频繁地加锁，显著提升效率。</p>
+<p>可以用于 <strong>原子操作</strong> 的数据运算大致包括：</p>
+<ul>
+<li>
+<p><strong>自增</strong> <code>++</code> 和 <strong>自减</strong> <code>--</code></p>
+  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">std::atomic&lt;<span class="hljs-type">int</span>&gt; <span class="hljs-title">atm</span><span class="hljs-params">(<span class="hljs-number">0</span>)</span></span>;<br>atm ++; <br>atm --;  <br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong>加法</strong> <code>+=</code> 和 <strong>减法</strong> <code>-=</code>（局限于对自身操作）</p>
+<p>需要注意的是，假设有一个变量 <code>x</code>，<code>x = x + 1</code> <strong>不是原子操作</strong>。<code>x = x + 1</code> 其实分为两步：</p>
+<p>第一步是从内存中读取变量 x 的值。这是一个内存读取（Load）操作，将 x 的值加载到处理器的寄存器中。</p>
+<p>第二步才是进行 <code>+ 1</code> 的加法操作。</p>
+  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">std::atomic&lt;<span class="hljs-type">int</span>&gt; <span class="hljs-title">atm</span><span class="hljs-params">(<span class="hljs-number">0</span>)</span></span>;<br>atm += <span class="hljs-number">3</span>; <br>atm -= <span class="hljs-number">2</span>;  <br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong>位运算</strong> <code>&amp;=</code>、<code>|=</code>、<code>^=</code> （局限于对自身操作）</p>
+  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">std::atomic&lt;<span class="hljs-type">int</span>&gt; <span class="hljs-title">atm</span><span class="hljs-params">(<span class="hljs-number">10</span>)</span></span>;<br>atm &amp;= <span class="hljs-number">3</span>;  <br>atm |= <span class="hljs-number">4</span>;  <br>atm ^= <span class="hljs-number">5</span>;  <br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>我们可以通过 <code>std::atomic</code> 改写 <a href="#51">互斥锁确保数据一致</a> 的示例如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;mutex&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;atomic&gt;</span></span><br><br>std::atomic&lt;<span class="hljs-type">int</span>&gt; at_cnt = <span class="hljs-number">0</span>;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo_use_atomic</span><span class="hljs-params">()</span></span>&#123;<br>	<span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">1</span>; i &lt;= <span class="hljs-number">1000000</span>; i ++ )&#123;<br>		at_cnt ++ ;  <span class="hljs-comment">// 原子操作不会被打断，无需加锁</span><br>		at_cnt += <span class="hljs-number">2</span>;<br>		<span class="hljs-comment">// at_cnt = at_cnt + 1; // 不是原子操作</span><br>	&#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>	<span class="hljs-function">std::thread <span class="hljs-title">t1</span><span class="hljs-params">(foo_use_atomic)</span></span>;<br>	<span class="hljs-function">std::thread <span class="hljs-title">t2</span><span class="hljs-params">(foo_use_atomic)</span></span>;<br>	t<span class="hljs-number">1.</span><span class="hljs-built_in">join</span>();<br>	t<span class="hljs-number">2.</span><span class="hljs-built_in">join</span>();<br><br>	std::cout &lt;&lt; at_cnt &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>在上面的代码中，我们通过定义共享数据变量为 <code>std::atomic&lt;int&gt;</code> 类型的原子变量确保了数据的一致性。原子类型可以看作是无锁类型的互斥访问，但是所支持的操作也必须是原子的，具有一定的局限性。</p>
+<p>最终输出的答案也可以确保为 <code>6000000</code>。</p>
+<p>总的来说，如果一个代码中某个数据所涉及的数据操作都是类似于自加、自减等 <strong>不可分割</strong> 的 <strong>简单操作</strong>，那么通常可以采用 <strong>原子操作</strong> 进行优化；而其他的数据所涉及的数据 <strong>操作是比较复杂</strong> 的，那么可以考虑采用 <strong>互斥锁</strong> 来确保数据的一致性。</p>
+<h2 id="参考">参考</h2>
+<ol>
+<li>
+<p><a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/atomic/atomic">std::atomic</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://nj.gitbooks.io/c/content/content/chapter5/chapter5-chinese.html">第5章 C++内存模型和原子类型操作</a></p>
+</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/C-%E5%A4%9A%E7%BA%BF%E7%A8%8B%E5%AD%A6%E4%B9%A0/" class="category-chain-item">C++ 多线程学习</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/C/" class="print-no-link">#C++</a>
+      
+        <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" class="print-no-link">#多线程</a>
+      
+        <a href="/tags/std-thread/" class="print-no-link">#std::thread</a>
+      
+        <a href="/tags/std-atomic/" class="print-no-link">#std::atomic</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「C++ 多线程」std::atomic 简单操作</div>
+      <div>https://marisamagic.github.io/2025/01/06/20250106/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年1月6日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/01/05/20250105/" title="「C++ 多线程」std::shared_future 多线程等待结果">
+                        <span class="hidden-mobile">「C++ 多线程」std::shared_future 多线程等待结果</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+       <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
