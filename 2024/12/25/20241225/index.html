@@ -8,8 +8,8 @@
 <head>
   <meta charset="UTF-8">
 
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/logo.png">
-  <link rel="icon" href="/img/logo.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
   
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
@@ -84,7 +84,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/marisad.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -343,10 +343,10 @@
 <p>我们同时还定义了一个 <code>std::mutex</code> 互斥量 <code>mtx</code>，也就是互斥锁。为了让两个线程互斥访问和修改数据，我们需要在每次进行 <code>count</code> 自加修改操作之前进行加锁 <code>mtx.lock()</code>，在执行完一次 <code>count</code> 自加修改操作后，进行解锁 <code>mtx.unlock()</code>。</p>
 <p>最终我们的 <code>count</code> 变量答案为 <code>200000</code>。</p>
 <p>运行结果如下:</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/25/5189z.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/25/5189z.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
 <h3 id="4-2-加锁与解锁位置分析">4.2 加锁与解锁位置分析</h3>
 <p>如果不进行加锁解锁的互斥操作，由于数据竞争可能导致的问题，那么有可能最终答案是一个介于 0 ~ 200000 的中间值:</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/25/518k0.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/25/518k0.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
 <p>如果在循环之外加锁解锁，那么本质上就变成第一个线程 <code>t1</code> 先执行完增加 <code>100000</code> 次，然后第二个线程 <code>t2</code> 执行增加 <code>100000</code> 次，而不是并发（并行）执行的。因此本质上就不是多线程了。</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;mutex&gt;</span></span><br><br>std::mutex mtx; <span class="hljs-comment">// 互斥量</span><br><span class="hljs-type">int</span> count; <br><br><span class="hljs-comment">// 错误的加锁、解锁位置。本质上不再是多线程并发执行</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span> num)</span></span>&#123;<br>    mtx.<span class="hljs-built_in">lock</span>();<br>    <span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; num; i ++ )&#123;<br>        count ++ ;<br>    &#125;<br>    mtx.<span class="hljs-built_in">unlock</span>();<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-function">std::thread <span class="hljs-title">t1</span><span class="hljs-params">(foo, <span class="hljs-number">100000</span>)</span></span>;<br>    <span class="hljs-function">std::thread <span class="hljs-title">t2</span><span class="hljs-params">(foo, <span class="hljs-number">100000</span>)</span></span>;<br>    t<span class="hljs-number">1.</span><span class="hljs-built_in">join</span>();<br>    t<span class="hljs-number">2.</span><span class="hljs-built_in">join</span>();<br><br>    std::cout &lt;&lt; <span class="hljs-string">&quot;final value: &quot;</span> &lt;&lt; count &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
 <p>在上面的代码中，我们在线程函数的循环之外加锁解锁，那么本质上不是多线程，虽然最终结果也是 <code>200000</code>，但是脱离了我们要并行执行的本意。</p>
@@ -362,7 +362,7 @@
 <p>在每次从消息队列中取出数据时，调用 <code>pop_command</code> 函数尝试去除队列中的一个数据。如果队列不为空，那么成功取出并输出消息指令的内容；如果队列为空，那么无法取出数据。</p>
 <p>在 <code>pop_command</code> 函数中，先进行加锁，然后判断队列是否为空，如果为空则直接解锁互斥量并返回 <code>false</code>，表示无法取出数据；如果队列不为空，就将队首的数据赋值给传入的引用参数 command，接着将队首元素从队列中移除，最后再进行解锁，返回 <code>true</code>，表示成功取出数据。</p>
 <p>运行结果如下:</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/25/5ilu0.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/25/5ilu0.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
 
                 
               </div>

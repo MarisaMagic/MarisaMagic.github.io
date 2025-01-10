@@ -8,8 +8,8 @@
 <head>
   <meta charset="UTF-8">
 
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/logo.png">
-  <link rel="icon" href="/img/logo.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
   
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
@@ -83,7 +83,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/marisad.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -355,16 +355,16 @@
 <p>在多核机上，<strong>每个核心都可以独立地执行不同的线程或进程</strong>，从而真正地同时处理多个任务，实现真正的 <strong>并行</strong>。</p>
 <h4 id="2-2-2-单核机的任务切换">2.2.2 单核机的任务切换</h4>
 <p>单核机上往往通过 <strong>时间分片</strong> 和 <strong>上下文切换</strong> 实现任务的切换，每个任务被分配一个小的时间段执行，任务执行结束后，会从当前任务切换到下一个任务。可以实现宏观上的同时处理任务。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/17/tt9u.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/17/tt9u.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
 <p>现在大部分的电脑 CPU 都是多核的，但即使在多核环境中，当线程数超过核心数时（电脑都会有线程限制数量，有时会大于核心数量，一切以实际测试结果为准），也需要在每个单核上进行时间片轮转和上下文切换。此时两种并发的方式是混合进行的。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/17/tt94.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/17/tt94.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
 <h3 id="2-3-并发的途径">2.3 并发的途径</h3>
 <h4 id="2-3-1-多进程并发">2.3.1 多进程并发</h4>
 <p>运用独立的进程实现并发。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/17/4c73.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/17/4c73.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
 <h4 id="2-3-2-一个进程内多线程并发">2.3.2 一个进程内多线程并发</h4>
 <p>同一个进程内的所有线程共享进程的大部分资源，但是这种方式往往比较复杂。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/17/mbb.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/17/mbb.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
 <h2 id="3-并发的意义">3 并发的意义</h2>
 <p>并发技术通常能够 <strong>提高资源利用率、增强系统的响应能力、支持复杂任务的分解与处理</strong>，适用于多用户交互、计算较为密集的任务等场景。</p>
 <p>当然，有时候也不适合使用并发技术。当对于 <strong>一些简单的、顺序依赖很强的</strong> 程序，或者 <strong>对执行顺序有严格要求</strong> 的任务，并发可能会引入不必要的复杂性反而造成多余的开销，此时就不如使用传统的串行编程方式了。</p>
@@ -373,7 +373,7 @@
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123; <br>    std::cout &lt;&lt; <span class="hljs-string">&quot;Hello, this is MarisaMagic.&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
 <p>可以将其改写多线程程序：</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">()</span></span>&#123;<br>	std::cout &lt;&lt; <span class="hljs-string">&quot;Hello, this is MarisaMagic.&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;  <span class="hljs-comment">// 主线程从 main() 开始执行</span><br>	<span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo)</span></span>; <span class="hljs-comment">// 新的子线程 t 从 foo() 开始执行</span><br>	t.<span class="hljs-built_in">join</span>();           <span class="hljs-comment">// 等待 t 线程执行完成</span><br><br>	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/17/vol3.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/17/vol3.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
 <p>每个线程需要一个 <strong>线程接口函数</strong>，例如上面代码中的 <code>foo()</code>。实际上，主函数也是一个线程，我们可以看作是主线程。为了输出 <code>Hello, this is MarisaMagic.</code> ，我们启动了一个新的线程 <code>t</code>（通过 <code>std::thread</code> 创建）来执行输出，此时该程序就有两个线程存在，一个是主线程从 <code>main()</code> 开始执行，另一个就是新的子线程从 <code>foo()</code> 开始执行。</p>
 <p>当新线程启动之后，主线程也在同步执行。主线程有可能执行地比较快，如果不等待子线程执行完，会直接执行到 <code>main()</code> 结束，可能会在子线程 <code>foo()</code> 还未执行结束就结束整个程序。因此，我们需要调用 <code>join()</code> 使得主线程等待子线程。</p>
 <p>这是个很简答的程序，实际上使用多线程是比较多余的。但是后面会遇到很多比较经典、复杂的程序。具体的基本 C++ 多线程（std::thread）工具的用法，进阶的并发程序以及高级线程管理等知识都会在后续慢慢更新 DA⭐ZE ~</p>

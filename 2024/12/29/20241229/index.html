@@ -8,8 +8,8 @@
 <head>
   <meta charset="UTF-8">
 
-  <link rel="apple-touch-icon" sizes="76x76" href="/img/logo.png">
-  <link rel="icon" href="/img/logo.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
   
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
@@ -85,7 +85,7 @@
   <script id="fluid-configs">
     var Fluid = window.Fluid || {};
     Fluid.ctx = Object.assign({}, Fluid.ctx)
-    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"/img/marisad.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
 
     if (CONFIG.web_analytics.follow_dnt) {
       var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
@@ -323,7 +323,7 @@
 <h2 id="2-std-shared-mutex-演变过程">2 std::shared_mutex 演变过程</h2>
 <p><code>std::shared_mutex</code> 其实最早是在 C++ 14 的时候被引入，但是此时的 <code>std::shared_mutex</code> 是 <strong>带有定时功能</strong> 的 <strong>共享互斥锁</strong>，相当于现在的 <code>std::shared_timed_mutex</code>。</p>
 <p>一方面为了保持命名的一致性，另一方面为了空出了空出 <strong>不带定时功能</strong> 的 <strong>共享锁</strong> <code>std::shared_mutex</code> 的定义，设定一个更加简单、更加高效的共享锁，将这两种共享锁进行区分，后来 C++ 14 引入的 <code>std::shared_mutex</code> 就改名为 <code>std::shared_timed_mutex</code>，并且在之后的 C++ 17 中正式引入了不带有定时功能的 <code>std::shared_mutex</code>。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/29/4yn1g.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/29/4yn1g.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
 <p>std::shared_mutex 演变过程详情可见 <a target="_blank" rel="noopener" href="https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2014/n3891.htm">A proposal to rename shared_mutex to shared_timed_mutex</a></p>
 <h2 id="3-std-shared-mutex-成员函数">3 std::shared_mutex 成员函数</h2>
 <h3 id="3-1-lock-try-lock-unlock">3.1 lock(), try_lock(), unlock()</h3>
@@ -332,7 +332,7 @@
 <p>在上面的代码中，如果线程的标记为奇数，那么调用 <code>std::shared_mutex::lock()</code> 和 <code>std::shared_mutex::unlock()</code> 进行手动的尝试加锁解锁。如果尝试加锁后成功获得了锁，那么线程继续执行下去；否则当前线程会被阻塞，直到其他线程释放了锁。</p>
 <p>如果线程的标记为偶数，那么调用 <code>std::shared_mutex::try_lock()</code> 去进行非阻塞地尝试加锁。如果成功获得锁，那么线程继续执行下去；否则当前线程放弃获得锁，直接返回。</p>
 <p>可能的运行结果如下：</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/29/1329g6.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/29/1329g6.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
 <p>可以看出，上面的代码中完全当作 <strong>独占锁</strong> 进行使用，和 <code>std::mutex</code> 的作用是一样的。</p>
 <h3 id="3-2-lock-shared-try-lock-shared-unlock-shared">3.2 lock_shared(), try_lock_shared(), unlock_shared()</h3>
 <p>在 <code>std::shared_mutex</code> 中的 lock_shared(), try_lock_shared(), unlock_shared() 函数用于作为 <strong>共享锁</strong> 的加锁、尝试加锁和解锁。</p>
@@ -343,7 +343,7 @@
 <p>之后，当这多个读线程全部执行完毕，并且全部将共享锁释放，写线程 <strong>优先</strong> 获得锁。当写线程获得锁时，其他新的读线程尝试获得锁会被阻塞（调用 <code>try_lock_shared()</code> 函数的读线程则会直接返回），直到写线程释放锁。</p>
 <p>写线程执行完数据修改操作并释放锁之后，其他新的读线程才能够成功共享锁。</p>
 <p>可能的运行结果如下：</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/29/sp78.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/29/sp78.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
 <p>可以看出，一开始有多个读线程共享锁，此时的数据为 <code>0</code>；然后当这些读线程释放共享锁之后，写线程优先获得锁，并对数据进行修改，在此期间，新的读线程尝试共享锁被阻塞（调用 <code>try_lock_shared()</code> 函数的读线程则会直接返回）；当写线程操作完并释放锁之后，新的读线程成功共享锁，并读取数据，此时的数据为 <code>1</code>。</p>
 <h3 id="3-3-std-shared-mutex-读写线程优先级">3.3 std::shared_mutex 读写线程优先级</h3>
 <ul>
@@ -378,7 +378,7 @@
 <p>一共创建了 <code>10</code> 个读者线程和 <code>2</code> 个写者线程，线程接口函数分别为 <code>Reader_Writer::reader</code> 和 <code>Reader_Writer::writer</code>。在线程接口函数中，<code>Reader_Writer::reader</code> 采用 <code>std::shared_lock</code> 实现了多个读线程共享锁的自动加锁解锁； <code>Reader_Writer::writer</code> 采用 <code>std::unique_lock</code> 实现写者线程之间互斥访问共享数据（独占锁机制），以及自动的加锁解锁。</p>
 <p>读者/写者线程在循环中每次读/写操作完成并释放锁之后，当前线程都进行一个小时间段的休息，避免频繁地读/写数据。</p>
 <p>可能的运行结果如下：</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/29/tw1j.png" srcset="/img/marisad.gif" lazyload alt=""></p>
+<p><img src="https://sukicdn.com/wyx/i/2024/12/29/tw1j.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
 <h2 id="参考">参考</h2>
 <ol>
 <li>
