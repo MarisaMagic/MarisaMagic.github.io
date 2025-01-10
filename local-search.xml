@@ -4,6 +4,35 @@
   
   
   <entry>
+    <title>「C++ 进阶语法」std::function 基本用法</title>
+    <link href="/2025/01/10/20250110/"/>
+    <url>/2025/01/10/20250110/</url>
+    
+    <content type="html"><![CDATA[<p>文章大图来源：<a href="https://www.pixiv.net/artworks/107985575">pixiv_id=107985575</a></p><h2 id="1-基本概念">1 基本概念</h2><p><code>std::function</code> 是 C++ 标准库中的一个模板类，定义在 <code>&lt;functional&gt;</code> 头文件中。</p><p><code>std::function</code> 是一种通用的、多态的 <strong>函数封装器</strong>，可以存储、复制和调用任何可调用对象（如函数、函数指针、成员函数指针、lambda 表达式等）</p><h2 id="2-基本语法">2 基本语法</h2><p><code>std::function</code> 其基本语法是 <code>std::function&lt;返回值类型(参数类型列表)&gt; 变量名;</code> 。</p><p>例如 <code>std::function&lt;void(int, std::string)&gt;</code> 定义了一个 存储返回值为 <code>void</code>，接收一个 <code>int</code> 参数和一个 <code>std::string</code> 字符串参数的函数（可调用对象） 的 <code>std::function</code> 对象。</p><ul><li><p>函数指针</p><p>可以将普通函数指针赋值给 <code>std::function</code> 对象：</p>  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span> a, std::string s)</span></span>&#123;<br>    std::cout &lt;&lt; a &lt;&lt; <span class="hljs-string">&#x27; &#x27;</span> &lt;&lt; s &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br>std::function&lt;<span class="hljs-type">void</span>(<span class="hljs-type">int</span>, std::string)&gt; func = add;<br><span class="hljs-built_in">func</span>(<span class="hljs-number">520</span>, <span class="hljs-string">&quot;Marisa&quot;</span>); <span class="hljs-comment">// 520 Marisa</span><br></code></pre></td></tr></table></figure></li><li><p>lambda 表达式</p><p>Lambda 表达式是一种匿名函数，也可以赋值给 <code>std::function</code> 对象：</p>  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++">std::function&lt;<span class="hljs-type">void</span>(<span class="hljs-type">int</span>, std::string)&gt; func = [](<span class="hljs-type">int</span> x, std::string)&#123;<br>    std::cout &lt;&lt; a &lt;&lt; <span class="hljs-string">&#x27; &#x27;</span> &lt;&lt; s &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;;<br><span class="hljs-built_in">func</span>(<span class="hljs-number">520</span>, <span class="hljs-string">&quot;Marisa&quot;</span>); <span class="hljs-comment">// 520 Marisa</span><br></code></pre></td></tr></table></figure></li><li><p>成员函数指针</p><p>对于类的成员函数，需要结合对象实例来使用:</p>  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">MyClass</span>&#123;<br><span class="hljs-keyword">public</span>:<br>    <span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span> a, <span class="hljs-type">int</span> b)</span></span>&#123;<br>        <span class="hljs-keyword">return</span> a * b;<br>    &#125;<br>&#125;;<br><br>MyClass obj; <span class="hljs-comment">// 创建一个对象实例</span><br>std::function&lt;<span class="hljs-type">int</span>(<span class="hljs-type">int</span>, <span class="hljs-type">int</span>)&gt; func = std::<span class="hljs-built_in">bind</span>(&amp;MyClass::multiply, &amp;obj, std::placeholders::_1, std::placeholders::_2);<br><br><span class="hljs-type">int</span> res = <span class="hljs-built_in">func</span>(<span class="hljs-number">2</span>, <span class="hljs-number">3</span>); <span class="hljs-comment">// 6</span><br></code></pre></td></tr></table></figure><p>这里使用 std::bind 来绑定成员函数和对象实例，<code>std::placeholders::_1</code> 和 <code>std::placeholders::_2</code> 表示参数占位符，用于在调用 func 时传递参数。</p></li></ul>]]></content>
+    
+    
+    <categories>
+      
+      <category>追逐繁星</category>
+      
+      <category>C++ 进阶语法</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>C++</tag>
+      
+      <tag>std::function</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>「C++ 多线程」std::atomic 内存序</title>
     <link href="/2025/01/08/20250108/"/>
     <url>/2025/01/08/20250108/</url>
@@ -15,7 +44,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -46,7 +75,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -83,7 +112,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -116,7 +145,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -142,14 +171,14 @@
     <link href="/2025/01/04/20250104/"/>
     <url>/2025/01/04/20250104/</url>
     
-    <content type="html"><![CDATA[<p>文章大图来源：<a href="https://www.pixiv.net/artworks/104169949">pixiv_id=104169949</a></p><h2 id="1-std-packaged-task">1 std::packaged_task</h2><h3 id="1-1-基本概念">1.1 基本概念</h3><p><code>std::packaged_task</code> 是 C++ 11 引入的一个模板类，定义在 <code>&lt;future&gt;</code> 头文件中。</p><p><code>std::packaged_task</code> 将一个 <strong>可调用对象</strong>（如函数、函数对象、lambda 表达式等）包装起来，以便异步执行，并且可以通过关联的 <code>std::future</code> 对象来获取这个可调用对象的返回值。</p><p>其基本函数原型为：</p><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span>&lt; <span class="hljs-keyword">class</span> <span class="hljs-title class_">R</span>, <span class="hljs-keyword">class</span> ...ArgTypes &gt;<br><span class="hljs-keyword">class</span> <span class="hljs-title class_">packaged_task</span>&lt;<span class="hljs-built_in">R</span>(ArgTypes...)&gt;;<br></code></pre></td></tr></table></figure><p>其中 <code>R</code> 为可调用对象的返回值的类型；<code>ArgTypes</code> 为可调用对象的参数列表。</p><p><a id='12'></a></p><h3 id="1-2-基本用法">1.2 基本用法</h3><ol><li><p>首先我们需要一个可调用对象，我们可以定义一个简单的两数相加的函数：</p> <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span> a, <span class="hljs-type">int</span> b)</span></span>&#123;<br>    <span class="hljs-keyword">return</span> a + b;<br>&#125;<br></code></pre></td></tr></table></figure></li><li><p>然后通过 <code>std::packaged_task</code> 把这个函数包装起来：</p> <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">std::packaged_task&lt;<span class="hljs-title">int</span><span class="hljs-params">(<span class="hljs-type">int</span>, <span class="hljs-type">int</span>)</span>&gt; <span class="hljs-title">task</span><span class="hljs-params">(foo)</span></span>;<br></code></pre></td></tr></table></figure><p>其中 <code>int(int, int)</code> 是可调用对象的函数签名。</p></li><li><p>然后通过 <code>task.get_future()</code> 获取这个包装任务 <code>task</code> 关联的 <code>std::future</code> 对象，之后将通过这个对象获取任务执行的结果。</p> <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++">std::future&lt;<span class="hljs-type">int</span>&gt; res = task.<span class="hljs-built_in">get_future</span>();<br></code></pre></td></tr></table></figure></li><li><p>将 <code>std::packaged_task</code> 对象（包装的任务 <code>task</code>）传入一个子线程执行（也可以直接调用这个 <code>task</code> 执行）：</p> <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(std::ref(task), <span class="hljs-number">1</span>, <span class="hljs-number">2</span>)</span></span>; <br>t.<span class="hljs-built_in">join</span>();<br></code></pre></td></tr></table></figure><p>在上面传入子线程执行中，传入的是 <code>std::packaged_task</code> 的引用，也可以使用 <code>std::move</code> 移动语义。当 <code>std::packaged_task</code> 被调用时，它会执行包装的可调用对象。</p><p>需要注意的是：同一个 <code>std::packaged_task</code> 对象 <strong>只能被调用一次</strong>。<code>std::packaged_task</code> 是一个可移动但不可复制的类型，在执行完成后，其内部状态会发生改变（变成任务已完成的状态，关联的 <code>std::future</code> 对象状态也被更新）。如果允许被多次调用，就会出现多个返回值，逻辑会出现混乱。</p></li><li><p>通过 <code>std::future</code> 对象获取结果：</p> <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">auto</span> data = res.<span class="hljs-built_in">get</span>(); <span class="hljs-comment">// 如果包装的异步任务还未完成，主线程被阻塞</span><br></code></pre></td></tr></table></figure></li></ol><p>以下是完整的代码示例：</p><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;future&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span> a, <span class="hljs-type">int</span> b)</span></span>&#123;<br>    <span class="hljs-keyword">return</span> a + b;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-function">std::packaged_task&lt;<span class="hljs-title">int</span><span class="hljs-params">(<span class="hljs-type">int</span>, <span class="hljs-type">int</span>)</span>&gt; <span class="hljs-title">task</span><span class="hljs-params">(foo)</span></span>; <span class="hljs-comment">// 包装一个异步任务</span><br>    std::future&lt;<span class="hljs-type">int</span>&gt; res = task.<span class="hljs-built_in">get_future</span>(); <span class="hljs-comment">// 获取关联的 future 对象</span><br><br>    <span class="hljs-comment">// 创建一个子线程执行异步任务</span><br>    <span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(std::ref(task), <span class="hljs-number">1</span>, <span class="hljs-number">2</span>)</span></span>;<br>    t.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-comment">// 通过 get() 获取结果</span><br>    <span class="hljs-keyword">auto</span> data = res.<span class="hljs-built_in">get</span>();<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;finally get the res = &quot;</span> &lt;&lt; data &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure><p>运行结果如下：</p><figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs txt">finally get the res = 3<br></code></pre></td></tr></table></figure><h2 id="2-std-packaged-task-执行方式对比">2 std::packaged_task 执行方式对比</h2><p>在 <a href="#12">1.2 std::packaged_task 基本用法</a> 中，通过启动一个子线程来执行异步任务，获取返回的结果。当然，也可以直接在主线程中调用 <code>std::packaged_task</code> 对象来执行这个任务。</p><p>如果有一个包装的任务如下：</p><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span> a, <span class="hljs-type">int</span> b)</span></span>&#123;<br>    <span class="hljs-keyword">return</span> a + b;<br>&#125;<br><br><span class="hljs-function">std::packaged_task&lt;<span class="hljs-title">int</span><span class="hljs-params">(<span class="hljs-type">int</span>, <span class="hljs-type">int</span>)</span>&gt; <span class="hljs-title">task</span><span class="hljs-params">(foo)</span></span>;<br></code></pre></td></tr></table></figure><p>在主线程直接调用的方法为：</p><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">task</span>(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>); <span class="hljs-comment">// 传入 foo() 函数参数即可</span><br></code></pre></td></tr></table></figure><p>可以看出，<code>std::packaged_task</code> 可以手动地控制任务在一个子线程中异步执行，还是就在当前的主线程中同步执行。</p><p>以下是一个完整的代码测试示例：</p><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;chrono&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;future&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span> a, <span class="hljs-type">int</span> b)</span></span>&#123;<br>std::cout &lt;&lt; <span class="hljs-string">&quot;foo() starts, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>std::this_thread::<span class="hljs-built_in">sleep_for</span>(std::chrono::<span class="hljs-built_in">milliseconds</span>(<span class="hljs-number">2000</span>));<br>std::cout &lt;&lt; <span class="hljs-string">&quot;foo() ends, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><span class="hljs-keyword">return</span> a + b;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">run_in_thread</span><span class="hljs-params">()</span></span>&#123;<br><span class="hljs-function">std::packaged_task&lt;<span class="hljs-title">int</span><span class="hljs-params">(<span class="hljs-type">int</span>, <span class="hljs-type">int</span>)</span>&gt; <span class="hljs-title">pt</span><span class="hljs-params">(foo)</span></span>; <span class="hljs-comment">// 包装一个异步任务</span><br>std::future&lt;<span class="hljs-type">int</span>&gt; res = pt.<span class="hljs-built_in">get_future</span>(); <span class="hljs-comment">// 获取 pt 关联的 future 对象</span><br><br><span class="hljs-comment">// 开启一个子线程，调用对象包装引用，启动异步任务</span><br><span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(std::ref(pt), <span class="hljs-number">3</span>, <span class="hljs-number">4</span>)</span></span>; <br>t.<span class="hljs-built_in">join</span>();<br><br><span class="hljs-comment">// 获取 packaged_task 的结果</span><br><span class="hljs-type">int</span> data = res.<span class="hljs-built_in">get</span>();<br>std::cout &lt;&lt; <span class="hljs-string">&quot;run_in_thread(): get the res = &quot;</span> &lt;&lt; data &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">run_in_main</span><span class="hljs-params">()</span></span>&#123;<br><span class="hljs-function">std::packaged_task&lt;<span class="hljs-title">int</span><span class="hljs-params">(<span class="hljs-type">int</span>, <span class="hljs-type">int</span>)</span>&gt; <span class="hljs-title">pt</span><span class="hljs-params">(foo)</span></span>; <span class="hljs-comment">// 包装一个异步任务</span><br>std::future&lt;<span class="hljs-type">int</span>&gt; res = pt.<span class="hljs-built_in">get_future</span>(); <span class="hljs-comment">// 获取 pt 关联的 future 对象</span><br><br><span class="hljs-comment">// 直接执行任务</span><br><span class="hljs-built_in">pt</span>(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>); <span class="hljs-comment">// 传入参数</span><br><br><span class="hljs-comment">// 获取 packaged_task 的结果</span><br><span class="hljs-type">int</span> data = res.<span class="hljs-built_in">get</span>();<br>std::cout &lt;&lt; <span class="hljs-string">&quot;run_in_main(): get the res = &quot;</span> &lt;&lt; data &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>std::cout &lt;&lt; <span class="hljs-string">&quot;main() starts, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br><span class="hljs-built_in">run_in_main</span>();<br><span class="hljs-built_in">run_in_thread</span>();<br><br><span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure><p>可能的运行结果如下：</p><figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs txt">main() starts, thread id = 0xb8<br>foo() starts, thread id = 0xb8<br>foo() ends, thread id = 0xb8<br>run_in_main(): get the res = 3<br>foo() starts, thread id = 0xbc<br>foo() ends, thread id = 0xbc<br>run_in_thread(): get the res = 7<br></code></pre></td></tr></table></figure><h2 id="3-std-packaged-task-与-std-async">3 std::packaged_task 与 std::async</h2><h3 id="3-1-概念区别">3.1 概念区别</h3><p><code>std::packaged_task</code> 是一个类模板，它主要用于将一个可调用对象（如函数、函数对象、lambda 表达式等）包装起来，方便异步调用并通过关联的 <code>std::future</code> 对象获取返回结果。</p><p><code>std::async</code> 是一个函数模板，主要用于简化异步任务的启动。它会自动创建一个线程（或者在某些情况下可能不会创建新线程，比如使用 <code>std::launch::deferred</code> 策略）来执行一个可调用对象，并返回一个<code>std::future</code> 对象，用于获取任务的结果。</p><h3 id="3-2-执行策略区别">3.2 执行策略区别</h3><p>对于 <code>std::packaged_task</code>，需要手动管理任务的执行。可以将 <code>packaged_task</code> 对象传递给一个子线程 <code>std::thread</code> 来启动任务执行，也可以将其放入一个线程池等其他执行环境中，或者在当前线程中直接调用。</p><p><code>std::async</code> 的执行策略由其第一个参数（<code>std::launch</code> 类型）决定。其中 <code>std::launch::async</code> 表示一定会在一个新线程中异步执行任务；<code>std::launch::deferred</code> 表示任务会被延迟执行。<a href="https://marisamagic.github.io/2025/01/02/20250102/">「C++ 多线程」std::async 异步任务创建</a></p><h3 id="3-3-使用场景">3.3 使用场景</h3><p>总的来说，<code>std::async</code> 更侧重于简单快速地开启一个异步任务，并且在不需要深入控制任务执行细节的场景下获取结果；<code>std::packaged_task</code> 侧重于对任务的封装和灵活的执行控制。</p><h2 id="参考">参考</h2><ol><li><a href="https://en.cppreference.com/w/cpp/thread/packaged_task">std::packaged_task</a></li></ol>]]></content>
+    <content type="html"><![CDATA[<p>文章大图来源：<a href="https://www.pixiv.net/artworks/104169949">pixiv_id=104169949</a></p><h2 id="1-std-packaged-task">1 std::packaged_task</h2><h3 id="1-1-基本概念">1.1 基本概念</h3><p><code>std::packaged_task</code> 是 C++ 11 引入的一个模板类，定义在 <code>&lt;future&gt;</code> 头文件中。</p><p><code>std::packaged_task</code> 将一个 <strong>可调用对象</strong>（如函数、函数对象、lambda 表达式等）包装起来，以便异步执行，并且可以通过关联的 <code>std::future</code> 对象来获取这个可调用对象的返回值。</p><p>其基本函数原型为：</p><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">template</span>&lt; <span class="hljs-keyword">class</span> <span class="hljs-title class_">R</span>, <span class="hljs-keyword">class</span> ...ArgTypes &gt;<br><span class="hljs-keyword">class</span> <span class="hljs-title class_">packaged_task</span>&lt;<span class="hljs-built_in">R</span>(ArgTypes...)&gt;;<br></code></pre></td></tr></table></figure><p>其中 <code>R</code> 为可调用对象的返回值的类型；<code>ArgTypes</code> 为可调用对象的参数列表。</p><p><a id='12'></a></p><h3 id="1-2-基本用法">1.2 基本用法</h3><ol><li><p>首先我们需要一个可调用对象，我们可以定义一个简单的两数相加的函数：</p> <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span> a, <span class="hljs-type">int</span> b)</span></span>&#123;<br>    <span class="hljs-keyword">return</span> a + b;<br>&#125;<br></code></pre></td></tr></table></figure></li><li><p>然后通过 <code>std::packaged_task</code> 把这个函数包装起来：</p> <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">std::packaged_task&lt;<span class="hljs-title">int</span><span class="hljs-params">(<span class="hljs-type">int</span>, <span class="hljs-type">int</span>)</span>&gt; <span class="hljs-title">task</span><span class="hljs-params">(foo)</span></span>;<br></code></pre></td></tr></table></figure><p>其中 <code>int(int, int)</code> 是可调用对象的函数签名。</p></li><li><p>然后通过 <code>task.get_future()</code> 获取这个包装任务 <code>task</code> 关联的 <code>std::future</code> 对象，之后将通过这个对象获取任务执行的结果。</p> <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++">std::future&lt;<span class="hljs-type">int</span>&gt; res = task.<span class="hljs-built_in">get_future</span>();<br></code></pre></td></tr></table></figure></li><li><p>将 <code>std::packaged_task</code> 对象（包装的任务 <code>task</code>）传入一个子线程执行（也可以直接调用这个 <code>task</code> 执行）：</p> <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(std::ref(task), <span class="hljs-number">1</span>, <span class="hljs-number">2</span>)</span></span>; <br>t.<span class="hljs-built_in">join</span>();<br></code></pre></td></tr></table></figure><p>在上面传入子线程执行中，传入的是 <code>std::packaged_task</code> 的引用，也可以使用 <code>std::move</code> 移动语义。当 <code>std::packaged_task</code> 被调用时，它会执行包装的可调用对象。</p><p>需要注意的是：同一个 <code>std::packaged_task</code> 对象 <strong>只能被调用一次</strong>。<code>std::packaged_task</code> 是一个可移动但不可复制的类型，在执行完成后，其内部状态会发生改变（变成任务已完成的状态，关联的 <code>std::future</code> 对象状态也被更新）。如果允许被多次调用，就会出现多个返回值，逻辑会出现混乱。</p></li><li><p>通过 <code>std::future</code> 对象获取结果：</p> <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">auto</span> data = res.<span class="hljs-built_in">get</span>(); <span class="hljs-comment">// 如果包装的异步任务还未完成，主线程被阻塞</span><br></code></pre></td></tr></table></figure></li></ol><p>以下是完整的代码示例：</p><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;future&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span> a, <span class="hljs-type">int</span> b)</span></span>&#123;<br>    <span class="hljs-keyword">return</span> a + b;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    <span class="hljs-function">std::packaged_task&lt;<span class="hljs-title">int</span><span class="hljs-params">(<span class="hljs-type">int</span>, <span class="hljs-type">int</span>)</span>&gt; <span class="hljs-title">task</span><span class="hljs-params">(foo)</span></span>; <span class="hljs-comment">// 包装一个异步任务</span><br>    std::future&lt;<span class="hljs-type">int</span>&gt; res = task.<span class="hljs-built_in">get_future</span>(); <span class="hljs-comment">// 获取关联的 future 对象</span><br><br>    <span class="hljs-comment">// 创建一个子线程执行异步任务</span><br>    <span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(std::ref(task), <span class="hljs-number">1</span>, <span class="hljs-number">2</span>)</span></span>;<br>    t.<span class="hljs-built_in">join</span>();<br><br>    <span class="hljs-comment">// 通过 get() 获取结果</span><br>    <span class="hljs-keyword">auto</span> data = res.<span class="hljs-built_in">get</span>();<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;finally get the res = &quot;</span> &lt;&lt; data &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure><p>运行结果如下：</p><figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs txt">finally get the res = 3<br></code></pre></td></tr></table></figure><h3 id="1-3-使用-std-bind">1.3 使用 std::bind</h3><p>std::bind 是一个函数模板，用于将 <strong>可调用对象</strong>（函数、成员函数指针、lambda 表达式等）与<strong>参数</strong> 进行 <strong>绑定</strong>。它返回一个新的可调用对象，这个新对象可以在调用时自动将绑定的参数传递给原始的可调用对象。</p><p>假设有一个函数 <code>int add(int a, int b)</code>，那么可以使用 std::bind 来创建一个新的可调用对象，如 <code>auto myadd = std::bind(add, 1, 2)</code>。这里 <code>myadd</code> 是一个新的可调用对象，之后使用 <code>myadd()</code> 进行调用，和调用 <code>add(1, 2)</code> 的效果一样。</p><p>可以看出，相当于用 <code>myadd</code> 将 <code>add</code> 函数和参数 <code>a = 1, b = 2</code> 进行绑定，变为一个新的 <strong>无参数</strong> 的、返回类型为 <code>int</code> 的 <code>myadd</code> 函数。</p><p>我们同样可以用到 <code>std::packaged_task</code> 创建中，例如：</p><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">add</span><span class="hljs-params">(<span class="hljs-type">int</span> a, <span class="hljs-type">int</span> b)</span></span>&#123; <br>    <span class="hljs-keyword">return</span> a + b;<br>&#125;<br><br><span class="hljs-comment">// 通过 bind 创建包装任务</span><br><span class="hljs-function">std::packaged_task&lt;<span class="hljs-title">int</span><span class="hljs-params">()</span>&gt; <span class="hljs-title">task</span><span class="hljs-params">(std::bind(add, <span class="hljs-number">1</span>, <span class="hljs-number">2</span>))</span></span>;<br>std::future&lt;<span class="hljs-type">int</span>&gt; res = task.<span class="hljs-built_in">get_future</span>();<br><br><span class="hljs-comment">// 执行任务</span><br><span class="hljs-built_in">task</span>();<br><br><span class="hljs-comment">// 通过 get() 获取结果</span><br><span class="hljs-keyword">auto</span> data = res.<span class="hljs-built_in">get</span>();<br>std::cout &lt;&lt; <span class="hljs-string">&quot;finally get the res = &quot;</span> &lt;&lt; data &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br></code></pre></td></tr></table></figure><h2 id="2-std-packaged-task-执行方式对比">2 std::packaged_task 执行方式对比</h2><p>在 <a href="#12">1.2 std::packaged_task 基本用法</a> 中，通过启动一个子线程来执行异步任务，获取返回的结果。当然，也可以直接在主线程中调用 <code>std::packaged_task</code> 对象来执行这个任务。</p><p>如果有一个包装的任务如下：</p><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span> a, <span class="hljs-type">int</span> b)</span></span>&#123;<br>    <span class="hljs-keyword">return</span> a + b;<br>&#125;<br><br><span class="hljs-function">std::packaged_task&lt;<span class="hljs-title">int</span><span class="hljs-params">(<span class="hljs-type">int</span>, <span class="hljs-type">int</span>)</span>&gt; <span class="hljs-title">task</span><span class="hljs-params">(foo)</span></span>;<br></code></pre></td></tr></table></figure><p>在主线程直接调用的方法为：</p><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">task</span>(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>); <span class="hljs-comment">// 传入 foo() 函数参数即可</span><br></code></pre></td></tr></table></figure><p>可以看出，<code>std::packaged_task</code> 可以手动地控制任务在一个子线程中异步执行，还是就在当前的主线程中同步执行。</p><p>以下是一个完整的代码测试示例：</p><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;chrono&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;future&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span> a, <span class="hljs-type">int</span> b)</span></span>&#123;<br>std::cout &lt;&lt; <span class="hljs-string">&quot;foo() starts, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>std::this_thread::<span class="hljs-built_in">sleep_for</span>(std::chrono::<span class="hljs-built_in">milliseconds</span>(<span class="hljs-number">2000</span>));<br>std::cout &lt;&lt; <span class="hljs-string">&quot;foo() ends, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><span class="hljs-keyword">return</span> a + b;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">run_in_thread</span><span class="hljs-params">()</span></span>&#123;<br><span class="hljs-function">std::packaged_task&lt;<span class="hljs-title">int</span><span class="hljs-params">(<span class="hljs-type">int</span>, <span class="hljs-type">int</span>)</span>&gt; <span class="hljs-title">pt</span><span class="hljs-params">(foo)</span></span>; <span class="hljs-comment">// 包装一个异步任务</span><br>std::future&lt;<span class="hljs-type">int</span>&gt; res = pt.<span class="hljs-built_in">get_future</span>(); <span class="hljs-comment">// 获取 pt 关联的 future 对象</span><br><br><span class="hljs-comment">// 开启一个子线程，调用对象包装引用，启动异步任务</span><br><span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(std::ref(pt), <span class="hljs-number">3</span>, <span class="hljs-number">4</span>)</span></span>; <br>t.<span class="hljs-built_in">join</span>();<br><br><span class="hljs-comment">// 获取 packaged_task 的结果</span><br><span class="hljs-type">int</span> data = res.<span class="hljs-built_in">get</span>();<br>std::cout &lt;&lt; <span class="hljs-string">&quot;run_in_thread(): get the res = &quot;</span> &lt;&lt; data &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">run_in_main</span><span class="hljs-params">()</span></span>&#123;<br><span class="hljs-function">std::packaged_task&lt;<span class="hljs-title">int</span><span class="hljs-params">(<span class="hljs-type">int</span>, <span class="hljs-type">int</span>)</span>&gt; <span class="hljs-title">pt</span><span class="hljs-params">(foo)</span></span>; <span class="hljs-comment">// 包装一个异步任务</span><br>std::future&lt;<span class="hljs-type">int</span>&gt; res = pt.<span class="hljs-built_in">get_future</span>(); <span class="hljs-comment">// 获取 pt 关联的 future 对象</span><br><br><span class="hljs-comment">// 直接执行任务</span><br><span class="hljs-built_in">pt</span>(<span class="hljs-number">1</span>, <span class="hljs-number">2</span>); <span class="hljs-comment">// 传入参数</span><br><br><span class="hljs-comment">// 获取 packaged_task 的结果</span><br><span class="hljs-type">int</span> data = res.<span class="hljs-built_in">get</span>();<br>std::cout &lt;&lt; <span class="hljs-string">&quot;run_in_main(): get the res = &quot;</span> &lt;&lt; data &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>std::cout &lt;&lt; <span class="hljs-string">&quot;main() starts, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br><span class="hljs-built_in">run_in_main</span>();<br><span class="hljs-built_in">run_in_thread</span>();<br><br><span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure><p>可能的运行结果如下：</p><figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs txt">main() starts, thread id = 0xb8<br>foo() starts, thread id = 0xb8<br>foo() ends, thread id = 0xb8<br>run_in_main(): get the res = 3<br>foo() starts, thread id = 0xbc<br>foo() ends, thread id = 0xbc<br>run_in_thread(): get the res = 7<br></code></pre></td></tr></table></figure><h2 id="3-std-packaged-task-与-std-async">3 std::packaged_task 与 std::async</h2><h3 id="3-1-概念区别">3.1 概念区别</h3><p><code>std::packaged_task</code> 是一个类模板，它主要用于将一个可调用对象（如函数、函数对象、lambda 表达式等）包装起来，方便异步调用并通过关联的 <code>std::future</code> 对象获取返回结果。</p><p><code>std::async</code> 是一个函数模板，主要用于简化异步任务的启动。它会自动创建一个线程（或者在某些情况下可能不会创建新线程，比如使用 <code>std::launch::deferred</code> 策略）来执行一个可调用对象，并返回一个<code>std::future</code> 对象，用于获取任务的结果。</p><h3 id="3-2-执行策略区别">3.2 执行策略区别</h3><p>对于 <code>std::packaged_task</code>，需要手动管理任务的执行。可以将 <code>packaged_task</code> 对象传递给一个子线程 <code>std::thread</code> 来启动任务执行，也可以将其放入一个线程池等其他执行环境中，或者在当前线程中直接调用。</p><p><code>std::async</code> 的执行策略由其第一个参数（<code>std::launch</code> 类型）决定。其中 <code>std::launch::async</code> 表示一定会在一个新线程中异步执行任务；<code>std::launch::deferred</code> 表示任务会被延迟执行。<a href="https://marisamagic.github.io/2025/01/02/20250102/">「C++ 多线程」std::async 异步任务创建</a></p><h3 id="3-3-使用场景">3.3 使用场景</h3><p>总的来说，<code>std::async</code> 更侧重于简单快速地开启一个异步任务，并且在不需要深入控制任务执行细节的场景下获取结果；<code>std::packaged_task</code> 侧重于对任务的封装和灵活的执行控制。</p><h2 id="参考">参考</h2><ol><li><a href="https://en.cppreference.com/w/cpp/thread/packaged_task">std::packaged_task</a></li></ol>]]></content>
     
     
     <categories>
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -182,7 +211,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -215,7 +244,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -248,7 +277,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -283,7 +312,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -316,7 +345,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -351,7 +380,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -384,7 +413,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -417,7 +446,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -450,7 +479,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -483,7 +512,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -516,7 +545,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -549,7 +578,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -580,7 +609,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -611,7 +640,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -642,7 +671,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -673,7 +702,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -704,7 +733,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -735,7 +764,7 @@
       
       <category>追逐繁星</category>
       
-      <category>C++ 多线程学习</category>
+      <category>C++ 多线程</category>
       
     </categories>
     
@@ -857,13 +886,13 @@
       
       <tag>C++</tag>
       
+      <tag>多线程</tag>
+      
       <tag>Ubuntu</tag>
       
       <tag>Linux</tag>
       
       <tag>VS Code</tag>
-      
-      <tag>多线程</tag>
       
     </tags>
     

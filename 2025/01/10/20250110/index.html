@@ -19,26 +19,25 @@
   <meta name="author" content="MarisaMagic">
   <meta name="keywords" content="">
   
-    <meta name="description" content="C++ 多线程用 std::thread 实现一个简单的 scoped_thread 资源管理类，原理是采用了 RAII 机制，确保线程在适当的时候被正确处理。">
+    <meta name="description" content="C++ std::function 基本用法">
 <meta property="og:type" content="article">
-<meta property="og:title" content="「C++ 多线程」std::thread scoped_thread 实现">
-<meta property="og:url" content="https://marisamagic.github.io/2024/12/22/20241222/index.html">
+<meta property="og:title" content="「C++ 进阶语法」std::function 基本用法">
+<meta property="og:url" content="https://marisamagic.github.io/2025/01/10/20250110/index.html">
 <meta property="og:site_name" content="MarisaMagic&#39;s Blog">
-<meta property="og:description" content="C++ 多线程用 std::thread 实现一个简单的 scoped_thread 资源管理类，原理是采用了 RAII 机制，确保线程在适当的时候被正确处理。">
+<meta property="og:description" content="C++ std::function 基本用法">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://sukicdn.com/wyx/i/2024/12/22/49naw.png">
-<meta property="article:published_time" content="2024-12-22T03:07:14.711Z">
-<meta property="article:modified_time" content="2025-01-10T08:06:40.522Z">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/01/10/20o.png">
+<meta property="article:published_time" content="2025-01-10T08:05:13.590Z">
+<meta property="article:modified_time" content="2025-01-10T09:04:49.050Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="C++">
-<meta property="article:tag" content="多线程">
-<meta property="article:tag" content="std::thread">
+<meta property="article:tag" content="std::function">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2024/12/22/49naw.png">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2025/01/10/20o.png">
   
   
   
-  <title>「C++ 多线程」std::thread scoped_thread 实现 - MarisaMagic&#39;s Blog</title>
+  <title>「C++ 进阶语法」std::function 基本用法 - MarisaMagic&#39;s Blog</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -221,13 +220,13 @@
   
 
 <div id="banner" class="banner" parallax=true
-     style="background: url('https://sukicdn.com/wyx/i/2024/12/22/49naw.png') no-repeat center center; background-size: cover;">
+     style="background: url('https://sukicdn.com/wyx/i/2025/01/10/20o.png') no-repeat center center; background-size: cover;">
   <div class="full-bg-img">
     <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="「C++ 多线程」std::thread scoped_thread 实现"></span>
+            <span id="subtitle" data-typed-text="「C++ 进阶语法」std::function 基本用法"></span>
           
         </div>
 
@@ -243,8 +242,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2024-12-22 11:07" pubdate>
-          2024年12月22日 上午
+        <time datetime="2025-01-10 16:05" pubdate>
+          2025年1月10日 下午
         </time>
       </span>
     
@@ -255,7 +254,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.1k 字
+          395 字
         
       </span>
     
@@ -266,7 +265,7 @@
         
         
         
-          9 分钟
+          4 分钟
         
       </span>
     
@@ -307,50 +306,36 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">「C++ 多线程」std::thread scoped_thread 实现</h1>
+            <h1 id="seo-header">「C++ 进阶语法」std::function 基本用法</h1>
             
             
               <div class="markdown-body">
                 
-                <p>文章大图来源：<a target="_blank" rel="noopener" href="https://www.pixiv.net/artworks/104139863">pixiv_id=104139863</a></p>
-<h2 id="scoped-thread-定义">scoped_thread 定义</h2>
-<p>scoped_thread 是一种资源管理类，用于确保线程在适当的时候被正确地加入（join）或分离（detach），更好地管理线程资源。scoped_thread 利用了 <strong>RAII</strong>（Resource Acquisition Is Initialization）机制，也可以称为 <strong>资源获取即初始化</strong>。</p>
-<h2 id="scoped-thread-实现及作用">scoped_thread 实现及作用</h2>
-<h3 id="std-thread-成员">std::thread 成员</h3>
-<p>通常我们在 scoped_thread 类中定义一个私有 std::thread 对象成员变量，用于存储实际的线程对象。scoped_thread 类可以对这个 std::thread 线程进行管理，控制其生命周期等操作。</p>
-<h3 id="构造函数的编写">构造函数的编写</h3>
+                <p>文章大图来源：<a target="_blank" rel="noopener" href="https://www.pixiv.net/artworks/107985575">pixiv_id=107985575</a></p>
+<h2 id="1-基本概念">1 基本概念</h2>
+<p><code>std::function</code> 是 C++ 标准库中的一个模板类，定义在 <code>&lt;functional&gt;</code> 头文件中。</p>
+<p><code>std::function</code> 是一种通用的、多态的 <strong>函数封装器</strong>，可以存储、复制和调用任何可调用对象（如函数、函数指针、成员函数指针、lambda 表达式等）</p>
+<h2 id="2-基本语法">2 基本语法</h2>
+<p><code>std::function</code> 其基本语法是 <code>std::function&lt;返回值类型(参数类型列表)&gt; 变量名;</code> 。</p>
+<p>例如 <code>std::function&lt;void(int, std::string)&gt;</code> 定义了一个 存储返回值为 <code>void</code>，接收一个 <code>int</code> 参数和一个 <code>std::string</code> 字符串参数的函数（可调用对象） 的 <code>std::function</code> 对象。</p>
 <ul>
 <li>
-<p>explicit 关键字</p>
-<p>使用 explicit 关键字修饰构造函数，是为了防止隐式转换。这意味着该构造函数只能通过显式地传入 std::thread 对象来进行调用，而不可以通过一些其他类型隐式地转换为 std::thread 对象传入构造函数。</p>
+<p>函数指针</p>
+<p>可以将普通函数指针赋值给 <code>std::function</code> 对象：</p>
+  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span> a, std::string s)</span></span>&#123;<br>    std::cout &lt;&lt; a &lt;&lt; <span class="hljs-string">&#x27; &#x27;</span> &lt;&lt; s &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br>std::function&lt;<span class="hljs-type">void</span>(<span class="hljs-type">int</span>, std::string)&gt; func = add;<br><span class="hljs-built_in">func</span>(<span class="hljs-number">520</span>, <span class="hljs-string">&quot;Marisa&quot;</span>); <span class="hljs-comment">// 520 Marisa</span><br></code></pre></td></tr></table></figure>
 </li>
 <li>
-<p>std::move 移动语义</p>
-<p>当 scoped_thread 对象被创建时，获取一个 std::thread 线程对象 <code>t_</code> ，并且通过 std::move 移动语义将这个 std::thread 对象的线程 <code>t_</code> 归属权转移到 scoped_thread 对象的成员变量 <code>t</code> 中。</p>
-<p>采用移动语义，也更加符合线程的资源管理方式，符合线程具有独占性所有权的特点，高效实现线程归属权的转移，能够避免不必要的拷贝操作。</p>
+<p>lambda 表达式</p>
+<p>Lambda 表达式是一种匿名函数，也可以赋值给 <code>std::function</code> 对象：</p>
+  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++">std::function&lt;<span class="hljs-type">void</span>(<span class="hljs-type">int</span>, std::string)&gt; func = [](<span class="hljs-type">int</span> x, std::string)&#123;<br>    std::cout &lt;&lt; a &lt;&lt; <span class="hljs-string">&#x27; &#x27;</span> &lt;&lt; s &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;;<br><span class="hljs-built_in">func</span>(<span class="hljs-number">520</span>, <span class="hljs-string">&quot;Marisa&quot;</span>); <span class="hljs-comment">// 520 Marisa</span><br></code></pre></td></tr></table></figure>
 </li>
 <li>
-<p>线程是否有效</p>
-<p>在构造函数体中，通过 <code>if(!t.joinable())&#123;...&#125;</code> 语句来检查接收到的线程对象是否关联了函数且有效（joinable）。</p>
-<p>有可能传入的 std::thread 对象是一个空线程（没有关联任何线程接口函数），或者已经 <code>join()</code> 或 <code>detach()</code> 过了。如果出现这些情况，需要抛出异常。</p>
+<p>成员函数指针</p>
+<p>对于类的成员函数，需要结合对象实例来使用:</p>
+  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">class</span> <span class="hljs-title class_">MyClass</span>&#123;<br><span class="hljs-keyword">public</span>:<br>    <span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span> a, <span class="hljs-type">int</span> b)</span></span>&#123;<br>        <span class="hljs-keyword">return</span> a * b;<br>    &#125;<br>&#125;;<br><br>MyClass obj; <span class="hljs-comment">// 创建一个对象实例</span><br>std::function&lt;<span class="hljs-type">int</span>(<span class="hljs-type">int</span>, <span class="hljs-type">int</span>)&gt; func = std::<span class="hljs-built_in">bind</span>(&amp;MyClass::multiply, &amp;obj, std::placeholders::_1, std::placeholders::_2);<br><br><span class="hljs-type">int</span> res = <span class="hljs-built_in">func</span>(<span class="hljs-number">2</span>, <span class="hljs-number">3</span>); <span class="hljs-comment">// 6</span><br></code></pre></td></tr></table></figure>
+<p>这里使用 std::bind 来绑定成员函数和对象实例，<code>std::placeholders::_1</code> 和 <code>std::placeholders::_2</code> 表示参数占位符，用于在调用 func 时传递参数。</p>
 </li>
 </ul>
-<h3 id="析构函数的编写">析构函数的编写</h3>
-<p>在析构函数中，首先通过 <code>if(t.joinable())&#123;...&#125;</code> 再次检查 std::thread 成员变量 <code>t</code> 所代表的线程对象是否是有效可连接的。如果已经 <code>join()</code> 或 <code>detach()</code> 过了，就不需要再进行后续的操作了。</p>
-<p>如果线程 <code>t</code> 确定是 joinable 的，那么调用 <code>join()</code> 函数。这使得 scoped_thread 对象的线程 <code>t</code> 在主线程 <code>main</code> 执行结束时调用析构函数，进而自动调用 <code>join()</code>，让主线程等待  scoped_thread 对象的线程 <code>t</code>（也即子线程）直到其执行完成。</p>
-<p>通过在析构函数中执行 <code>join()</code> 操作，利用了 <strong>RAII</strong> 机制，保证了无论在什么情况下，线程都能被正确地结束，避免了线程被意外中断等结果。</p>
-<h3 id="禁用拷贝与拷贝赋值">禁用拷贝与拷贝赋值</h3>
-<p>众所周知，std::thread 是不可以拷贝和拷贝赋值的，因此我们定义的 scoped_thread 类也需要禁用拷贝构造函数和拷贝赋值函数（声明为 <code>= delete</code>），避免出现多个 scoped_thread 对象同时管理一个线程的混乱情况（一个 std::thread 同一时刻只能拥有一个线程的归属权）。</p>
-<h2 id="scoped-thread-简单代码实现">scoped_thread 简单代码实现</h2>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">scoped_thread</span>&#123;<br>	std::thread t;<br><span class="hljs-keyword">public</span>:<br>	<span class="hljs-comment">// 构造函数，采用移动语义（防止隐式转换）</span><br>	<span class="hljs-function"><span class="hljs-keyword">explicit</span> <span class="hljs-title">scoped_thread</span><span class="hljs-params">(std::thread t_)</span>: t(std::move(t_))&#123;</span><br>		<span class="hljs-keyword">if</span>(!t.<span class="hljs-built_in">joinable</span>())&#123; <span class="hljs-comment">// 检查线程是否有效</span><br>			<span class="hljs-keyword">throw</span> std::<span class="hljs-built_in">logic_error</span>(<span class="hljs-string">&quot;thread is unjoinable.&quot;</span>);<br>		&#125;<br>	&#125;<br>	<span class="hljs-comment">// 析构函数</span><br>	~<span class="hljs-built_in">scoped_thread</span>()&#123;<br>		<span class="hljs-keyword">if</span>(t.<span class="hljs-built_in">joinable</span>())&#123;<br>			t.<span class="hljs-built_in">join</span>();  <span class="hljs-comment">// 析构时自动 join</span><br>		&#125;<br>	&#125;<br>	<span class="hljs-comment">// 禁用拷贝构造函数</span><br>	<span class="hljs-built_in">scoped_thread</span>(scoped_thread <span class="hljs-type">const</span>&amp;) = <span class="hljs-keyword">delete</span>;<br>	<span class="hljs-comment">// 禁用拷贝赋值函数</span><br>	scoped_thread&amp; <span class="hljs-keyword">operator</span>=(scoped_thread <span class="hljs-type">const</span>&amp;) = <span class="hljs-keyword">delete</span>;<br>&#125;;<br><br><span class="hljs-comment">// 线程接口函数</span><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">(<span class="hljs-type">int</span> cnt)</span></span>&#123;<br>	<span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">1</span>; i &lt;= cnt; i ++ )&#123;<br>		std::cout &lt;&lt; <span class="hljs-string">&quot;Kirisame Marisa.&quot;</span> &lt;&lt; i &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>	&#125;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>	<span class="hljs-function">scoped_thread <span class="hljs-title">st</span><span class="hljs-params">(std::thread(foo, <span class="hljs-number">10</span>))</span></span>;<br><br>	<span class="hljs-comment">// 主线程中模拟做些其他事情</span><br>	<span class="hljs-keyword">for</span>(<span class="hljs-type">int</span> i = <span class="hljs-number">1</span>; i &lt;= <span class="hljs-number">3</span>; i ++ )&#123;<br>		std::cout &lt;&lt; <span class="hljs-string">&quot;Alice Margatroid. &quot;</span> &lt;&lt; i &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
-<p>运行结果如下:</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/22/483fe.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
-<p>可以看出，scoped_thread 对象的子线程正常执行完毕。</p>
-<p>当主线程结束时，我们定义的 scoped_thread 对象 st 也超出了作用域，此时会自动调用析构函数。在我们实现的 scoped_thread 类的析构函数中，会自动执行 <code>join()</code> 操作，等待关联的线程（关联函数 <code>foo()</code>）执行完成，确保线程资源被正确处理。之后 <code>main</code> 函数才会真正结束，整个程序正常退出。</p>
-<h2 id="参考">参考</h2>
-<ol>
-<li><a target="_blank" rel="noopener" href="https://nj.gitbooks.io/c/content/content/chapter2/chapter2-chinese.html">C++ 并发编程实战 第 2 章 线程管理</a></li>
-</ol>
 
                 
               </div>
@@ -374,7 +359,7 @@
   
     <span>></span>
     
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/C-%E5%A4%9A%E7%BA%BF%E7%A8%8B/" class="category-chain-item">C++ 多线程</a>
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/C-%E8%BF%9B%E9%98%B6%E8%AF%AD%E6%B3%95/" class="category-chain-item">C++ 进阶语法</a>
   
   
 
@@ -393,9 +378,7 @@
       
         <a href="/tags/C/" class="print-no-link">#C++</a>
       
-        <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" class="print-no-link">#多线程</a>
-      
-        <a href="/tags/std-thread/" class="print-no-link">#std::thread</a>
+        <a href="/tags/std-function/" class="print-no-link">#std::function</a>
       
     </div>
   
@@ -407,8 +390,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>「C++ 多线程」std::thread scoped_thread 实现</div>
-      <div>https://marisamagic.github.io/2024/12/22/20241222/</div>
+      <div>「C++ 进阶语法」std::function 基本用法</div>
+      <div>https://marisamagic.github.io/2025/01/10/20250110/</div>
     </div>
     <div class="license-meta">
       
@@ -420,7 +403,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2024年12月22日</div>
+          <div>2025年1月10日</div>
         </div>
       
       
@@ -452,18 +435,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2024/12/23/20241223/" title="「C++ 多线程」硬件支持线程数、线程识别">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">「C++ 多线程」硬件支持线程数、线程识别</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2024/12/21/20241221/" title="「C++ 多线程」线程归属权及其转移">
-                        <span class="hidden-mobile">「C++ 多线程」线程归属权及其转移</span>
+                      <a href="/2025/01/08/20250108/" title="「C++ 多线程」std::atomic 内存序">
+                        <span class="hidden-mobile">「C++ 多线程」std::atomic 内存序</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
