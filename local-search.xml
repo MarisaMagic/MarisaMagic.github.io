@@ -255,9 +255,9 @@
       
       <tag>std::mutex</tag>
       
-      <tag>std::atomic</tag>
-      
       <tag>std::future</tag>
+      
+      <tag>std::atomic</tag>
       
     </tags>
     
