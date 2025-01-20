@@ -129,9 +129,9 @@
       
       <tag>std::mutex</tag>
       
-      <tag>std::future</tag>
-      
       <tag>std::condition_variable</tag>
+      
+      <tag>std::future</tag>
       
     </tags>
     
