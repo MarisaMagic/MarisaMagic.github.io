@@ -38,7 +38,7 @@
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2025/07/14/w615.png">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2025/07/14/wbox.png">
 <meta property="article:published_time" content="2025-07-14T07:57:35.209Z">
-<meta property="article:modified_time" content="2025-07-14T07:56:42.410Z">
+<meta property="article:modified_time" content="2025-07-16T04:02:07.710Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="C++">
 <meta property="article:tag" content="Qt 6">
@@ -264,7 +264,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          2.3k 字
+          2.4k 字
         
       </span>
     
@@ -488,6 +488,8 @@ namespace Ui { class Widget; }：前向声明 Ui::Widget 类</p>
 <p>在 Qt 项目中创建 .ui 文件（如 widget.ui）并通过 Qt Designer 设计界面时，Qt 的构建系统（qmake 或 cmake）会在编译阶段自动将 .ui 文件转换为 C++ 代码，生成 ui_widget.h 头文件。</p>
 <p>这个头文件中定义的类就是 Ui::Widget（通常称为 ui_widget 类，因文件名派生），包含了所有界面元素的声明和初始化逻辑。</p>
 <p>开发者无需手动编写创建和布局控件的代码，只需通过 Qt Designer 可视化设计，ui_widget 自动生成对应代码，降低了开发成本，便于维护。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-keyword">namespace</span> Ui &#123;<br>    <span class="hljs-keyword">class</span> <span class="hljs-title class_">Widget</span>: <span class="hljs-keyword">public</span> Ui_Widget &#123;&#125;;<br>&#125; <span class="hljs-comment">// namespace Ui</span><br></code></pre></td></tr></table></figure>
+<p>ui_widget.h 中封装界面的类是 <code>Ui_Widget</code>，再定义一个 <code>Widget</code> 类继承 <code>Ui_Widget</code>，并定义在 <code>Ui</code> 命名空间中。这样 <code>Ui::Widget</code> 与文件 <code>widget.h</code> 中的类 <code>Widget</code> 同名，但是用空间区分开。</p>
 <hr>
 <p>main.cpp 是程序的入口点，主要用于：</p>
 <ul>
@@ -607,6 +609,12 @@ namespace Ui { class Widget; }：前向声明 Ui::Widget 类</p>
                 <div class="post-prevnext my-3">
                   <article class="post-prev col-6">
                     
+                    
+                      <a href="/2025/07/16/20250716/" title="「C++ Qt6 开发」Qt 可视化 UI 设计">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「C++ Qt6 开发」Qt 可视化 UI 设计</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
                     
                   </article>
                   <article class="post-next col-6">

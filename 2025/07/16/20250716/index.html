@@ -19,28 +19,31 @@
   <meta name="author" content="MarisaMagic">
   <meta name="keywords" content="">
   
-    <meta name="description" content="Ubuntu 环境下在 VS Code 中运行 C++ 多线程程序">
+    <meta name="description" content="创建项目的资源文件及其使用；界面组件布局管理">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Ubuntu 18.04 VS Code 运行 C++ 多线程程序">
-<meta property="og:url" content="https://marisamagic.github.io/2024/12/15/20241215/index.html">
+<meta property="og:title" content="「C++ Qt6 开发」Qt 可视化 UI 设计">
+<meta property="og:url" content="https://marisamagic.github.io/2025/07/16/20250716/index.html">
 <meta property="og:site_name" content="MarisaMagic&#39;s Blog">
-<meta property="og:description" content="Ubuntu 环境下在 VS Code 中运行 C++ 多线程程序">
+<meta property="og:description" content="创建项目的资源文件及其使用；界面组件布局管理">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://sukicdn.com/wyx/i/2024/12/15/wno.png">
-<meta property="article:published_time" content="2024-12-15T13:26:17.796Z">
-<meta property="article:modified_time" content="2025-01-06T05:22:04.577Z">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/07/16/129c7.png">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/07/16/1ianqf.png">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/07/16/1i1730.png">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/07/16/7k1c0.png">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/07/16/5s40.png">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/07/16/5sny.png">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/07/16/7wybj.png">
+<meta property="article:published_time" content="2025-07-16T13:05:55.742Z">
+<meta property="article:modified_time" content="2025-07-16T15:13:09.305Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="C++">
-<meta property="article:tag" content="多线程">
-<meta property="article:tag" content="Ubuntu">
-<meta property="article:tag" content="Linux">
-<meta property="article:tag" content="VS Code">
+<meta property="article:tag" content="Qt 6">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2024/12/15/wno.png">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2025/07/16/129c7.png">
   
   
   
-  <title>Ubuntu 18.04 VS Code 运行 C++ 多线程程序 - MarisaMagic&#39;s Blog</title>
+  <title>「C++ Qt6 开发」Qt 可视化 UI 设计 - MarisaMagic&#39;s Blog</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -223,13 +226,13 @@
   
 
 <div id="banner" class="banner" parallax=true
-     style="background: url('https://sukicdn.com/wyx/i/2024/12/15/wno.png') no-repeat center center; background-size: cover;">
+     style="background: url('https://sukicdn.com/wyx/i/2025/01/10/3lgax.png') no-repeat center center; background-size: cover;">
   <div class="full-bg-img">
     <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="Ubuntu 18.04 VS Code 运行 C++ 多线程程序"></span>
+            <span id="subtitle" data-typed-text="「C++ Qt6 开发」Qt 可视化 UI 设计"></span>
           
         </div>
 
@@ -245,8 +248,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2024-12-15 21:26" pubdate>
-          2024年12月15日 晚上
+        <time datetime="2025-07-16 21:05" pubdate>
+          2025年7月16日 晚上
         </time>
       </span>
     
@@ -257,7 +260,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          801 字
+          921 字
         
       </span>
     
@@ -268,7 +271,7 @@
         
         
         
-          7 分钟
+          8 分钟
         
       </span>
     
@@ -309,59 +312,148 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">Ubuntu 18.04 VS Code 运行 C++ 多线程程序</h1>
+            <h1 id="seo-header">「C++ Qt6 开发」Qt 可视化 UI 设计</h1>
             
             
               <div class="markdown-body">
                 
-                <p>文章大图来源: <a target="_blank" rel="noopener" href="https://www.pixiv.net/artworks/105845465">pixiv_id=105845465</a></p>
-<h2 id="Ubuntu-对应-gcc-版本">Ubuntu 对应 gcc 版本</h2>
-<p>我之前配置的 VMWare 虚拟机采用的操作系统为 Ubuntu 18.04，对应的 g++ 版本为 g++ 7.5.0</p>
-<h2 id="Ubuntu-下-VS-Code-运行-C-多线程报错">Ubuntu 下 VS Code 运行 C++ 多线程报错</h2>
-<p>假设写了如下 C++ 多线程程序:</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">()</span></span>&#123;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;foo() start, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;Hello, this is Alice Margatroid.&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;foo() end, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;main() start, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;Hello, this is MarisaMagic.&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>    <span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo)</span></span>;<br>    t.<span class="hljs-built_in">join</span>();<br><br>    std::cout &lt;&lt; <span class="hljs-string">&quot;main(), end, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
-<p>在 Ubuntu 环境下用 VS Code 中的 <strong>Code Runner 插件运行</strong> C++ 代码会出现如下报错:</p>
-<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs txt">In function `std::thread::thread&lt;void (&amp;)()&gt;(void (&amp;)())&#x27;:<br>test.cpp:(.text._ZNSt6threadC2IRFvvEJEEEOT_DpOT0_[_ZNSt6threadC5IRFvvEJEEEOT_DpOT0_]+0x2f): <br>undefined reference to `pthread_create&#x27;<br>collect2: error: ld returned 1 exit status<br></code></pre></td></tr></table></figure>
-<p>如果选择 <strong>生成 C/C++ g++ 生成活动文件</strong> 也会报错:</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/uhb.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
-<h2 id="报错原因">报错原因</h2>
-<p>在 Ubuntu 平台下创建线程时会调用 pthread_create() 函数，但是 pthread 库不是 Linux 系统默认的库，需要链接到 pthread 库。因此在使用 g++ 编译时，加上链接 pthread 库命令，即可编译成功:</p>
-<p>故我们可以打开终端，或者在 VS Code 中打开终端输入如下编译命令:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">g++ test.cpp -o <span class="hljs-built_in">test</span> -lpthread <br></code></pre></td></tr></table></figure>
-<p>运行生成可执行文件，发现多线程程序运行成功:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">./test<br></code></pre></td></tr></table></figure>
-<p>可是我们还没有成功解决如何在 VS Code 中使用 <strong>Code Runner 插件</strong> 或者 <strong>生成 C/C++ g++ 生成活动文件</strong> 运行 C++ 多线程程序。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/61yn.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
-<h2 id="解决方法">解决方法</h2>
-<h3 id="Code-Runner-插件配置修改">Code Runner 插件配置修改</h3>
-<p>打开 Code Runner 扩展设置，输入关键词 Executor Map，点击第一个选项中“在 settings.json 中编辑”。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/88x9b.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
-<p>打开之后，看到如下界面。然后在 “cpp” 那一行的编译命令中，增加 -lpthread 链接命令并保存即可。</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-attr">&quot;cpp&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;cd $dir &amp;&amp; g++ $fileName -o $fileNameWithoutExt -lpthread &amp;&amp; $dir$fileNameWithoutExt&quot;</span><br></code></pre></td></tr></table></figure>
-<p>修改后大致如下图所示:</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/16ezi.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
-<p>之后点击右上角 <strong>Code Runner 插件</strong> 运行代码的按钮就可以运行成功 DA⭐ZE~</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/175xp.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
-<h3 id="生成-C-C-g-生成活动文件配置修改">生成 C/C++ g++ 生成活动文件配置修改</h3>
-<p>键盘按下 “Ctrl + Shift + P”，打开命令面板。输入关键词 “Tasks” 找到 “Tasks: Configure Default Build Task” 点开。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/8ewil.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
-<p>点开之后选择 “C/C++: g++ 生成活动文件”，会自动生成一个编译配置文件 tasks.json 。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/179mu.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
-<p>在编译配置文件中找到 “args”，也就是执行编译命令时加入的参数。增加一条 “-lpthread”，保存文件即可。</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-attr">&quot;tasks&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><br>    <span class="hljs-punctuation">&#123;</span><br>        <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;cppbuild&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;label&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;C/C++: g++ 生成活动文件&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;command&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;/usr/bin/g++&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;args&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><br>            <span class="hljs-string">&quot;-fdiagnostics-color=always&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-string">&quot;-g&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-string">&quot;$&#123;file&#125;&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-string">&quot;-o&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-string">&quot;$&#123;fileDirname&#125;/$&#123;fileBasenameNoExtension&#125;&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-string">&quot;-lpthread&quot;</span><br>        <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;options&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>            <span class="hljs-attr">&quot;cwd&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;$&#123;fileDirname&#125;&quot;</span><br>        <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;problemMatcher&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><br>            <span class="hljs-string">&quot;$gcc&quot;</span><br>        <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;group&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>            <span class="hljs-attr">&quot;kind&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;build&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-attr">&quot;isDefault&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><br>        <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;detail&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;编译器: /usr/bin/g++&quot;</span><br>    <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">]</span><br></code></pre></td></tr></table></figure>
-<p>修改配置后如下图所示:</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/8ewft.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
-<p>之后使用 <strong>生成 C/C++ g++ 生成活动文件</strong> 也可以运行成功 DA⭐ZE ~</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/67gs.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+                <h2 id="1-项目资源文件">1 项目资源文件</h2>
+<h3 id="1-1-创建一个项目资源文件">1.1 创建一个项目资源文件</h3>
+<p>先创建一个项目，此处创建了一个 Widget Application 项目，基类选择的是 QDialog。</p>
+<p>点击 File 列表中的 New File，并选择 Qt 找到 Qt Source File 创建项目资源文件。资源文件的名称设定为 res.qrc。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/07/16/129c7.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<p>资源文件主要的功能是存储图标和图片文件，以便在程序中使用。在资源文件中首先需要建一个前缀（.prefix），例如 icons。前缀表示资源的分组。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/07/16/1ianqf.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<h3 id="1-2-项目资源文件的使用">1.2 项目资源文件的使用</h3>
+<p>首先可以在项目的根目录下创建一个 imgs 文件夹，用于存储需要用到的图片。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/07/16/1i1730.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<p><img src="https://sukicdn.com/wyx/i/2025/07/16/7k1c0.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<p>后续可以将这些图片添加到资源文件 res.qrc 的 icons 分组中，便于后续使用。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/07/16/5s40.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<p>点击 dialog.ui 文件打开 Qt Designer 界面，创建一些按钮，在按钮中可以修改其属性 icon，在资源文件中选择想要设置的图片作为按钮的图标。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/07/16/5sny.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<h2 id="2-界面组件布局管理">2 界面组件布局管理</h2>
+<h3 id="2-1-界面组件的层次关系">2.1 界面组件的层次关系</h3>
+<p>为了让界面上的各个组件变得整齐美观，通常使用一些容器类组件。例如，将 3 个复选框（QCheckBox）放置在一个分组框（Group Box）中。如下图，groupBox_Font 是 3 个复选框（QCheckBox）的父容器，窗体 Dialog 则是窗体上所有组件的顶层容器。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/07/16/7wybj.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<h3 id="2-2-布局管理">2.2 布局管理</h3>
+<ul>
+<li>Layout 组件</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>组件名称</th>
+<th>对应类</th>
+<th>功能描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Vertical Layout</strong></td>
+<td><code>QVBoxLayout</code></td>
+<td>创建垂直排列的布局容器，子部件按<strong>从上到下</strong>顺序排列</td>
+</tr>
+<tr>
+<td><strong>Horizontal Layout</strong></td>
+<td><code>QHBoxLayout</code></td>
+<td>创建水平排列的布局容器，子部件按<strong>从左到右</strong>顺序排列</td>
+</tr>
+<tr>
+<td><strong>Grid Layout</strong></td>
+<td><code>QGridLayout</code></td>
+<td>创建网格状布局容器，支持多行多列和部件跨单元格</td>
+</tr>
+<tr>
+<td><strong>Form Layout</strong></td>
+<td><code>QFormLayout</code></td>
+<td>自动创建两列表单（标签+输入控件），专为数据输入表单优化</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<ul>
+<li>Spacer 组件</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>组件名称</th>
+<th>对应类</th>
+<th>功能描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Horizontal Spacer</strong></td>
+<td><code>QSpacerItem</code></td>
+<td>在布局中插入<strong>水平弹性空间</strong>，推挤两侧部件</td>
+</tr>
+<tr>
+<td><strong>Vertical Spacer</strong></td>
+<td><code>QSpacerItem</code></td>
+<td>在布局中插入<strong>垂直弹性空间</strong>，推挤上下部件</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Spacer 核心作用</strong>：</p>
+<blockquote>
+<p>[部件A] + [Horizontal Spacer] + [部件B]<br>
+└──&gt; 窗口变大时：弹簧扩展 → 部件A左移，部件B右移<br>
+└──&gt; 保持部件间距自适应</p>
+</blockquote>
+<hr>
+<ul>
+<li>工具栏各按钮说明</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>按钮名称</th>
+<th>功能说明</th>
+<th>使用场景举例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Edit Widget</strong></td>
+<td>直接编辑选中控件的文本内容（如按钮文字、标签文本）</td>
+<td>快速修改按钮上的文字“确定”为“提交”</td>
+</tr>
+<tr>
+<td><strong>Edit Signals/Slots</strong></td>
+<td>可视化建立控件间的信号与槽连接（事件响应关系）</td>
+<td>为按钮添加点击事件，连接到窗口的关闭槽函数（close()）</td>
+</tr>
+<tr>
+<td><strong>Edit Buddies</strong></td>
+<td>建立控件与标签（QLabel）的伙伴关系（快捷键关联）</td>
+<td>让标签“&amp;用户名:”与输入框关联，例如可以通过快捷键“Alt + U”聚焦到输入框</td>
+</tr>
+<tr>
+<td><strong>Edit Tab Order</strong></td>
+<td>设置控件的 Tab 键切换顺序（按 Tab 时焦点的移动路径）</td>
+<td>调整表单中输入框的切换顺序，确保按逻辑顺序跳转</td>
+</tr>
+<tr>
+<td><strong>Layouts</strong></td>
+<td>提供布局管理器快捷按钮（如垂直布局、水平布局、网格布局等）</td>
+<td>用网格布局排列多个输入框和标签，确保窗口大小变化时控件自动调整位置</td>
+</tr>
+<tr>
+<td><strong>Break Layout</strong></td>
+<td>取消选中控件的布局约束，使其恢复自由排列状态</td>
+<td>解除误添加的布局，重新调整部分控件的位置</td>
+</tr>
+<tr>
+<td><strong>Adjust Size</strong></td>
+<td>自动调整所选组件的大小，使其刚好容纳内容（如文本框的文字、按钮的标签）</td>
+<td>当按钮文字从 “OK” 改为 “确认提交” 后，点击此按钮自动扩展按钮宽度以完整显示文字</td>
+</tr>
+</tbody>
+</table>
 <h2 id="参考">参考</h2>
-<ol>
-<li>
-<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/afgqwjgfjqwgfg/article/details/115737489">VS Code在ubuntu中执行多线程程序时报错：undefined reference to `pthread_create</a></p>
-</li>
-<li>
-<p><a target="_blank" rel="noopener" href="https://worktile.com/kb/ask/402685.html">编译多线程程序linux命令</a></p>
-</li>
-</ol>
+<p>《Qt 6 C++ 开发指南》</p>
 
                 
               </div>
@@ -385,7 +477,7 @@
   
     <span>></span>
     
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/C-%E5%B0%8F%E6%8A%80%E5%B7%A7/" class="category-chain-item">C++ 小技巧</a>
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/C-Qt6-%E5%BC%80%E5%8F%91/" class="category-chain-item">C++ Qt6 开发</a>
   
   
 
@@ -404,13 +496,7 @@
       
         <a href="/tags/C/" class="print-no-link">#C++</a>
       
-        <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" class="print-no-link">#多线程</a>
-      
-        <a href="/tags/Ubuntu/" class="print-no-link">#Ubuntu</a>
-      
-        <a href="/tags/Linux/" class="print-no-link">#Linux</a>
-      
-        <a href="/tags/VS-Code/" class="print-no-link">#VS Code</a>
+        <a href="/tags/Qt-6/" class="print-no-link">#Qt 6</a>
       
     </div>
   
@@ -422,8 +508,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>Ubuntu 18.04 VS Code 运行 C++ 多线程程序</div>
-      <div>https://marisamagic.github.io/2024/12/15/20241215/</div>
+      <div>「C++ Qt6 开发」Qt 可视化 UI 设计</div>
+      <div>https://marisamagic.github.io/2025/07/16/20250716/</div>
     </div>
     <div class="license-meta">
       
@@ -435,7 +521,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2024年12月15日</div>
+          <div>2025年7月16日</div>
         </div>
       
       
@@ -467,18 +553,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2024/12/16/2024YZUGPLT/" title="2024 扬州大学与南通大学 GPLT 联谊选拔赛题解">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">2024 扬州大学与南通大学 GPLT 联谊选拔赛题解</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2024/12/14/YAC_Round_13/" title="2024 YAC Round 13 题解">
-                        <span class="hidden-mobile">2024 YAC Round 13 题解</span>
+                      <a href="/2025/07/14/20250714/" title="「C++ Qt6 开发」创建一个 Qt 项目">
+                        <span class="hidden-mobile">「C++ Qt6 开发」创建一个 Qt 项目</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
