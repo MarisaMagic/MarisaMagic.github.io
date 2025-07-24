@@ -1,0 +1,918 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="QChar 主要功能测试">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「C++ Qt6 开发」QChar 常用功能测试">
+<meta property="og:url" content="https://marisamagic.github.io/2025/07/24/20250723/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="QChar 主要功能测试">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/07/24/j9d.png">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/07/24/53wje.png">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/07/24/q9te.png">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/07/24/55l1k.png">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/07/24/3um5.png">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/07/24/r6ya.png">
+<meta property="article:published_time" content="2025-07-24T05:54:23.602Z">
+<meta property="article:modified_time" content="2025-07-24T05:55:44.884Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="Qt 6">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2025/07/24/j9d.png">
+  
+  
+  
+  <title>「C++ Qt6 开发」QChar 常用功能测试 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2025/01/10/3lgax.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「C++ Qt6 开发」QChar 常用功能测试"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-07-24 13:54" pubdate>
+          2025年7月24日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          11 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「C++ Qt6 开发」QChar 常用功能测试</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="1-QChar">1 QChar</h2>
+<h3 id="1-1-QChar-简介">1.1 QChar 简介</h3>
+<p>QChar 是 Qt 框架中的一个类，用于表示 Unicode 字符。它是 Qt 字符处理的基础，类似于 C++ 中的 char 或 wchar_t，但不同的是，QChar 类内部用 <strong>2 个字节</strong> 的 Unicode 编码来表示一个字符。</p>
+<h3 id="1-2-QChar-功能">1.2 QChar 功能</h3>
+<p>下面为你介绍Qt中<code>QChar</code>类的主要接口函数及其功能：</p>
+<table>
+<thead>
+<tr>
+<th>函数原型</th>
+<th>功能描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>构造函数</strong></td>
+<td></td>
+</tr>
+<tr>
+<td><code>QChar()</code></td>
+<td>默认构造函数，创建一个空字符（即Unicode值为0的字符）。</td>
+</tr>
+<tr>
+<td><code>QChar(ushort code)</code></td>
+<td>通过Unicode码点值构造字符。</td>
+</tr>
+<tr>
+<td><code>QChar(char16_t code)</code></td>
+<td>通过UTF-16码点构造字符（C++11及以上）。</td>
+</tr>
+<tr>
+<td><code>QChar(char32_t code)</code></td>
+<td>通过UTF-32码点构造字符（C++11及以上）。</td>
+</tr>
+<tr>
+<td><strong>属性判断</strong></td>
+<td></td>
+</tr>
+<tr>
+<td><code>bool isNull() const</code></td>
+<td>判断字符是否为空（Unicode值为0）。</td>
+</tr>
+<tr>
+<td><code>bool isSpace() const</code></td>
+<td>判断字符是否为空白字符（如空格、制表符、换行符等）。</td>
+</tr>
+<tr>
+<td><code>bool isDigit() const</code></td>
+<td>判断字符是否为数字（‘0’-‘9’）。</td>
+</tr>
+<tr>
+<td><code>bool isLetter() const</code></td>
+<td>判断字符是否为字母。</td>
+</tr>
+<tr>
+<td><code>bool isLetterOrNumber() const</code></td>
+<td>判断字符是否为字母或数字。</td>
+</tr>
+<tr>
+<td><code>bool isUpper() const</code></td>
+<td>判断字符是否为大写字母。</td>
+</tr>
+<tr>
+<td><code>bool isLower() const</code></td>
+<td>判断字符是否为小写字母。</td>
+</tr>
+<tr>
+<td><code>bool isPrint() const</code></td>
+<td>判断字符是否为可打印字符。</td>
+</tr>
+<tr>
+<td><strong>大小写转换</strong></td>
+<td></td>
+</tr>
+<tr>
+<td><code>QChar toUpper() const</code></td>
+<td>返回字符的大写形式。</td>
+</tr>
+<tr>
+<td><code>QChar toLower() const</code></td>
+<td>返回字符的小写形式。</td>
+</tr>
+<tr>
+<td><code>bool toUpper()</code></td>
+<td>将字符转换为大写形式，成功返回true。</td>
+</tr>
+<tr>
+<td><code>bool toLower()</code></td>
+<td>将字符转换为小写形式，成功返回true。</td>
+</tr>
+<tr>
+<td><strong>编码转换</strong></td>
+<td></td>
+</tr>
+<tr>
+<td><code>ushort unicode() const</code></td>
+<td>返回字符的Unicode码点值。</td>
+</tr>
+<tr>
+<td><code>char toLatin1() const</code></td>
+<td>返回字符的Latin-1（ISO 8859-1）表示，超出范围时返回0。</td>
+</tr>
+<tr>
+<td><code>QString toUcs4() const</code></td>
+<td>返回字符的UCS-4表示（作为单元素的QString）。</td>
+</tr>
+<tr>
+<td><strong>比较操作</strong></td>
+<td></td>
+</tr>
+<tr>
+<td><code>bool operator==(QChar other) const</code></td>
+<td>判断两个字符是否相等。</td>
+</tr>
+<tr>
+<td><code>bool operator!=(QChar other) const</code></td>
+<td>判断两个字符是否不相等。</td>
+</tr>
+<tr>
+<td><code>bool operator&lt;(QChar other) const</code></td>
+<td>比较两个字符的Unicode值大小。</td>
+</tr>
+<tr>
+<td><strong>其他功能</strong></td>
+<td></td>
+</tr>
+<tr>
+<td><code>static QChar fromLatin1(char c)</code></td>
+<td>从Latin-1字符创建QChar对象。</td>
+</tr>
+<tr>
+<td><code>static QChar fromUcs4(uint code)</code></td>
+<td>从UCS-4码点创建QChar对象（处理超出基本多文种平面的字符）。</td>
+</tr>
+<tr>
+<td><code>QString toString() const</code></td>
+<td>将字符转换为单字符的QString。</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="2-QChar-功能测试">2 QChar 功能测试</h2>
+<h3 id="2-1-显示字符串每个字符的-unicode">2.1 显示字符串每个字符的 unicode</h3>
+<p><strong>slot 函数如下:</strong></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">Widget::on_btnGetChars_clicked</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>    QString str = ui -&gt; editStr -&gt; <span class="hljs-built_in">text</span>();<br>    <span class="hljs-keyword">if</span>(str.<span class="hljs-built_in">isEmpty</span>()) <span class="hljs-keyword">return</span>;<br>    <span class="hljs-keyword">for</span>(qint16 i = <span class="hljs-number">0</span>; i &lt; str.<span class="hljs-built_in">size</span>(); i ++ )<br>    &#123;<br>        QChar ch = str.<span class="hljs-built_in">at</span>(i);<br>        <span class="hljs-type">char16_t</span> uni = ch.<span class="hljs-built_in">unicode</span>();<br>        <span class="hljs-function">QString <span class="hljs-title">chStr</span><span class="hljs-params">(ch)</span></span>;<br>        QString info = chStr + QString::<span class="hljs-built_in">asprintf</span>(<span class="hljs-string">&quot;\t, Unicode = 0x%X&quot;</span>, uni);<br>        ui -&gt; plainTextEdit -&gt; <span class="hljs-built_in">appendPlainText</span>(info);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/07/24/j9d.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<h3 id="2-2-显示单个字符的特性">2.2 显示单个字符的特性</h3>
+<p><strong>slot 函数如下:</strong></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">Widget::on_btnCharJudge_clicked</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>    QString str = ui -&gt; editChar -&gt; <span class="hljs-built_in">text</span>();<br>    <span class="hljs-keyword">if</span>(str.<span class="hljs-built_in">isEmpty</span>()) <span class="hljs-keyword">return</span>;<br><br>    QChar ch = str.<span class="hljs-built_in">at</span>(<span class="hljs-number">0</span>);<br>    <span class="hljs-type">char16_t</span> uni = ch.<span class="hljs-built_in">unicode</span>();<br><br>    QString info = str + QString::<span class="hljs-built_in">asprintf</span>(<span class="hljs-string">&quot;\t, Unicode = 0x%X&quot;</span>, uni);<br>    ui -&gt; plainTextEdit -&gt; <span class="hljs-built_in">appendPlainText</span>(info);<br><br>    ui -&gt; chkDigit -&gt; <span class="hljs-built_in">setChecked</span>(ch.<span class="hljs-built_in">isDigit</span>());<br>    ui -&gt; chkLetter -&gt; <span class="hljs-built_in">setChecked</span>(ch.<span class="hljs-built_in">isLetter</span>());<br>    ui -&gt; chkLetterNum -&gt; <span class="hljs-built_in">setChecked</span>(ch.<span class="hljs-built_in">isLetterOrNumber</span>());<br>    ui -&gt; chkUpper -&gt; <span class="hljs-built_in">setChecked</span>(ch.<span class="hljs-built_in">isUpper</span>());<br>    ui -&gt; chkLower -&gt; <span class="hljs-built_in">setChecked</span>(ch.<span class="hljs-built_in">isLower</span>());<br>    ui -&gt; chkMark -&gt; <span class="hljs-built_in">setChecked</span>(ch.<span class="hljs-built_in">isMark</span>());<br>    ui -&gt; chkSpace -&gt; <span class="hljs-built_in">setChecked</span>(ch.<span class="hljs-built_in">isSpace</span>());<br>    ui -&gt; chkSymbol -&gt; <span class="hljs-built_in">setChecked</span>(ch.<span class="hljs-built_in">isSymbol</span>());<br>    ui -&gt; chkPunct -&gt; <span class="hljs-built_in">setChecked</span>(ch.<span class="hljs-built_in">isPunct</span>()); <span class="hljs-comment">// 是否为标点符号</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/07/24/53wje.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<p><img src="https://sukicdn.com/wyx/i/2025/07/24/q9te.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<h3 id="2-3-QChar-字符与-Latin1-字符的转换">2.3 QChar 字符与 Latin1 字符的转换</h3>
+<p>Latin1（ISO 8859-1） 是单字节编码，覆盖 0-255 的字符范围，包含基本 ASCII（0-127）和扩展西欧字符（128-255）。</p>
+<ul>
+<li>
+<p>QChar 转换为 Latin1</p>
+<p><code>char toLatin1() const</code> 返回QChar的 Latin1 表示。若字符超出 Latin1 范围（0-255），返回’\0’（值为 0）。</p>
+  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++">QChar c1 = <span class="hljs-string">&#x27;A&#x27;</span>;         <span class="hljs-comment">// Unicode 65 → Latin1 65 (&#x27;A&#x27;)</span><br>QChar c2 = <span class="hljs-built_in">QChar</span>(<span class="hljs-number">225</span>);  <span class="hljs-comment">// Unicode 225 (ε) → Latin1 225 (α)</span><br>QChar c3 = <span class="hljs-built_in">QChar</span>(<span class="hljs-number">1000</span>); <span class="hljs-comment">// 超出Latin1范围 → 返回 &#x27;\0&#x27;</span><br><br><span class="hljs-type">char</span> latin1_c1 = c<span class="hljs-number">1.</span><span class="hljs-built_in">toLatin1</span>(); <span class="hljs-comment">// &#x27;A&#x27;</span><br><span class="hljs-type">char</span> latin1_c2 = c<span class="hljs-number">2.</span><span class="hljs-built_in">toLatin1</span>(); <span class="hljs-comment">// &#x27;α&#x27;</span><br><span class="hljs-type">char</span> latin1_c3 = c<span class="hljs-number">3.</span><span class="hljs-built_in">toLatin1</span>(); <span class="hljs-comment">// &#x27;\0&#x27;</span><br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p>Latin1 转换为 QChar</p>
+  <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-type">char</span> latinChar = <span class="hljs-string">&#x27;B&#x27;</span>;      <span class="hljs-comment">// ASCII &#x27;B&#x27; (66)</span><br>QChar unicodeChar = QChar::<span class="hljs-built_in">fromLatin1</span>(latinChar); <span class="hljs-comment">// Unicode 66 (&#x27;B&#x27;)</span><br><br><span class="hljs-type">char</span> extendedChar = <span class="hljs-number">233</span>;   <span class="hljs-comment">// Latin1 233 (é)</span><br>QChar accentedChar = QChar::<span class="hljs-built_in">fromLatin1</span>(extendedChar); <span class="hljs-comment">// Unicode 233 (é)</span><br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<p><strong>功能测试 slot 函数如下:</strong></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">Widget::on_btnLatin_clicked</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>    QString str = <span class="hljs-string">&quot;Marisa&quot;</span>;<br>    ui -&gt; plainTextEdit -&gt; <span class="hljs-built_in">appendPlainText</span>(str);<br>    QChar ch = QChar::<span class="hljs-built_in">fromLatin1</span>(<span class="hljs-string">&#x27;A&#x27;</span>);<br>    str.<span class="hljs-built_in">back</span>() = ch;<br>    ui -&gt; plainTextEdit -&gt; <span class="hljs-built_in">appendPlainText</span>(<span class="hljs-string">&quot;\n&quot;</span> + str);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/07/24/55l1k.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<h3 id="2-4-QChar-字符与-UTF-16-字符的转换">2.4 QChar 字符与 UTF-16 字符的转换</h3>
+<p>QChar 是用于表示 Unicode 字符的类，内部使用 UTF-16 编码。</p>
+<ul>
+<li>
+<p>QChar 对应一个 UTF-16 编码单元（16 位值）。</p>
+</li>
+<li>
+<p>Unicode 字符分两种情况：</p>
+<ul>
+<li>
+<p>BMP 字符（码位 ≤ 0xFFFF）：1 个 QChar 表示。</p>
+</li>
+<li>
+<p>非 BMP 字符（码位 &gt; 0xFFFF，如表情符号）：需 2 个 QChar（代理对）。</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>数值 → <code>QChar</code></strong></p>
+  <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs cpp">ushort utf16Value = <span class="hljs-number">0x4E2D</span>;  <span class="hljs-comment">// &quot;中&quot; 的 UTF-16 编码</span><br><span class="hljs-function">QChar <span class="hljs-title">ch</span><span class="hljs-params">(utf16Value)</span></span>;        <span class="hljs-comment">// 直接构造</span><br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong><code>QChar</code> → 数值</strong></p>
+  <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs cpp">ushort value = ch.<span class="hljs-built_in">unicode</span>();  <span class="hljs-comment">// 获取 UTF-16 编码值</span><br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong>代理对转换（非 BMP 字符）</strong></p>
+<ul>
+<li><strong>32 位码位 → 代理对（两个 <code>QChar</code>）</strong></li>
+</ul>
+  <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs cpp">uint codePoint = <span class="hljs-number">0x1F600</span>; <span class="hljs-comment">// 😀 的码位</span><br><br><span class="hljs-comment">// 检查是否需要代理对</span><br><span class="hljs-keyword">if</span> (codePoint &gt; <span class="hljs-number">0xFFFF</span>) &#123;<br>    QChar high = QChar::<span class="hljs-built_in">highSurrogate</span>(codePoint); <span class="hljs-comment">// 高代理</span><br>    QChar low = QChar::<span class="hljs-built_in">lowSurrogate</span>(codePoint);   <span class="hljs-comment">// 低代理</span><br>    QString str;<br>    str.<span class="hljs-built_in">append</span>(high).<span class="hljs-built_in">append</span>(low); <span class="hljs-comment">// 组合成字符串</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<ul>
+<li><strong>代理对 → 32 位码位</strong></li>
+</ul>
+  <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs cpp">QString str = <span class="hljs-string">u&quot;😀&quot;</span>; <span class="hljs-comment">// 包含两个 QChar（代理对）</span><br><span class="hljs-keyword">if</span> (str.<span class="hljs-built_in">length</span>() == <span class="hljs-number">2</span>) &#123;<br>    QChar high = str[<span class="hljs-number">0</span>];<br>    QChar low = str[<span class="hljs-number">1</span>];<br>    <span class="hljs-keyword">if</span> (high.<span class="hljs-built_in">isHighSurrogate</span>() &amp;&amp; low.<span class="hljs-built_in">isLowSurrogate</span>()) &#123;<br>        uint codePoint = QChar::<span class="hljs-built_in">surrogateToUcs4</span>(high, low); <span class="hljs-comment">// 0x1F600</span><br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<p><strong>功能测试 slot 函数如下:</strong></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">Widget::on_btnUTF16_clicked</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>    QString str = <span class="hljs-string">&quot;魔理沙&quot;</span>;<br>    ui -&gt; plainTextEdit -&gt; <span class="hljs-built_in">appendPlainText</span>(str);<br>    QString tmp = <span class="hljs-string">&quot;爱丽丝&quot;</span>;<br>    <span class="hljs-keyword">for</span>(qint16 i = <span class="hljs-number">0</span>; i &lt; tmp.<span class="hljs-built_in">size</span>(); i ++ )&#123;<br>        <span class="hljs-type">char16_t</span> uni = tmp.<span class="hljs-built_in">at</span>(i).<span class="hljs-built_in">unicode</span>();<br>        str[i] = <span class="hljs-built_in">QChar</span>(uni);<br>    &#125;<br>    ui -&gt; plainTextEdit -&gt; <span class="hljs-built_in">appendPlainText</span>(<span class="hljs-string">&quot;\n&quot;</span> + str);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/07/24/3um5.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<h3 id="2-5-QChar-字符的比较和替换">2.5 QChar 字符的比较和替换</h3>
+<p>QChar支持标准比较运算符，基于 Unicode 码点值进行比较：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function">QChar <span class="hljs-title">c1</span><span class="hljs-params">(<span class="hljs-string">&#x27;A&#x27;</span>)</span></span>;<br><span class="hljs-function">QChar <span class="hljs-title">c2</span><span class="hljs-params">(<span class="hljs-string">&#x27;B&#x27;</span>)</span></span>;<br><span class="hljs-function">QChar <span class="hljs-title">c3</span><span class="hljs-params">(<span class="hljs-string">&#x27;A&#x27;</span>)</span></span>;<br><br><span class="hljs-type">bool</span> equal = (c1 == c3);    <span class="hljs-comment">// true（码点均为65）</span><br><span class="hljs-type">bool</span> notEqual = (c1 != c2); <span class="hljs-comment">// true</span><br><span class="hljs-type">bool</span> lessThan = (c1 &lt; c2);  <span class="hljs-comment">// true（&#x27;A&#x27;码点65 &lt; &#x27;B&#x27;码点66）</span><br></code></pre></td></tr></table></figure>
+<p><strong>功能测试 slot 函数如下:</strong></p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">Widget::on_btnCmp_clicked</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>    QString str = <span class="hljs-string">&quot;爱丽丝&quot;</span>;<br>    ui -&gt; plainTextEdit -&gt; <span class="hljs-built_in">appendPlainText</span>(str);<br>    QString tmp = <span class="hljs-string">&quot;爱魔&quot;</span>;<br>    QChar ai = QChar::<span class="hljs-built_in">fromUcs2</span>(tmp.<span class="hljs-built_in">at</span>(<span class="hljs-number">0</span>).<span class="hljs-built_in">unicode</span>());<br>    QChar mo = <span class="hljs-built_in">QChar</span>(tmp.<span class="hljs-built_in">back</span>().<span class="hljs-built_in">unicode</span>());<br>    <span class="hljs-keyword">for</span>(qint16 i = <span class="hljs-number">0</span>; i &lt; str.<span class="hljs-built_in">size</span>(); i ++ )&#123;<br>        <span class="hljs-keyword">if</span>(str.<span class="hljs-built_in">at</span>(i) == ai)&#123;<br>            str[i] = mo;<br>        &#125;<br>    &#125;<br>    ui -&gt; plainTextEdit -&gt; <span class="hljs-built_in">appendPlainText</span>(<span class="hljs-string">&quot;\n&quot;</span> + str);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/07/24/r6ya.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<h2 id="参考">参考</h2>
+<p>《Qt 6 C++ 开发指南》</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/C-Qt6-%E5%BC%80%E5%8F%91/" class="category-chain-item">C++ Qt6 开发</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/C/" class="print-no-link">#C++</a>
+      
+        <a href="/tags/Qt-6/" class="print-no-link">#Qt 6</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「C++ Qt6 开发」QChar 常用功能测试</div>
+      <div>https://marisamagic.github.io/2025/07/24/20250723/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年7月24日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/07/17/20250717/" title="「C++ Qt6 开发」信号与槽">
+                        <span class="hidden-mobile">「C++ Qt6 开发」信号与槽</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
