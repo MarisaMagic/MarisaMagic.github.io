@@ -1,0 +1,1003 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Linux 系统中常用的命令；Linux 系统目录结构">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Linux 系统编程」常用命令及系统目录结构">
+<meta property="og:url" content="https://marisamagic.github.io/2025/08/01/20250801_2/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="Linux 系统中常用的命令；Linux 系统目录结构">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/08/01/8wujid.jpg">
+<meta property="article:published_time" content="2025-08-01T08:22:35.873Z">
+<meta property="article:modified_time" content="2025-08-01T14:41:40.115Z">
+<meta property="article:author" content="MarisaMagic">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2025/08/01/8wujid.jpg">
+  
+  
+  
+  <title>「Linux 系统编程」常用命令及系统目录结构 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2025/08/01/8wujid.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Linux 系统编程」常用命令及系统目录结构"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-08-01 16:22" pubdate>
+          2025年8月1日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          17 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Linux 系统编程」常用命令及系统目录结构</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="1-Linux-常用命令">1 Linux 常用命令</h2>
+<h3 id="1-1-文件目录操作">1.1 文件目录操作</h3>
+<h4 id="1-1-1-列出当前目录所有内容">1.1.1 列出当前目录所有内容</h4>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">ls</span><br></code></pre></td></tr></table></figure>
+<p><code>ls -l</code> 可以列出目录详细列表；<code>ls -a</code> 可以显示隐藏文件；通过 <code>ls [指定目录]</code> 可以列出指定路径中的所有内容。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/01/4x1s.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<h4 id="1-1-2-切换目录">1.1.2 切换目录</h4>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">cd</span> [切换的目录路径]<br></code></pre></td></tr></table></figure>
+<p><code>cd /</code> 可以切换到 <strong>系统根目录</strong>；<br>
+<code>cd ~</code> 可以切换到系统 <strong>默认用户的家目录</strong>；<br>
+<code>cd ..</code> 或者 <code>cd ../</code> 可以跳到当前目录的 <strong>上一级目录</strong>；<br>
+<code>cd -</code> 可以切换到 <strong>上次访问的目录</strong>。</p>
+<p>通过 <strong>绝对路径</strong> 切换示例:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">cd</span> /home/marisa<br></code></pre></td></tr></table></figure>
+<p>通过 <strong>相对路径</strong> 切换示例：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">cd</span> home<br><span class="hljs-built_in">cd</span> marisa<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/01/6rd5l.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<p>或者采用 <code>cd ./home</code>，<code>cd ./marisa</code>，效果一样。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/01/1bief7.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<h4 id="1-1-3-显示当前目录路径">1.1.3 显示当前目录路径</h4>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">pwd</span><br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/01/ewb.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<h4 id="1-1-4-空目录创建与删除">1.1.4 空目录创建与删除</h4>
+<p>在当前目录下 <strong>创建一个空的新目录</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">mkdir</span> [创建的目录名称]<br></code></pre></td></tr></table></figure>
+<p>也可以递归创建多级目录：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">mkdir</span> -p marisa/alice/aya<br></code></pre></td></tr></table></figure>
+<p>通过以下命令 <strong>删除一个空目录</strong>（一定要是空的）：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">rmdir</span> [先前创建的空目录名称]<br></code></pre></td></tr></table></figure>
+<p>在下面的示例中，先通过 <code>mkdir testDir</code> 当前默认用户的家目录创建了一个空目录 <code>testDir</code>，然后执行 <code>rmdir testDir</code> 将其删除。</p>
+<p>之后跳到上级 <code>/home</code> 目录，通过 <code>mkdir marisa/testDir2</code> 递归创建多级目录在 默认用户的家目录 下创建一个空目录 <code>testDir2</code>，然后执行 <code>rmdir marisa/testDir2</code> 将其删除。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/01/3du1.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<h4 id="1-1-5-创建空文件及删除文件-目录">1.1.5 创建空文件及删除文件 / 目录</h4>
+<p>通过以下命令 <strong>创建一个空文件</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">touch</span> [创建空文件名称]<br></code></pre></td></tr></table></figure>
+<p>可以创建一个新的目录 <code>testDir</code>，在这个新目录下创建一个空文件例如 <code>1.cpp</code>：</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/01/r5a0.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<p>此时这个 <code>testDir</code> 目录不为空，通过 <code>rmdir testDir</code> 是无法删除该目录的。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/01/q3ta.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<p>可以通过以下命令 <strong>删除文件或目录</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">rm</span> [删除的文件名称]<br><span class="hljs-built_in">rm</span> -r [删除的目录名称]<br></code></pre></td></tr></table></figure>
+<p>通过 <code>rm -f</code> 可以强制删除文件，且无任何提示信息；通过 <code>rm -rf</code> 可以强制删除目录，且无任何提示信息。</p>
+<p>在下面的示例中，通过 <code>rm testFile.cpp</code> 和 <code>rm -r testDir</code> 删除了先前创建的文件和目录。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/01/46om.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<h4 id="1-1-6-其他常用文件目录操作">1.1.6 其他常用文件目录操作</h4>
+<table>
+<thead>
+<tr>
+<th>命令</th>
+<th>功能描述</th>
+<th>常用示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cp</code></td>
+<td>复制文件/目录</td>
+<td><code>cp file1.txt file2.txt</code>（复制文件）、<code>cp -r dir1 dir2</code>（复制目录，需加 <code>-r</code>）</td>
+</tr>
+<tr>
+<td><code>mv</code></td>
+<td>移动/重命名文件/目录</td>
+<td><code>mv file.txt dir/</code>（移动）、<code>mv oldname.txt newname.txt</code>（重命名）</td>
+</tr>
+<tr>
+<td><code>cat</code></td>
+<td>查看文件内容（适合短文件）</td>
+<td><code>cat text.txt</code>、<code>cat file1.txt file2.txt</code>（合并显示）</td>
+</tr>
+<tr>
+<td><code>more</code></td>
+<td>分页查看长文件内容（空格键翻页）</td>
+<td><code>more longfile.txt</code></td>
+</tr>
+<tr>
+<td><code>less</code></td>
+<td>分页查看长文件（支持上下滚动）</td>
+<td><code>less longfile.txt</code>（按 <code>q</code> 退出）</td>
+</tr>
+<tr>
+<td><code>head</code></td>
+<td>查看文件前 N 行（默认前10行）</td>
+<td><code>head -n 5 file.txt</code>（前5行）</td>
+</tr>
+<tr>
+<td><code>tail</code></td>
+<td>查看文件后 N 行（默认后10行）</td>
+<td><code>tail -n 5 file.txt</code>（后5行）、<code>tail -f log.txt</code>（实时跟踪文件更新）</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="1-2-文件权限和用户管理">1.2 文件权限和用户管理</h3>
+<h4 id="1-2-1-以管理员权限执行命令">1.2.1 以管理员权限执行命令</h4>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> [选项] [以管理员权限执行的命令]<br></code></pre></td></tr></table></figure>
+<p>例如：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> apt update         <span class="hljs-comment"># 以 root 权限更新软件包列表</span><br><span class="hljs-built_in">sudo</span> vim /etc/hosts     <span class="hljs-comment"># 编辑需要 root 权限的文件</span><br></code></pre></td></tr></table></figure>
+<h4 id="1-2-2-切换用户">1.2.2 切换用户</h4>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">su [选项] [用户名]<br></code></pre></td></tr></table></figure>
+<p>通过以下命令可以切换到 root 用户：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">su              <span class="hljs-comment"># 切换到root，保持当前环境</span><br>su -            <span class="hljs-comment"># 切换到root，加载root的完整环境</span><br>su root         <span class="hljs-comment"># 明确指定切换到root用户</span><br></code></pre></td></tr></table></figure>
+<p>通过以下命令切换到其他用户：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs bash">su username<br>su - username<br>su -l username<br></code></pre></td></tr></table></figure>
+<p>选项参数：</p>
+<ul>
+<li><code>-</code> 或 <code>-l</code> 或 <code>--login</code>: 提供类似直接登录的环境</li>
+<li><code>-c command</code>: 执行指定命令后退出</li>
+<li><code>-s shell</code>: 指定要使用的shell</li>
+<li><code>-p</code> 或 <code>--preserve-environment</code>: 保留当前环境变量</li>
+</ul>
+<hr>
+<h4 id="1-2-3-其他常用文件权限和用户管理操作">1.2.3 其他常用文件权限和用户管理操作</h4>
+<table>
+<thead>
+<tr>
+<th>命令</th>
+<th>功能描述</th>
+<th>常用示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>chmod</code></td>
+<td>修改文件/目录权限</td>
+<td><code>chmod 755 file.sh</code>（权限数字表示）、<code>chmod +x file.sh</code>（添加执行权限）</td>
+</tr>
+<tr>
+<td><code>chown</code></td>
+<td>修改文件/目录所有者</td>
+<td><code>chown user:group file.txt</code>（修改用户和组）</td>
+</tr>
+<tr>
+<td><code>chgrp</code></td>
+<td>修改文件/目录所属组</td>
+<td><code>chgrp group file.txt</code></td>
+</tr>
+<tr>
+<td><code>useradd</code></td>
+<td>创建新用户</td>
+<td><code>useradd newuser</code>、<code>useradd -m newuser</code>（自动创建家目录）</td>
+</tr>
+<tr>
+<td><code>userdel</code></td>
+<td>删除用户</td>
+<td><code>userdel newuser</code>、<code>userdel -r newuser</code>（同时删除家目录）</td>
+</tr>
+<tr>
+<td><code>passwd</code></td>
+<td>修改用户密码</td>
+<td><code>passwd</code>（修改当前用户密码）、<code>passwd newuser</code>（管理员修改其他用户密码）</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="1-3-系统信息与进程管理">1.3 系统信息与进程管理</h3>
+<table>
+<thead>
+<tr>
+<th>命令</th>
+<th>功能描述</th>
+<th>常用示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>uname</code></td>
+<td>查看系统内核信息</td>
+<td><code>uname -a</code>（显示所有信息）</td>
+</tr>
+<tr>
+<td><code>hostname</code></td>
+<td>查看/设置主机名</td>
+<td><code>hostname</code>（查看）、<code>hostname newname</code>（临时设置）</td>
+</tr>
+<tr>
+<td><code>df</code></td>
+<td>查看磁盘空间使用情况</td>
+<td><code>df -h</code>（以人类可读单位显示，如 GB）</td>
+</tr>
+<tr>
+<td><code>du</code></td>
+<td>查看文件/目录大小</td>
+<td><code>du -sh dir/</code>（显示目录总大小，<code>-s</code> 汇总，<code>-h</code> 人性化）</td>
+</tr>
+<tr>
+<td><code>top</code></td>
+<td>实时查看系统进程资源占用（动态）</td>
+<td><code>top</code>（按 <code>q</code> 退出，<code>P</code> 按 CPU 排序）</td>
+</tr>
+<tr>
+<td><code>ps</code></td>
+<td>查看当前进程（静态）</td>
+<td><code>ps aux</code>（显示所有进程）、`ps -ef</td>
+</tr>
+<tr>
+<td><code>kill</code></td>
+<td>终止进程</td>
+<td><code>kill 1234</code>（通过进程 ID 终止）、<code>kill -9 1234</code>（强制终止）</td>
+</tr>
+<tr>
+<td><code>free</code></td>
+<td>查看内存使用情况</td>
+<td><code>free -h</code>（人性化显示内存和 swap 信息）</td>
+</tr>
+<tr>
+<td><code>uptime</code></td>
+<td>查看系统运行时间和负载</td>
+<td><code>uptime</code>（显示当前时间、运行时长、用户数、负载均值）</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="1-4-网络操作">1.4 网络操作</h3>
+<table>
+<thead>
+<tr>
+<th>命令</th>
+<th>功能描述</th>
+<th>常用示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ping</code></td>
+<td>测试网络连通性</td>
+<td><code>ping baidu.com</code>、<code>ping -c 4 192.168.1.1</code>（发送4个包后停止）</td>
+</tr>
+<tr>
+<td><code>ifconfig</code></td>
+<td>查看/配置网络接口（旧版）</td>
+<td><code>ifconfig</code>（查看所有网卡信息）</td>
+</tr>
+<tr>
+<td><code>ip</code></td>
+<td>查看/配置网络接口（新版，替代 <code>ifconfig</code>）</td>
+<td><code>ip addr</code>（查看IP地址）、<code>ip link set eth0 up</code>（启用网卡）</td>
+</tr>
+<tr>
+<td><code>netstat</code></td>
+<td>查看网络连接和端口状态</td>
+<td><code>netstat -tuln</code>（显示监听的 TCP/UDP 端口）</td>
+</tr>
+<tr>
+<td><code>ss</code></td>
+<td>查看网络连接（替代 <code>netstat</code>，更高效）</td>
+<td><code>ss -tuln</code></td>
+</tr>
+<tr>
+<td><code>curl</code></td>
+<td>发送 HTTP 请求或下载文件</td>
+<td><code>curl http://example.com</code>、<code>curl -O https://example.com/file.zip</code>（下载文件）</td>
+</tr>
+<tr>
+<td><code>wget</code></td>
+<td>下载文件</td>
+<td><code>wget https://example.com/file.zip</code>、<code>wget -c &lt;URL&gt;</code>（断点续传）</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="1-5-压缩与解压">1.5 压缩与解压</h3>
+<table>
+<thead>
+<tr>
+<th>命令</th>
+<th>功能描述</th>
+<th>常用示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tar</code></td>
+<td>打包/解压文件（常用格式：.tar、.tar.gz、.tar.bz2）</td>
+<td><code>tar -cvf archive.tar dir/</code>（打包）、<code>tar -zxvf archive.tar.gz</code>（解压 .tar.gz）、<code>tar -jxvf archive.tar.bz2</code>（解压 .tar.bz2）</td>
+</tr>
+<tr>
+<td><code>zip</code></td>
+<td>创建 ZIP 压缩包</td>
+<td><code>zip -r archive.zip dir/</code>（递归压缩目录）</td>
+</tr>
+<tr>
+<td><code>unzip</code></td>
+<td>解压 ZIP 压缩包</td>
+<td><code>unzip archive.zip</code>、<code>unzip archive.zip -d targetdir</code>（指定解压目录）</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="2-Linux-系统目录">2 Linux 系统目录</h2>
+<h3 id="2-1-系统目录结构">2.1 系统目录结构</h3>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/01/ud5.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/01/82770.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<h3 id="2-2-系统目录主要文件">2.2 系统目录主要文件</h3>
+<ul>
+<li>
+<p><strong>bin</strong></p>
+<p>存放二进制 <strong>可执行文件</strong>。</p>
+<p>包含系统启动和日常操作必需的基础命令，如 ls、cd、cp、mv 等，所有用户都可执行。</p>
+</li>
+<li>
+<p><strong>boot</strong></p>
+<p>存放 <strong>系统启动</strong> 相关的程序和文件。</p>
+<p>包括内核文件（如 vmlinuz-&lt;版本号&gt;）、初始化内存磁盘（initrd 或 initramfs，用于启动时加载驱动）。</p>
+</li>
+<li>
+<p><strong>dev</strong></p>
+<p>存放 <strong>设备文件</strong>。</p>
+<p>例如字符设备：键盘（/dev/keyboard）、鼠标（/dev/mouse）、串口（/dev/ttyS0）等；块设备：硬盘（/dev/sda）、U 盘（/dev/sdb）、分区（/dev/sda1）等。</p>
+</li>
+<li>
+<p><strong>home</strong></p>
+<p>存放 <strong>普通用户的家目录</strong>。</p>
+<p>每个用户在 /home 下有一个以用户名命名的子目录（如 /home/user1），用于存放用户的个人文件、配置（如 .bashrc）、文档等。</p>
+</li>
+<li>
+<p><strong>etc</strong></p>
+<p>存放 <strong>系统和应用程序的配置文件，以及用户信息文件</strong>。</p>
+<p>包括 passwd（用户账号列表）、group（用户组列表）、hostname（主机名配置）、network/interfaces（网络接口配置）、ssh/sshd_config（SSH 服务配置）等。</p>
+</li>
+<li>
+<p><strong>lib</strong></p>
+<p>存放 <strong>共享库文件</strong>（动态链接库）和 <strong>内核模块</strong>。</p>
+<p>包括 系统核心库：如 libc.so.6（C 标准库）；应用程序依赖的库：如 <a target="_blank" rel="noopener" href="http://libssl.so">libssl.so</a>（加密相关库）；内核模块：/lib/modules/ 目录下存放内核驱动模块，用于扩展硬件支持。</p>
+</li>
+<li>
+<p><strong>root</strong></p>
+<p><strong>系统管理员</strong>（root 用户）的家目录。</p>
+<p>root 作为超级用户，家目录直接放在根目录，用于存放管理员的个人文件和配置。</p>
+</li>
+<li>
+<p><strong>usr</strong></p>
+<p><strong>用户共享资源</strong>（Unix Software Resource），集中存放系统软件和用户安装的应用。</p>
+<p>主要子目录及功能：</p>
+<ul>
+<li><code>/usr/bin</code>：非必需的用户命令（如 git、python），补充 /bin 的功能；</li>
+<li><code>/usr/sbin</code>：非必需的系统管理命令（如 httpd、vsftpd）；</li>
+<li><code>/usr/lib</code>：与 /lib 类似，但存放非核心的共享库；</li>
+<li><code>/usr/share</code>：共享数据（如文档、图标、locale 语言文件）；</li>
+<li><code>/usr/local</code>：用户自行编译安装的软件（如源码安装的程序默认放在这里，避免与系统自带软件冲突）。</li>
+</ul>
+</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Linux 系统编程」常用命令及系统目录结构</div>
+      <div>https://marisamagic.github.io/2025/08/01/20250801_2/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年8月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/08/01/20250801/" title="「Linux 系统编程」Shell 及主键盘快捷键">
+                        <span class="hidden-mobile">「Linux 系统编程」Shell 及主键盘快捷键</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
