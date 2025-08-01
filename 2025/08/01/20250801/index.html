@@ -1,0 +1,903 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="什么是 Shell；bash 是 Linux 系统最广泛使用的 Shell；bash 提供的命令与路径补齐功能；bash 历史记录；bash 中常用的主键盘快捷键。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Linux 系统编程」Shell 及基础快捷命令">
+<meta property="og:url" content="https://marisamagic.github.io/2025/08/01/20250801/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="什么是 Shell；bash 是 Linux 系统最广泛使用的 Shell；bash 提供的命令与路径补齐功能；bash 历史记录；bash 中常用的主键盘快捷键。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/08/01/3rpu.jpg">
+<meta property="article:published_time" content="2025-08-01T04:47:30.811Z">
+<meta property="article:modified_time" content="2025-08-01T05:37:29.363Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2025/08/01/3rpu.jpg">
+  
+  
+  
+  <title>「Linux 系统编程」Shell 及基础快捷命令 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2025/08/01/3rpu.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Linux 系统编程」Shell 及基础快捷命令"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-08-01 12:47" pubdate>
+          2025年8月1日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          12 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Linux 系统编程」Shell 及基础快捷命令</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="1-什么是-Shell">1 什么是 Shell</h2>
+<p>在 Linux 系统中，Shell 即 <strong>命令解释器</strong>，是用户与操作系统内核之间的交互接口。Shell 接收用户输入的命令，解析后传递给内核执行，并将执行结果返回给用户。</p>
+<p>除了执行单个命令，Shell 还支持脚本编程（通过编写 .sh 脚本文件批量执行命令），实现自动化任务。</p>
+<h3 id="1-1-Shell-家族">1.1 Shell 家族</h3>
+<p>Linux 系统中有多种 Shell 版本：</p>
+<ul>
+<li>
+<p>Bourne Shell（sh）：最早的 Unix Shell，是其他许多 Shell 的基础，功能相对简单，不支持命令行编辑等高级特性。</p>
+</li>
+<li>
+<p>Bourne Again Shell（<strong>bash</strong>）：是 sh 的增强版，兼容 sh 的语法，同时增加了 <strong>命令补全、历史记录、脚本编程扩展</strong> 等功能，目前是大多数 Linux 发行版（如 Ubuntu、CentOS）的默认 Shell。</p>
+</li>
+<li>
+<p>C Shell（csh）：语法类似 C 语言，支持命令历史、别名等功能。</p>
+</li>
+<li>
+<p>TENEX C Shell（tcsh）：csh 的增强版，增加了命令行编辑、路径补全等功能，交互性更好。</p>
+</li>
+<li>
+<p>Korn Shell（ksh）：结合了 sh 的语法和 csh 的交互特性，支持脚本调试、数组等高级功能，在商业 Unix 系统（如 AIX）中较常用。</p>
+</li>
+<li>
+<p>Z Shell（zsh）：功能强大的现代 Shell，兼容 bash，由 ksh 发展出来，支持更智能的补全、主题定制、插件扩展。</p>
+</li>
+</ul>
+<h3 id="1-2-查看系统中的-Shell">1.2 查看系统中的 Shell</h3>
+<p>我在虚拟机上安装的操作系统为 Ubuntu 18.04。</p>
+<p>可以用以下命令查看当前系统中可用的 Shell：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">cat</span> /etc/shells<br></code></pre></td></tr></table></figure>
+<p>可以用以下命令查看系统当前正在使用的 Shell：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">echo</span> <span class="hljs-variable">$SHELL</span><br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/01/3n63.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<h2 id="2-bash-命令和路径补齐">2 bash 命令和路径补齐</h2>
+<p>bash 提供了 <strong>命令 / 路径补齐功能</strong>，通过按下 <strong>Tab 键</strong> 自动补全未输入完整的命令或文件路径。</p>
+<ul>
+<li>
+<p><strong>命令补齐</strong></p>
+<p>输入命令的前几个字符，按下 Tab 键，bash 会自动补全命令，<strong>前提是这条命令是唯一的</strong>；</p>
+<p>若有多个匹配项，按 <strong>两次 Tab 键会列出所有可能的命令</strong>。</p>
+<p>例如，输入 <code>his</code> 后按下 Tab 键，系统会补全为 <code>history</code> 命令；输入 <code>hi</code> 后按下 Tab 键无反应，第二次按下 Tab 键后会显示所有以 <code>hi</code> 为开头的命令。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/01/50njj.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+</li>
+<li>
+<p><strong>路径补齐</strong></p>
+<p>输入文件 / 目录路径的前几个字符，按下 Tab 键，bash 会补全路径，<strong>前提是这条路径是唯一的</strong>；</p>
+<p>若有多个匹配项，按 <strong>两次 Tab 键会列出所有可能的路径</strong>。</p>
+<p>例如，输入 <code>cd /usr/lo</code> 后按下 Tab 键，系统会补全为 <code>cd /usr/local</code> 命令；输入 <code>cd /usr/l</code> 后按下 Tab 键无反应，第二次按下 Tab 键后会显示所有以 <code>cd /usr/l</code> 为开头的命令。</p>
+</li>
+</ul>
+<hr>
+<h2 id="3-历史记录">3 历史记录</h2>
+<p>bash 会记录用户输入的所有命令（默认保存最近 1000 条，可通过 HISTSIZE 变量修改）。</p>
+<h3 id="3-1-历史命令查看与执行">3.1 历史命令查看与执行</h3>
+<p>使用 history 命令列出所有历史命令，每条命令前有编号。输入 <code>!编号</code> 可以重复执行对应编号的命令；输入 <code>!命令前缀</code> 重复执行最近一条以该前缀开头的命令。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/01/534m7.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<h3 id="3-2-历史命令搜索">3.2 历史命令搜索</h3>
+<p>按下 Ctrl + R 进入反向搜索模式，<strong>输入关键词可匹配历史命令</strong>，按 Enter 执行，按 Ctrl + G 退出。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/01/zlw4p.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<h3 id="3-3-清除历史记录">3.3 清除历史记录</h3>
+<p>使用 <code>history -c</code> 清空当前会话的历史记录；若需删除文件中的记录，可编辑 <code>~/.bash_history</code>（历史记录默认保存在该文件中）。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/01/53zm7.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<h2 id="4-主键盘快捷键">4 主键盘快捷键</h2>
+<h3 id="4-1-光标移动">4.1 光标移动</h3>
+<table>
+<thead>
+<tr>
+<th>快捷键组合</th>
+<th>功能描述</th>
+<th>备注/示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Ctrl + A</code></td>
+<td>将光标移动到命令行<strong>开头</strong></td>
+<td>输入 <code>ls -l /usr</code> 时，快速定位到 <code>l</code> 前</td>
+</tr>
+<tr>
+<td><code>Ctrl + E</code></td>
+<td>将光标移动到命令行<strong>结尾</strong></td>
+<td>长命令末尾补充内容时使用</td>
+</tr>
+<tr>
+<td><code>Ctrl + F</code></td>
+<td>光标向前（右）移动1个字符</td>
+<td>等同于右方向键</td>
+</tr>
+<tr>
+<td><code>Ctrl + B</code></td>
+<td>光标向后（左）移动1个字符</td>
+<td>等同于左方向键</td>
+</tr>
+<tr>
+<td><code>Alt + F</code></td>
+<td>光标向前（右）移动1个单词（以空格/标点分隔）</td>
+<td><code>cd /home/user</code> 中，从 <code>/</code> 跳到 <code>h</code> 前</td>
+</tr>
+<tr>
+<td><code>Alt + B</code></td>
+<td>光标向后（左）移动1个单词</td>
+<td>与 <code>Alt + F</code> 方向相反</td>
+</tr>
+</tbody>
+</table>
+<h3 id="4-2-编辑操作">4.2 编辑操作</h3>
+<table>
+<thead>
+<tr>
+<th>快捷键组合</th>
+<th>功能描述</th>
+<th>备注/示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Ctrl + C</code></td>
+<td>终止当前运行的命令</td>
+<td>中断 <code>ping baidu.com</code> 等进程</td>
+</tr>
+<tr>
+<td><code>Ctrl + D</code></td>
+<td>退出当前 Shell 会话；或删除光标处字符</td>
+<td>替代 <code>exit</code> 命令，或类似 Delete 键功能</td>
+</tr>
+<tr>
+<td><code>Ctrl + K</code></td>
+<td>删除从 <strong>光标</strong> 到 <strong>命令行结尾</strong> 的内容</td>
+<td><code>echo &quot;test&quot;</code> 中光标在 <code>e</code> 后，删除 <code>e &quot;test&quot;</code></td>
+</tr>
+<tr>
+<td><code>Ctrl + U</code></td>
+<td>删除从 <strong>光标</strong> 到 <strong>命令行开头</strong> 的内容</td>
+<td>快速清空错误输入的长命令</td>
+</tr>
+<tr>
+<td><code>Ctrl + W</code></td>
+<td>删除光标前的1个单词</td>
+<td><code>sudo service nginx start</code> 中，光标在末尾时删除 <code>start</code></td>
+</tr>
+<tr>
+<td><code>Ctrl + Y</code></td>
+<td>粘贴用 <code>Ctrl + K/U/W</code> 删除的内容</td>
+<td>恢复误删的命令片段</td>
+</tr>
+<tr>
+<td><code>Ctrl + L</code></td>
+<td>清空终端屏幕（保留历史记录）</td>
+<td>替代 <code>clear</code> 命令</td>
+</tr>
+<tr>
+<td><code>Ctrl + _</code></td>
+<td>撤销上一次编辑操作（恢复误删）</td>
+<td><code>_</code> 需配合 Shift 键输入</td>
+</tr>
+</tbody>
+</table>
+<h3 id="4-3-历史命令">4.3 历史命令</h3>
+<table>
+<thead>
+<tr>
+<th>快捷键组合</th>
+<th>功能描述</th>
+<th>备注/示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Ctrl + R</code></td>
+<td>反向搜索历史命令（按关键词匹配）</td>
+<td>输入 <code>ls</code> 可匹配最近含 <code>ls</code> 的命令</td>
+</tr>
+<tr>
+<td><code>Ctrl + P</code></td>
+<td>调用上一条历史命令</td>
+<td>等同于上方向键</td>
+</tr>
+<tr>
+<td><code>Ctrl + N</code></td>
+<td>调用下一条历史命令</td>
+<td>等同于下方向键</td>
+</tr>
+</tbody>
+</table>
+<h3 id="4-4-其他实用命令">4.4 其他实用命令</h3>
+<table>
+<thead>
+<tr>
+<th>快捷键组合</th>
+<th>功能描述</th>
+<th>备注/示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Ctrl + S</code></td>
+<td>暂停终端输出（防止刷屏）</td>
+<td>大量日志输出时临时暂停</td>
+</tr>
+<tr>
+<td><code>Ctrl + Q</code></td>
+<td>恢复被 <code>Ctrl + S</code> 暂停的终端输出</td>
+<td>继续查看暂停的输出内容</td>
+</tr>
+<tr>
+<td><code>Alt + .</code></td>
+<td>粘贴上一条命令的最后一个参数</td>
+<td>先执行 <code>ls /var/log</code>，再输入 <code>cd </code> 后按此键，补全为 <code>cd /var/log</code></td>
+</tr>
+</tbody>
+</table>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Linux-%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B/" class="category-chain-item">Linux 系统编程</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Linux/" class="print-no-link">#Linux</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Linux 系统编程」Shell 及基础快捷命令</div>
+      <div>https://marisamagic.github.io/2025/08/01/20250801/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年8月1日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/07/24/20250723/" title="「C++ Qt6 开发」QChar 常用功能测试">
+                        <span class="hidden-mobile">「C++ Qt6 开发」QChar 常用功能测试</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
