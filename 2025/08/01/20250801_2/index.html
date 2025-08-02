@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2025/08/01/8wujid.jpg">
 <meta property="article:published_time" content="2025-08-01T08:22:35.873Z">
-<meta property="article:modified_time" content="2025-08-01T14:48:48.646Z">
+<meta property="article:modified_time" content="2025-08-02T08:44:13.371Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="Linux">
 <meta name="twitter:card" content="summary_large_image">
@@ -253,7 +253,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          2k 字
+          2.3k 字
         
       </span>
     
@@ -264,7 +264,7 @@
         
         
         
-          17 分钟
+          20 分钟
         
       </span>
     
@@ -316,6 +316,16 @@
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">ls</span><br></code></pre></td></tr></table></figure>
 <p><code>ls -l</code> 可以列出目录详细列表；<code>ls -a</code> 可以显示隐藏文件；通过 <code>ls [指定目录]</code> 可以列出指定路径中的所有内容。</p>
 <p><img src="https://sukicdn.com/wyx/i/2025/08/01/4x1s.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<p>执行 <code>ls -l</code> 命令之后，每一条为每个目录的详细信息，从左到右依次为：</p>
+<p><strong>文件权限  硬链接计数  所有者  所属组  大小  时间  文件名/文件夹名</strong></p>
+<p>权限具体展开：</p>
+<p><code>-rw-r--r--</code> 共 10 位<br>
+1234567890</p>
+<p>其中：</p>
+<p>1 代表文件类型；<br>
+234 代表所有者读写执行权限；<br>
+567 代表同组用户读写执行权限；<br>
+890 代表其他人读写执行权限。</p>
 <hr>
 <h4 id="1-1-2-切换目录">1.1.2 切换目录</h4>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">cd</span> [切换的目录路径]<br></code></pre></td></tr></table></figure>
@@ -360,7 +370,24 @@
 <p>在下面的示例中，通过 <code>rm testFile.cpp</code> 和 <code>rm -r testDir</code> 删除了先前创建的文件和目录。</p>
 <p><img src="https://sukicdn.com/wyx/i/2025/08/01/46om.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
 <hr>
-<h4 id="1-1-6-其他常用文件目录操作">1.1.6 其他常用文件目录操作</h4>
+<h4 id="1-1-6-查看文件（适合短文件）">1.1.6 查看文件（适合短文件）</h4>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">cat</span> test.txt   <br><span class="hljs-built_in">cat</span> file1.txt file2.txt  <span class="hljs-comment"># （合并显示）</span><br></code></pre></td></tr></table></figure>
+<p>在下面的示例中，新创建了一个 a.cpp 文件并随便写入一些东西，<code>cat a.cpp</code> 查看其中的内容；另外，<code>tac a.cpp</code> 可以倒序查看文件内容。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/02/xiej.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<h4 id="1-1-7-复制文件-目录">1.1.7 复制文件 / 目录</h4>
+<p>通过以下命令进行文件 / 目录的复制：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">cp</span> file1.txt file2.txt   <span class="hljs-comment"># 复制文件</span><br><span class="hljs-built_in">cp</span> -r dir1 dir2          <span class="hljs-comment"># 复制目录，需加 `-r`</span><br></code></pre></td></tr></table></figure>
+<p>在下面的示例中，将 <code>a.cpp</code> 文件中的内容复制到一个新文件 <code>b.txt</code> 中（会自动先创建一个文件 <code>b.txt</code>），<code>cat b.txt</code> 查看其中的内容：</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/02/xmsq.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<p>在下面的示例中，将 <code>testDir</code> 目录递归复制到一个新目录 <code>testDir2</code> 中，添加参数 <code>-r</code> 用于递归复制目录：</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/02/xwfk.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<p><code>cp -a dir1  dir2</code> 可以复制目录 1 及其下所有文件到目录 2，与 <code>-r</code> 参数不同的是，<code>-a</code> 是完全复制，复制后文件权限，改动时间什么的也完全相同。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/02/1af1yc.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<h4 id="1-1-8-其他常用文件目录操作">1.1.8 其他常用文件目录操作</h4>
 <table>
 <thead>
 <tr>
@@ -371,19 +398,9 @@
 </thead>
 <tbody>
 <tr>
-<td><code>cp</code></td>
-<td>复制文件/目录</td>
-<td><code>cp file1.txt file2.txt</code>（复制文件）、<code>cp -r dir1 dir2</code>（复制目录，需加 <code>-r</code>）</td>
-</tr>
-<tr>
 <td><code>mv</code></td>
 <td>移动/重命名文件/目录</td>
 <td><code>mv file.txt dir/</code>（移动）、<code>mv oldname.txt newname.txt</code>（重命名）</td>
-</tr>
-<tr>
-<td><code>cat</code></td>
-<td>查看文件内容（适合短文件）</td>
-<td><code>cat text.txt</code>、<code>cat file1.txt file2.txt</code>（合并显示）</td>
 </tr>
 <tr>
 <td><code>more</code></td>
