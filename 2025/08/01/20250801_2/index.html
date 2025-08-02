@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2025/08/01/8wujid.jpg">
 <meta property="article:published_time" content="2025-08-01T08:22:35.873Z">
-<meta property="article:modified_time" content="2025-08-02T08:44:13.371Z">
+<meta property="article:modified_time" content="2025-08-02T08:57:42.025Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="Linux">
 <meta name="twitter:card" content="summary_large_image">
@@ -253,7 +253,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          2.3k 字
+          2.4k 字
         
       </span>
     
@@ -319,13 +319,22 @@
 <p>执行 <code>ls -l</code> 命令之后，每一条为每个目录的详细信息，从左到右依次为：</p>
 <p><strong>文件权限  硬链接计数  所有者  所属组  大小  时间  文件名/文件夹名</strong></p>
 <p>权限具体展开：</p>
-<p><code>-rw-r--r--</code> 共 10 位<br>
-1234567890</p>
-<p>其中：</p>
+<p><code>-rw-r--r--</code> 共 10 位，记为 1234567890。</p>
 <p>1 代表文件类型；<br>
 234 代表所有者读写执行权限；<br>
 567 代表同组用户读写执行权限；<br>
 890 代表其他人读写执行权限。</p>
+<p>Linux 系统文件类型有 7/8 种，分别为：</p>
+<ul>
+<li><strong>普通文件</strong>：-</li>
+<li><strong>目录文件</strong>：d</li>
+<li><strong>字符设备文件</strong>：c</li>
+<li><strong>块设备文件</strong>：b</li>
+<li><strong>软连接</strong>：l</li>
+<li><strong>管道文件</strong>：p</li>
+<li><strong>套接字</strong>：s</li>
+<li><strong>未知文件</strong></li>
+</ul>
 <hr>
 <h4 id="1-1-2-切换目录">1.1.2 切换目录</h4>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">cd</span> [切换的目录路径]<br></code></pre></td></tr></table></figure>
@@ -771,6 +780,12 @@
                 <div class="post-prevnext my-3">
                   <article class="post-prev col-6">
                     
+                    
+                      <a href="/2025/08/02/20250802/" title="「Linux 系统编程」软链接和硬链接">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「Linux 系统编程」软链接和硬链接</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
                     
                   </article>
                   <article class="post-next col-6">
