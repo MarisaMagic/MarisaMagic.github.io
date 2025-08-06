@@ -1,0 +1,957 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="apt 软件安装命令的使用；dpkg 从本地 .deb 文件安装软件；tar 压缩命令 gzip 和 bzip2 的使用；压缩命令 rar 和 zip 的使用。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Linux 系统编程」软件安装命令、压缩命令">
+<meta property="og:url" content="https://marisamagic.github.io/2025/08/06/20250806_2/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="apt 软件安装命令的使用；dpkg 从本地 .deb 文件安装软件；tar 压缩命令 gzip 和 bzip2 的使用；压缩命令 rar 和 zip 的使用。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/08/06/wev.jpg">
+<meta property="article:published_time" content="2025-08-06T13:32:15.731Z">
+<meta property="article:modified_time" content="2025-08-06T15:33:39.447Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2025/08/06/wev.jpg">
+  
+  
+  
+  <title>「Linux 系统编程」软件安装命令、压缩命令 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2025/08/06/wev.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Linux 系统编程」软件安装命令、压缩命令"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-08-06 21:32" pubdate>
+          2025年8月6日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          10 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Linux 系统编程」软件安装命令、压缩命令</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="1-apt-软件安装命令的使用">1 apt 软件安装命令的使用</h2>
+<h3 id="1-1-apt-与-apt-get">1.1 apt 与 apt-get</h3>
+<p><code>apt</code> 和 <code>apt-get</code> 都是 Debian/Ubuntu 系统中用于包管理的命令行工具，核心功能基本相同（都基于 <code>dpkg</code>）。</p>
+<table>
+<thead>
+<tr>
+<th><strong>操作</strong></th>
+<th><code>apt-get</code> 命令</th>
+<th><code>apt</code> 命令</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>更新软件源</td>
+<td><code>apt-get update</code></td>
+<td><code>apt update</code></td>
+<td>同步软件源索引</td>
+</tr>
+<tr>
+<td>升级所有软件包</td>
+<td><code>apt-get upgrade</code></td>
+<td><code>apt upgrade</code></td>
+<td>不删除旧包</td>
+</tr>
+<tr>
+<td>升级系统 (谨慎!)</td>
+<td><code>apt-get dist-upgrade</code></td>
+<td><code>apt full-upgrade</code></td>
+<td>可能删除旧包（解决依赖）</td>
+</tr>
+<tr>
+<td>安装软件包</td>
+<td><code>apt-get install pkg</code></td>
+<td><code>apt install pkg</code></td>
+<td></td>
+</tr>
+<tr>
+<td>删除软件包</td>
+<td><code>apt-get remove pkg</code></td>
+<td><code>apt remove pkg</code></td>
+<td>保留配置文件</td>
+</tr>
+<tr>
+<td><strong>彻底删除</strong></td>
+<td><code>apt-get purge pkg</code></td>
+<td><code>apt purge pkg</code></td>
+<td><strong>删除软件包+配置文件</strong></td>
+</tr>
+<tr>
+<td>自动清理</td>
+<td><code>apt-get autoremove</code></td>
+<td><code>apt autoremove</code></td>
+<td>删除不再需要的依赖包</td>
+</tr>
+<tr>
+<td>搜索软件包</td>
+<td><code>apt-cache search pkg</code></td>
+<td><code>apt search pkg</code></td>
+<td></td>
+</tr>
+<tr>
+<td>查看软件包信息</td>
+<td><code>apt-cache show pkg</code></td>
+<td><code>apt show pkg</code></td>
+<td></td>
+</tr>
+<tr>
+<td>列出可升级包</td>
+<td><code>apt list --upgradable</code></td>
+<td><code>apt list --upgradable</code></td>
+<td>✅ <code>apt</code> 原生支持</td>
+</tr>
+</tbody>
+</table>
+<p><strong>注意</strong>：<code>apt</code> 整合了部分 <code>apt-cache</code> 和 <code>apt-config</code> 的功能（如 <code>search</code>, <code>show</code>）。</p>
+<hr>
+<p>Ubuntu 14.04 LTS 及更早版本中，默认主要使用 <code>apt-get</code>，<code>apt</code> 尚未作为默认工具广泛推广。</p>
+<p>从 Ubuntu 16.04 LTS 开始，<code>apt</code> 被正式引入并作为默认的包管理前端工具，与 <code>apt-get</code> 同时存在于系统中。</p>
+<hr>
+<br/>
+<h3 id="1-2-软件包的安装">1.2 软件包的安装</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> apt install [软件包名称]<br></code></pre></td></tr></table></figure>
+<p>在下面的示例中，执行 <code>sudo apt install tree</code> 安装了软件包 <code>tree</code>：</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/06/7o68l.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<p><code>sudo dpkg -i 文件名.deb</code> 是 直接安装本地 .deb 软件包 的命令，但是，<code>dpkg</code> 并不能自动解决依赖。现有的 <code>apt</code> 工具会调用 <code>dpkg</code> 完成 .deb 软件包的安装，同时也会 <strong>自动处理依赖</strong>。</p>
+<p>因此，现在通常用以下命令代替 <code>sudo dpkg -i 文件名.deb</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> apt install ./文件名.deb  <span class="hljs-comment"># 注意路径前的 `./`</span><br></code></pre></td></tr></table></figure>
+<p><strong>注意：</strong> 使用该命令 <strong>必须指定相对路径</strong>（如 <code>./package.deb</code>）或绝对路径（如 <code>/home/user/package.deb</code>）</p>
+<hr>
+<br/>
+<h3 id="1-3-软件包的卸载">1.3 软件包的卸载</h3>
+<ul>
+<li>卸载软件包（保留配置文件）：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> apt remove [软件包名称]<br></code></pre></td></tr></table></figure>
+<ul>
+<li>彻底卸载（包括配置文件）：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> apt purge [软件包名称]<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/06/1iy19h.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<br/>
+<h2 id="2-tar-命令">2 tar 命令</h2>
+<h3 id="2-1-tar-命令语法">2.1 tar 命令语法</h3>
+<p><code>tar</code> 命令是管理归档文件（打包、压缩、解压）的核心工具。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">tar [操作选项] [选项参数] [归档文件] [文件/目录列表]<br></code></pre></td></tr></table></figure>
+<table>
+<thead>
+<tr>
+<th>选项</th>
+<th>功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-c</code></td>
+<td>创建新归档文件</td>
+</tr>
+<tr>
+<td><code>-x</code></td>
+<td>从归档中提取文件</td>
+</tr>
+<tr>
+<td><code>-t</code></td>
+<td>列出归档内容</td>
+</tr>
+<tr>
+<td><code>-f</code></td>
+<td>指定归档文件名（<strong>必须</strong>）</td>
+</tr>
+<tr>
+<td><code>-v</code></td>
+<td>显示详细过程（verbose）</td>
+</tr>
+<tr>
+<td><code>-z</code></td>
+<td><strong>使用gzip压缩/解压</strong>（.gz）</td>
+</tr>
+<tr>
+<td><code>-j</code></td>
+<td><strong>使用bzip2压缩/解压</strong>（.bz2）</td>
+</tr>
+<tr>
+<td><code>-J</code></td>
+<td><strong>使用xz压缩/解压</strong>（.xz）</td>
+</tr>
+<tr>
+<td><code>-C</code></td>
+<td>解压到指定目录</td>
+</tr>
+<tr>
+<td><code>--exclude</code></td>
+<td>排除特定文件/目录</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<p><strong>注意事项：</strong></p>
+<ol>
+<li>
+<p><strong><code>-f</code> 选项必须放在最后</strong></p>
+<p>正确：<code>tar -czvf archive.tar.gz folder</code><br>
+错误：<code>tar -fvcz ...</code>（会导致错误）</p>
+</li>
+<li>
+<p><strong>压缩效率对比</strong></p>
+<p><code>xz</code> &gt; <code>bzip2</code> &gt; <code>gzip</code>（压缩率越高，耗时越长）</p>
+</li>
+</ol>
+<hr>
+<br/>
+<h3 id="2-2-tar-打包与压缩">2.2 tar 打包与压缩</h3>
+<ul>
+<li>仅打包，不压缩。生成 <code>.tar</code>：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">tar -cvf archive.tar [文件/目录列表]<br></code></pre></td></tr></table></figure>
+<ul>
+<li>打包 + gzip 压缩。生成 <code>.tar.gz</code> 或者 <code>.tgz</code>：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">tar -czvf archive.tar.gz [文件/目录列表]<br></code></pre></td></tr></table></figure>
+<ul>
+<li>打包 + bzip2 压缩。生成 <code>.tar.bz2</code>：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">tar -cjvf archive.tar.bz2 [文件/目录列表]<br></code></pre></td></tr></table></figure>
+<ul>
+<li>打包 + xz 压缩。生成 <code>.tar.xz</code>：</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">tar -cJvf archive.tar.xz [文件/目录列表]<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/06/ugr.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<br/>
+<h3 id="2-3-tar-解压">2.3 tar 解压</h3>
+<p>将压缩命令中的参数 <code>-c</code> 换为 <code>-x</code> 即可。</p>
+<ul>
+<li>解压 <code>.tar</code> 文件</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">tar -xvf archive.tar<br></code></pre></td></tr></table></figure>
+<ul>
+<li>解压 <code>.tar.gz</code></li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">tar -xzvf archive.tar.gz<br></code></pre></td></tr></table></figure>
+<ul>
+<li>解压 <code>.tar.bz2</code></li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">tar -xjvf archive.tar.bz2<br></code></pre></td></tr></table></figure>
+<ul>
+<li>解压到指定目录</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">tar -xzvf archive.tar.gz -C /target_dir<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/06/5y9e.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<br/>
+<h3 id="2-4-tar-查看压缩包内容">2.4 tar 查看压缩包内容</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">tar -tvf archive.tar       <span class="hljs-comment"># 查看.tar内容</span><br>tar -tzvf archive.tar.gz   <span class="hljs-comment"># 查看.tar.gz内容</span><br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/06/855uu.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<br/>
+<h2 id="3-rar-和-zip-命令">3 rar 和 zip 命令</h2>
+<p>Ubuntu 通常自带 <code>zip</code> 和 <code>unzip</code> 工具。然而，在使用 <code>rar</code> 之前通常需要先下载 <code>rar</code> 和 <code>unrar</code> 包：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">sudo</span> apt install rar unrar<br></code></pre></td></tr></table></figure>
+<h3 id="3-1-rar-压缩">3.1 rar 压缩</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 基本压缩</span><br>rar a archive.rar [文件/目录列表]<br><br><span class="hljs-comment"># 递归压缩目录</span><br>rar a -r archive.rar [文件/目录列表]<br><br><span class="hljs-comment"># 设置压缩级别（0-5，5为最高）</span><br>rar a -m5 max_compress.rar [文件/目录列表]<br><br><span class="hljs-comment"># 添加恢复记录（防损坏）</span><br>rar a -rr3% recovery.rar [文件/目录列表]<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/06/662t.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<br/>
+<h3 id="3-2-rar-解压">3.2 rar 解压</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 解压到当前目录</span><br>unrar x archive.rar<br><br><span class="hljs-comment"># 解压到指定目录</span><br>unrar x archive.rar /target_dir_2<br><br><span class="hljs-comment"># 解压但不保留路径结构</span><br><span class="hljs-comment"># 压缩包内所有文件均直接提取到当前目录或指定目录下，不创建任何子文件夹</span><br>unrar e archive.rar<br><br><span class="hljs-comment"># 列出压缩包内容</span><br>unrar l archive.rar<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/06/8gaeh.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<br/>
+<h3 id="3-3-zip-压缩">3.3 zip 压缩</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 压缩单个文件</span><br>zip archive.zip [文件/目录列表]<br><br><span class="hljs-comment"># 递归压缩目录（-r 选项）</span><br>zip -r archive.zip [文件/目录列表]<br><br><span class="hljs-comment"># 设置压缩级别（0-9，9为最高）</span><br>zip -9 -r high_compress.zip [文件/目录列表]<br><br><span class="hljs-comment"># 排除文件</span><br>zip -r archive.zip [文件/目录列表] -x <span class="hljs-string">&quot;*.txt&quot;</span><br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/06/8jdkn.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<br/>
+<h3 id="3-4-zip-解压">3.4 zip 解压</h3>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 解压到当前目录</span><br>unzip archive.zip<br><br><span class="hljs-comment"># 解压到指定目录</span><br>unzip archive.zip -d /target_dir_2<br><br><span class="hljs-comment"># 解压时覆盖已有文件（-o 选项）</span><br>unzip -o archive.zip<br><br><span class="hljs-comment"># 列出压缩包内容（不解压）</span><br>unzip -l archive.zip<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/08/06/6a8a.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<br/>
+<h3 id="3-5-rar-和-zip-对比">3.5 rar 和 zip 对比</h3>
+<ol>
+<li>
+<p><strong>跨平台兼容性</strong>：</p>
+<ul>
+<li>ZIP 格式在 Windows/macOS/Linux 通用性更好</li>
+<li>RAR 在 Windows 更常见，Linux 通常需额外安装工具</li>
+</ul>
+</li>
+<li>
+<p><strong>压缩效率</strong>：</p>
+<ul>
+<li>RAR 通常比 ZIP 压缩率更高（尤其大文件）</li>
+<li>ZIP 的压缩速度更快</li>
+</ul>
+</li>
+<li>
+<p><strong>默认行为差异</strong>：</p>
+<ul>
+<li><code>unzip</code> 默认覆盖文件 <strong>会询问</strong>，<code>unrar x</code> <strong>默认直接覆盖</strong></li>
+<li>使用 <code>-o</code>（unzip）或 <code>-o+</code>（unrar）强制覆盖</li>
+</ul>
+</li>
+</ol>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Linux-%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B/" class="category-chain-item">Linux 系统编程</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Linux/" class="print-no-link">#Linux</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Linux 系统编程」软件安装命令、压缩命令</div>
+      <div>https://marisamagic.github.io/2025/08/06/20250806_2/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年8月6日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/08/06/20250806/" title="「Linux 系统编程」grep、xargs">
+                        <span class="hidden-mobile">「Linux 系统编程」grep、xargs</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
