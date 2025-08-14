@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2025/08/12/nqk.jpg">
 <meta property="article:published_time" content="2025-08-12T07:11:25.645Z">
-<meta property="article:modified_time" content="2025-08-12T09:58:56.137Z">
+<meta property="article:modified_time" content="2025-08-12T15:15:19.689Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="Linux">
 <meta name="twitter:card" content="summary_large_image">
@@ -454,23 +454,27 @@
 <hr>
 <p>在程序 <strong>运行阶段</strong>，需要为动态链接器 <strong>提供动态库所在目录位置</strong>：</p>
 <ul>
-<li><strong>临时设置</strong>（仅当前终端有效）</li>
-</ul>
+<li>
+<p><strong>临时设置</strong>（仅当前终端有效）</p>
 <p>在编译之后，执行如下命令：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">export</span> LD_LIBRARY_PATH=.:<span class="hljs-variable">$LD_LIBRARY_PATH</span><br></code></pre></td></tr></table></figure>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">export</span> LD_LIBRARY_PATH=.:<span class="hljs-variable">$LD_LIBRARY_PATH</span><br></code></pre></td></tr></table></figure>
 <p>然后再运行程序 <code>./test</code> 即可。</p>
 <p><code>export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH</code> 指定动态链接器在运行时搜索共享库（.so 文件）的路径为当前路径。</p>
 <p>其中 <code>.</code> 表示当前工作目录（点号.代表当前目录），确保程序首先在当前目录中查找需要的动态库。<code>$LD_LIBRARY_PATH</code> 引用该变量当前已有的值。这样可以在添加新路径的同时保留原有的搜索路径。</p>
+</li>
+</ul>
 <hr>
 <ul>
-<li><strong>永久设置</strong>（添加到用户配置文件）</li>
-</ul>
+<li>
+<p><strong>永久设置</strong>（添加到用户配置文件）</p>
 <p>任何编辑器都行，打开 <code>~/.bashrc</code>：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">gedit ~/.bashrc  <br></code></pre></td></tr></table></figure>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">gedit ~/.bashrc  <br></code></pre></td></tr></table></figure>
 <p>将这 <code>export LD_LIBRARY_PATH=.:$LD_LIBRARY_PATH</code> 添加到文件中，并执行：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">source</span> ~/.bashrc  <span class="hljs-comment"># 使配置文件立即生效</span><br></code></pre></td></tr></table></figure>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">source</span> ~/.bashrc  <span class="hljs-comment"># 使配置文件立即生效</span><br></code></pre></td></tr></table></figure>
 <p><img src="https://sukicdn.com/wyx/i/2025/08/12/n4ok.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
 <p><img src="https://sukicdn.com/wyx/i/2025/08/12/msmr.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+</li>
+</ul>
 <hr>
 <p>需要注意的是，如果动态库的路径被修改了，在重新编译过后，<code>~/.bashrc</code> 文件中的运行时指定动态库路径命令也需要修改。</p>
 <p><img src="https://sukicdn.com/wyx/i/2025/08/12/revh.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
@@ -584,6 +588,12 @@
                 <div class="post-prevnext my-3">
                   <article class="post-prev col-6">
                     
+                    
+                      <a href="/2025/08/14/20250814/" title="「Linux 系统编程」gdb 调试指令">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「Linux 系统编程」gdb 调试指令</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
                     
                   </article>
                   <article class="post-next col-6">
