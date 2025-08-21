@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2025/08/21/i0sd.jpg">
 <meta property="article:published_time" content="2025-08-21T10:00:57.065Z">
-<meta property="article:modified_time" content="2025-08-21T11:01:12.070Z">
+<meta property="article:modified_time" content="2025-08-21T15:37:27.477Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="Linux">
 <meta name="twitter:card" content="summary_large_image">
@@ -253,7 +253,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.1k 字
+          1.3k 字
         
       </span>
     
@@ -264,7 +264,7 @@
         
         
         
-          10 分钟
+          11 分钟
         
       </span>
     
@@ -314,6 +314,41 @@
 <h3 id="1-1-open-函数简介">1.1 open 函数简介</h3>
 <p><code>open</code> 函数是 Linux 系统中非常核心的系统调用函数，用于 <strong>打开或创建一个文件</strong>，并返回一个 <strong>文件描述符</strong>（file descriptor）。</p>
 <p>文件描述符是一个小的、非负的整数，在后续的读（<code>read</code>）、写（<code>write</code>）等 I/O 操作中，将用来代表被打开的文件。</p>
+<p>文件描述符是一个索引值，指向内核为每个进程所维护的该进程打开文件的记录表。每个进程启动时，通常会自动打开三个标准的文件描述符：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">整数</th>
+<th style="text-align:left">缩写</th>
+<th style="text-align:left">全名</th>
+<th style="text-align:left">默认指向</th>
+<th style="text-align:left">用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>0</strong></td>
+<td style="text-align:left"><code>STDIN_FILENO</code></td>
+<td style="text-align:left">Standard Input</td>
+<td style="text-align:left">键盘</td>
+<td style="text-align:left">用于读取标准输入</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>1</strong></td>
+<td style="text-align:left"><code>STDOUT_FILENO</code></td>
+<td style="text-align:left">Standard Output</td>
+<td style="text-align:left">终端屏幕</td>
+<td style="text-align:left">用于输出正常信息</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>2</strong></td>
+<td style="text-align:left"><code>STDERR_FILENO</code></td>
+<td style="text-align:left">Standard Error</td>
+<td style="text-align:left">终端屏幕</td>
+<td style="text-align:left">用于输出错误信息</td>
+</tr>
+</tbody>
+</table>
 <hr>
 <h3 id="1-2-open-函数所需头文件">1.2 open 函数所需头文件</h3>
 <p>使用 <code>open</code> 函数，需要包含以下头文件：</p>
@@ -366,14 +401,15 @@
 <hr>
 <h3 id="1-4-open-函数返回值">1.4 open 函数返回值</h3>
 <p><strong>成功</strong>: 返回一个新的 <strong>文件描述符</strong>（一个非负整数）。这个值是当前进程未使用的最小文件描述符。</p>
-<p><strong>失败</strong>: 返回 <code>-1</code>，并设置全局变量 <code>errno</code> 来指示错误的具体原因（例如，文件不存在、权限不足等）。可以通过 <code>perror</code> 函数打印错误信息。</p>
+<p><strong>失败</strong>: 返回 <code>-1</code>，并设置全局变量 <code>errno</code> 来指示错误的具体原因（例如，文件不存在、权限不足等）。</p>
+<p>可以通过 <code>perror</code> 函数打印错误信息（<code>perror</code> 函数可以自动将 errno 转换为可读的错误消息）。也可以通过 <code>strerror()</code> 函数返回与 errno 值对应的错误字符串。</p>
 <hr>
 <br/>
 <h2 id="2-open-基本使用示例">2 open 基本使用示例</h2>
 <ul>
 <li>
 <p>以 <strong>只读方式</strong> 打开一个已有文件</p>
-  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;fcntl.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span>  <span class="hljs-comment">// close 函数</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">int</span> fd;<br>    <br>    <span class="hljs-comment">// 尝试打开文件</span><br>    fd = open(<span class="hljs-string">&quot;existing_file.txt&quot;</span>, O_RDONLY);<br>    <span class="hljs-keyword">if</span> (fd == <span class="hljs-number">-1</span>) &#123;<br>        perror(<span class="hljs-string">&quot;Error opening file&quot;</span>);<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>;<br>    &#125;<br>    <br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;File opened successfully with FD: %d\n&quot;</span>, fd);<br>    <br>    close(fd); <span class="hljs-comment">// 操作完成后，必须关闭文件描述符</span><br>    <br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;fcntl.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span>  <span class="hljs-comment">// close 函数</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">int</span> fd;<br>    <br>    <span class="hljs-comment">// 尝试打开文件</span><br>    fd = open(<span class="hljs-string">&quot;existing_file.txt&quot;</span>, O_RDONLY);<br>    <span class="hljs-keyword">if</span> (fd == <span class="hljs-number">-1</span>) &#123;<br>        perror(<span class="hljs-string">&quot;Error opening file&quot;</span>);<br>        <span class="hljs-comment">// printf(&quot;ERROR: %s\n&quot;, strerror(errno)); // 需要 errno.h</span><br>        <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>;<br>    &#125;<br>    <br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;File opened successfully with FD: %d\n&quot;</span>, fd);<br>    <br>    close(fd); <span class="hljs-comment">// 操作完成后，必须关闭文件描述符</span><br>    <br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
 <p><img src="https://sukicdn.com/wyx/i/2025/08/21/vish.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
 <hr>
 </li>
@@ -483,6 +519,12 @@
                 <div class="post-prevnext my-3">
                   <article class="post-prev col-6">
                     
+                    
+                      <a href="/2025/08/22/20250822/" title="「Linux 系统编程」read 和 write 函数基本使用方法">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「Linux 系统编程」read 和 write 函数基本使用方法</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
                     
                   </article>
                   <article class="post-next col-6">
