@@ -1,0 +1,869 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="exec 函数族多种函数介绍及基本使用示例；exec 与 fork() 结合基本示例。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Linux 系统编程」">
+<meta property="og:url" content="https://marisamagic.github.io/2025/09/02/20250902/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="exec 函数族多种函数介绍及基本使用示例；exec 与 fork() 结合基本示例。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/09/02/wcwb.png">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/09/02/nlp.png">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/09/02/6feiu.png">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/09/02/19wze5.png">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/09/02/4u62.png">
+<meta property="article:published_time" content="2025-09-02T07:39:02.124Z">
+<meta property="article:modified_time" content="2025-09-02T08:30:11.526Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2025/09/02/wcwb.png">
+  
+  
+  
+  <title>「Linux 系统编程」 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2025/01/10/3lgax.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Linux 系统编程」"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-09-02 15:39" pubdate>
+          2025年9月2日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          1.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          13 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Linux 系统编程」</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="1-exec-函数族">1 exec 函数族</h2>
+<p>在 Linux 系统编程中，<code>fork()</code> 函数用于创建一个新的进程，这个新进程是当前进程的副本。如果我们想要新进程执行一个全新的、不同的程序，这个时候就需要用到 <code>exec</code> 函数族。</p>
+<p><code>exec</code> 是 Linux 中一组功能强大且常用的函数，负责将当前进程的镜像替换为一个新的程序镜像 —— <strong>进程的 PID 保持不变，但运行的程序被彻底替换</strong>。</p>
+<h3 id="1-1-exec-函数族概览">1.1 exec 函数族概览</h3>
+<p><code>exec</code> 函数族包含了多个函数，它们的核心功能相同（加载新程序），在参数传递方式上略有差异。这些函数都定义在 <code>&lt;unistd.h&gt;</code> 中。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">函数原型</th>
+<th style="text-align:left">参数特点</th>
+<th style="text-align:left">路径搜索</th>
+<th style="text-align:left">环境变量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><code>int execl(const char *path, const char *arg, ...);</code></td>
+<td style="text-align:left"><strong>列表</strong> (List)</td>
+<td style="text-align:left"><strong>否</strong> (需全路径)</td>
+<td style="text-align:left">继承父进程</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>int execlp(const char *file, const char *arg, ...);</code></td>
+<td style="text-align:left"><strong>列表</strong> (List)</td>
+<td style="text-align:left"><strong>是</strong> (PATH)</td>
+<td style="text-align:left">继承父进程</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>int execle(const char *path, const char *arg, ..., char *const envp[]);</code></td>
+<td style="text-align:left"><strong>列表</strong> (List)</td>
+<td style="text-align:left"><strong>否</strong> (需全路径)</td>
+<td style="text-align:left"><strong>自定义</strong></td>
+</tr>
+<tr>
+<td style="text-align:left"><code>int execv(const char *path, char *const argv[]);</code></td>
+<td style="text-align:left"><strong>向量</strong> (Vector/数组)</td>
+<td style="text-align:left"><strong>否</strong> (需全路径)</td>
+<td style="text-align:left">继承父进程</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>int execvp(const char *file, char *const argv[]);</code></td>
+<td style="text-align:left"><strong>向量</strong> (Vector/数组)</td>
+<td style="text-align:left"><strong>是</strong> (PATH)</td>
+<td style="text-align:left">继承父进程</td>
+</tr>
+<tr>
+<td style="text-align:left"><code>int execvpe(const char *file, char *const argv[], char *const envp[]);</code></td>
+<td style="text-align:left"><strong>向量</strong> (Vector/数组)</td>
+<td style="text-align:left"><strong>是</strong> (PATH)</td>
+<td style="text-align:left"><strong>自定义</strong></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>注意</strong>：<code>execvpe</code> 是一个 GNU 扩展，并非所有 UNIX 系统都支持（但主流 Linux 发行版都支持）。</p>
+</blockquote>
+<p>区分 <code>exec</code> 函数族每个函数：</p>
+<ul>
+<li><code>l</code> (list)：以列表的形式设置命令行参数</li>
+<li><code>p</code> (path)：搜索 file 时使用 path 变量</li>
+<li><code>v</code> (vector)：以数组的形式设置命令行</li>
+<li><code>e</code> (environment)：使用环境变量数组，不适用进程原有的环境变量，设置新加载程序运行的环境变量</li>
+</ul>
+<hr>
+<h3 id="1-2-exec-函数参数">1.2 exec 函数参数</h3>
+<ul>
+<li>
+<p><code>const char *file</code> / <code>const char *path</code>：执行的程序。如果是 <code>file</code> 需要借助 PATH 环境变量寻找待执行程序；如果是 <code>path</code> 必须是完整的路径。</p>
+</li>
+<li>
+<p><code>const char *arg, ...</code>：对应的分别是命令行参数的 <code>argv[0], argv[1], argv[2], ...</code>，并且最后需要添加一个 <code>NULL</code> 表示参数结束。</p>
+</li>
+<li>
+<p><code>char *const argv[]</code>：与 <code>const char *arg, ...</code> 同理，参数数组的最后必须以 <code>NULL</code> 结尾。</p>
+</li>
+</ul>
+<hr>
+<h3 id="1-3-exec-函数返回值">1.3 exec 函数返回值</h3>
+<ul>
+<li><code>exec</code> 函数一旦调用成功，即执行新的程序，<strong>不返回</strong>。</li>
+<li><code>exec</code> 只有失败才返回，返回 <code>-1</code>。因此通常直接在 <code>exec</code> 函数调用后直接调用 <code>perror()</code> 等错误判断。</li>
+</ul>
+<hr>
+<br/>
+<h2 id="2-execl、execlp-参数列表形式">2 execl、execlp (参数列表形式)</h2>
+<h3 id="2-1-函数原型">2.1 函数原型</h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">execl</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">char</span> *path, <span class="hljs-type">const</span> <span class="hljs-type">char</span> *arg0, <span class="hljs-type">const</span> <span class="hljs-type">char</span> *arg1, ..., (<span class="hljs-type">char</span> *) <span class="hljs-literal">NULL</span>)</span>;<br><span class="hljs-type">int</span> <span class="hljs-title function_">execlp</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">char</span> *file, <span class="hljs-type">const</span> <span class="hljs-type">char</span> *arg0, <span class="hljs-type">const</span> <span class="hljs-type">char</span> *arg1, ..., (<span class="hljs-type">char</span> *) <span class="hljs-literal">NULL</span>)</span>;<br></code></pre></td></tr></table></figure>
+<ul>
+<li>
+<p><code>path/file</code>: 要执行的程序的路径。</p>
+<ul>
+<li><code>execl</code> 需要 <strong>绝对路径</strong> 或 <strong>相对路径</strong>（如 <code>/bin/ls</code> 或 <code>./my_program</code>）。</li>
+<li><code>execlp</code> 只需要 <strong>程序名</strong>，系统会在 <code>$PATH</code> 环境变量指定的目录中搜索该程序。</li>
+</ul>
+</li>
+<li>
+<p><code>arg0, arg1, ...</code>: 命令行参数列表。<code>arg0</code> 是程序名本身（<code>argv[0]</code>）。</p>
+</li>
+<li>
+<p><code>...</code>: 参数需要以 <strong><code>(char *) NULL</code></strong> 结尾，表示参数列表结束。</p>
+</li>
+</ul>
+<hr>
+<h3 id="2-2-代码示例">2.2 代码示例</h3>
+<ul>
+<li>
+<p>使用 <code>execl</code> 执行 <code>ls -lh</code></p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span>&#123;<br>    execl(<span class="hljs-string">&quot;/bin/ls&quot;</span>, <span class="hljs-string">&quot;ls&quot;</span>, <span class="hljs-string">&quot;-l&quot;</span>, <span class="hljs-string">&quot;-h&quot;</span>, (<span class="hljs-type">char</span>*)<span class="hljs-literal">NULL</span>);<br>    <br>    <span class="hljs-comment">// execl 失败才会执行后续代码</span><br>    perror(<span class="hljs-string">&quot;execl error&quot;</span>); <br>    <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/02/wcwb.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+</li>
+</ul>
+<hr>
+<ul>
+<li>
+<p>使用 <code>execlp</code> 执行 <code>ps aux</code>：</p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span>&#123;<br>    <span class="hljs-comment">// 系统会在 PATH 中找到 &quot;ps&quot; 命令</span><br>    execlp(<span class="hljs-string">&quot;ps&quot;</span>, <span class="hljs-string">&quot;ps&quot;</span>, <span class="hljs-string">&quot;aux&quot;</span>, (<span class="hljs-type">char</span>*)<span class="hljs-literal">NULL</span>);<br>    <br>    <span class="hljs-comment">// execlp 失败才会执行后续代码</span><br>    perror(<span class="hljs-string">&quot;execlp failed&quot;</span>);<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/02/nlp.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+</li>
+</ul>
+<hr>
+<br/>
+<h2 id="3-execv、execvp-参数数组形式">3 execv、execvp (参数数组形式)</h2>
+<h3 id="3-1-函数原型">3.1 函数原型</h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">execv</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">char</span> *path, <span class="hljs-type">char</span> *<span class="hljs-type">const</span> argv[])</span>;<br><span class="hljs-type">int</span> <span class="hljs-title function_">execvp</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">char</span> *file, <span class="hljs-type">char</span> *<span class="hljs-type">const</span> argv[])</span>;<br></code></pre></td></tr></table></figure>
+<ul>
+<li>
+<p><code>path/file</code>: 同 <code>execl/execlp</code>。</p>
+</li>
+<li>
+<p><code>argv[]</code>: 一个字符串指针数组，包含了所有命令行参数。该数组的最后一个元素必须是 <code>NULL</code>。</p>
+</li>
+</ul>
+<hr>
+<h3 id="3-2-代码示例">3.2 代码示例</h3>
+<p>使用 <code>execvp</code> 执行 <code>ls -l /home/[username]</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span>&#123;<br>    <span class="hljs-comment">// 参数数组</span><br>    <span class="hljs-type">char</span>* args[] = &#123;<span class="hljs-string">&quot;ls&quot;</span>, <span class="hljs-string">&quot;-l&quot;</span>, <span class="hljs-string">&quot;/home/marisa&quot;</span>, <span class="hljs-literal">NULL</span>&#125;;<br>    <br>    <span class="hljs-comment">// 使用 execvp 执行</span><br>    execvp(<span class="hljs-string">&quot;ls&quot;</span>, args);<br>    <br>    perror(<span class="hljs-string">&quot;execvp failed&quot;</span>);<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/02/6feiu.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<br/>
+<h2 id="4-execle、execvpe-自定义环境变量">4 execle、execvpe (自定义环境变量)</h2>
+<h3 id="4-1-函数原型">4.1 函数原型</h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">execle</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">char</span> *path, <span class="hljs-type">const</span> <span class="hljs-type">char</span> *arg0, ..., (<span class="hljs-type">char</span> *) <span class="hljs-literal">NULL</span>, <span class="hljs-type">char</span> *<span class="hljs-type">const</span> envp[])</span>;<br><span class="hljs-type">int</span> <span class="hljs-title function_">execvpe</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">char</span> *file, <span class="hljs-type">char</span> *<span class="hljs-type">const</span> argv[], <span class="hljs-type">char</span> *<span class="hljs-type">const</span> envp[])</span>;<br></code></pre></td></tr></table></figure>
+<ul>
+<li><code>envp[]</code>: 一个字符串指针数组，代表新程序的环境变量。数组以 <code>NULL</code> 结尾。每个字符串的格式通常是 “KEY=VALUE”。</li>
+</ul>
+<p><code>envp[]</code> 为新的程序进程提供一个 <strong>完全自定义的环境</strong>，而不是继承父进程的环境。</p>
+<hr>
+<h3 id="4-2-代码示例">4.2 代码示例</h3>
+<p>使用 <code>execle</code> 执行一个程序并传递自定义环境</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">char</span>* new_envp[] = &#123;<br>        <span class="hljs-string">&quot;MY_VAR=Hello_World&quot;</span>,<br>        <span class="hljs-string">&quot;PATH=/usr/bin:/bin&quot;</span>,<br>        <span class="hljs-literal">NULL</span> <span class="hljs-comment">// 环境变量数组也必须以 NULL 结尾</span><br>    &#125;;<br>    <br>    <span class="hljs-comment">// print_env 打印环境变量</span><br>    execle(<span class="hljs-string">&quot;./print_env&quot;</span>, <span class="hljs-string">&quot;print_env&quot;</span>, <span class="hljs-literal">NULL</span>, new_envp);<br>    <br>    perror(<span class="hljs-string">&quot;execle failed&quot;</span>);<br>    <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// print_env.c</span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><br><span class="hljs-comment">// 外部变量 environ，它是由C库提供的指向环境变量数组的指针</span><br><span class="hljs-keyword">extern</span> <span class="hljs-type">char</span> **environ;<br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">(<span class="hljs-type">int</span> argc, <span class="hljs-type">char</span> *argv[])</span> &#123;<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Printing all environment variables:\n&quot;</span>);<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;===================================\n&quot;</span>);<br>    <br>    <span class="hljs-comment">// 遍历环境变量数组，直到遇到NULL指针</span><br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">char</span> **env = environ; *env != <span class="hljs-literal">NULL</span>; env++) &#123;<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;%s\n&quot;</span>, *env);<br>    &#125;<br>    <br>    <span class="hljs-comment">// 也可以使用 main 的第三个参数（如果使用 execle 等方式传递了环境变量）</span><br>    <span class="hljs-comment">// 但更通用的方法是使用 environ 变量</span><br>    <br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><code>print_env</code> 程序只是打印它的所有环境变量，只会看到 <code>MY_VAR</code> 和 <code>PATH</code>，而看不到父进程原有的其他环境变量。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/02/19wze5.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<br/>
+<h2 id="5-fork-结合-exec-调用新程序">5 fork() 结合 exec 调用新程序</h2>
+<h3 id="5-1-exec-核心特性">5.1 exec 核心特性</h3>
+<ul>
+<li>
+<p><code>exec</code> 调用成功，<strong>当前进程的代码、数据、堆、栈等所有段都被新程序彻底覆盖</strong>。<code>exec</code> 之后的代码永远不会被执行（除非调用失败）。</p>
+</li>
+<li>
+<p>进程的 <strong>PID、PPID（父进程ID）、文件描述符、信号处理方式等属性会被保留</strong>。新程序可以继承父进程打开的文件、网络连接等资源。</p>
+</li>
+</ul>
+<h3 id="fork-结合-exec-代码示例">fork() 结合 exec 代码示例</h3>
+<p><code>exec</code> 最常见的用法是与 <code>fork()</code> 结合：</p>
+<ul>
+<li>父进程调用 <code>fork()</code> 创建子进程。</li>
+<li>子进程调用 <code>exec()</code> 来执行另一个程序。</li>
+<li>父进程通常调用 <code>wait()</code> 来等待子进程结束。</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/wait.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">pid_t</span> pid = fork();<br><br>    <span class="hljs-keyword">if</span> (pid == <span class="hljs-number">-1</span>) &#123;<br>        perror(<span class="hljs-string">&quot;fork failed&quot;</span>);<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>;<br>    &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (pid == <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-comment">// 子进程</span><br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;I&#x27;m the child process (PID: %d).\n&quot;</span>, getpid());<br>        execlp(<span class="hljs-string">&quot;ls&quot;</span>, <span class="hljs-string">&quot;ls&quot;</span>, <span class="hljs-string">&quot;-l&quot;</span>, <span class="hljs-literal">NULL</span>);<br>        <span class="hljs-comment">// 如果 exec 失败</span><br>        perror(<span class="hljs-string">&quot;execlp failed&quot;</span>);<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>; <span class="hljs-comment">// 子进程退出</span><br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-comment">// 父进程</span><br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;I&#x27;m the parent process (PID: %d), my child is %d.\n&quot;</span>, getpid(), pid);<br>        wait(<span class="hljs-literal">NULL</span>); <span class="hljs-comment">// 等待子进程结束</span><br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Child process finished.\n&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/02/4u62.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Linux-%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B/" class="category-chain-item">Linux 系统编程</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Linux/" class="print-no-link">#Linux</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Linux 系统编程」</div>
+      <div>https://marisamagic.github.io/2025/09/02/20250902/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年9月2日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/09/01/20250901/" title="「Linux 系统编程」fork() 创建子进程">
+                        <span class="hidden-mobile">「Linux 系统编程」fork() 创建子进程</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
