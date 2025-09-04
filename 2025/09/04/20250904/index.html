@@ -1,0 +1,837 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Linux 系统中进程间通信的方式；Linux 管道的核心特点和管道命令基本使用方法；pipe 函数使用以及基本示例；pipe 管道的读写行为；使用 pipe 管道实现父子进程通信示例；兄弟进程间通信及代码示例；多个读写端操作管道和管道缓冲区大小">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Linux 系统编程」进程间通信方式、管道基本使用方法">
+<meta property="og:url" content="https://marisamagic.github.io/2025/09/04/20250904/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="Linux 系统中进程间通信的方式；Linux 管道的核心特点和管道命令基本使用方法；pipe 函数使用以及基本示例；pipe 管道的读写行为；使用 pipe 管道实现父子进程通信示例；兄弟进程间通信及代码示例；多个读写端操作管道和管道缓冲区大小">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/09/04/5bgo.jpg">
+<meta property="article:published_time" content="2025-09-04T10:20:50.616Z">
+<meta property="article:modified_time" content="2025-09-04T12:52:44.580Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2025/09/04/5bgo.jpg">
+  
+  
+  
+  <title>「Linux 系统编程」进程间通信方式、管道基本使用方法 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2025/09/04/5bgo.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Linux 系统编程」进程间通信方式、管道基本使用方法"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-09-04 18:20" pubdate>
+          2025年9月4日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          19 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Linux 系统编程」进程间通信方式、管道基本使用方法</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="1-Linux-进程间常用通信方式">1 Linux 进程间常用通信方式</h2>
+<p>在 Linux 系统中，进程间通信（IPC，InterProcess Communication）是多进程协作的基础。常见的 IPC 方式包括：</p>
+<ul>
+<li><strong>管道</strong>（Pipe）：简单易用，适用于有血缘关系的进程。</li>
+<li><strong>信号</strong>（Signal）：开销小，用于异步事件通知。</li>
+<li><strong>mmap 映射</strong>：允许非血缘关系进程间通过内存映射实现通信。</li>
+<li><strong>Socket（本地套接字）</strong>：稳定可靠，可用于本地或网络通信。</li>
+</ul>
+<p>其中，管道是最基本和常用的一种方式。</p>
+<hr>
+<br/>
+<h2 id="2-Linux-中的管道命令">2 Linux 中的管道命令</h2>
+<p><strong>管道（Pipe）</strong>，符号为 <code>|</code>，是一种将一个命令的标准输出（stdout） 直接连接到另一个命令的标准输入（stdin） 的机制。</p>
+<p>可以想象成一根真实的管道：第一个命令产生的数据像水一样从管道一端流入，第二个命令则在管道的另一端立即接收并处理这些数据。</p>
+<h3 id="2-1-管道的核心特点">2.1 管道的核心特点</h3>
+<ul>
+<li>
+<p><strong>单向流动</strong>：数据 <strong>只能从左向右流动</strong>，即从前一个命令流向后一个命令。</p>
+</li>
+<li>
+<p><strong>内存操作</strong>：<strong>数据的传输发生在内存中</strong>，不需要经过磁盘上的临时文件，因此效率极高。</p>
+</li>
+<li>
+<p><strong>顺序处理</strong>：后一个命令会等待前一个命令输出数据，并一行一行（或一块一块）地立即处理，而不是等待前一个命令全部执行完。</p>
+</li>
+<li>
+<p><strong>匿名性</strong>：管道本身没有名字，只在创建它的 shell 会话中存在，命令执行完毕后就消失了。</p>
+</li>
+</ul>
+<hr>
+<h3 id="2-2-Linux-管道命令简单示例">2.2 Linux 管道命令简单示例</h3>
+<p><strong>基本语法</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">command_A [arguments] | command_B [arguments]<br></code></pre></td></tr></table></figure>
+<p><code>command_A</code> 的输出会作为 <code>command_B</code> 的输入。</p>
+<ol>
+<li>
+<p><strong>查找特定的进程</strong></p>
+<p>查找所有包含 “nginx” 字符串的进程</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">ps aux | grep nginx<br></code></pre></td></tr></table></figure>
+</li>
+</ol>
+<hr>
+<ol start="2">
+<li>
+<p><strong>统计文件数量</strong></p>
+<p>统计当前目录下有多少个 <code>.txt</code> 文件</p>
+ <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">ls</span> -l *.txt | <span class="hljs-built_in">wc</span> -l<br></code></pre></td></tr></table></figure>
+</li>
+</ol>
+<hr>
+<br/>
+<h2 id="3-管道的使用、pipe-函数">3 管道的使用、pipe 函数</h2>
+<h3 id="3-1-管道的特质">3.1 管道的特质</h3>
+<p><strong>管道</strong> 是一种基于内核缓冲区的通信机制，借助环形队列实现。其特点如下：</p>
+<ul>
+<li><strong>伪文件</strong>：不占用磁盘空间，仅存在于内核缓冲区。</li>
+<li><strong>数据一次性读取</strong>：一旦被读取，数据就不再存在于管道中。</li>
+<li><strong>单向流动</strong>：数据只能从一个方向流动。</li>
+<li><strong>局限性</strong>：
+<ul>
+<li>不能自己写自己读。</li>
+<li>数据不可反复读取。</li>
+<li>仅适用于有血缘关系的进程。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="3-2-管道的使用">3.2 管道的使用</h3>
+<p><strong>管道</strong> 分为 <strong>读端和写端</strong>，需要两个文件描述符来管理管道：<code>fd[0]</code> 为读端，<code>fd[1]</code> 为写端。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/04/4gf0.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<p><strong>管道</strong> 一般用于父子进程之间相互通信，基本用法如下：</p>
+<ol>
+<li>父进程使用 <code>pipe()</code> 系统调用创建一个管道；</li>
+<li>父进程使用 <code>fork()</code> 系统调用创建一个子进程；</li>
+<li>父子进程 <strong>共享文件描述符</strong>，相当于 2个 fd 指向同一块内存空间。因此父子进程可以通过新创建的管道进行通信。</li>
+</ol>
+<hr>
+<h3 id="3-3-pipe-函数">3.3 pipe 函数</h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">pipe</span><span class="hljs-params">(<span class="hljs-type">int</span> fd[<span class="hljs-number">2</span>])</span>;<br></code></pre></td></tr></table></figure>
+<ul>
+<li><code>fd[0]</code>：读端</li>
+<li><code>fd[1]</code>：写端</li>
+<li><strong>返回值</strong>：成功返回 0；失败返回 -1 并设置 errno</li>
+</ul>
+<hr>
+<h3 id="3-4-pipe-父子进程通信示例">3.4 pipe 父子进程通信示例</h3>
+<p>在下面的示例中，子进程负责从写端写入数据到管道中，父进程负责从读端读取子进程写入的数据。</p>
+<p>在写端打开但子进程还会写入数据时，父进程读管道会 <strong>阻塞等待</strong>，直到子进程写入数据到管道中。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;string.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>	<span class="hljs-type">int</span> fd[<span class="hljs-number">2</span>]; <span class="hljs-comment">// fd[0] 读，fd[1] 写</span><br>	<span class="hljs-type">pid_t</span> pid;<br>	<span class="hljs-type">char</span> buf[<span class="hljs-number">1024</span>];<br>	<span class="hljs-type">char</span>* str = <span class="hljs-string">&quot;Hello, Marisa\n&quot;</span>;<br><br>	<span class="hljs-comment">// 父进程创建管道</span><br>	<span class="hljs-keyword">if</span> (pipe(fd) == <span class="hljs-number">-1</span>) &#123; <br>		perror(<span class="hljs-string">&quot;pipe error&quot;</span>);<br>		<span class="hljs-built_in">exit</span>(<span class="hljs-number">1</span>);<br>	&#125;<br><br>	pid = fork(); <span class="hljs-comment">// 创建子进程</span><br><br>	<span class="hljs-comment">// 子进程写，父进程读</span><br>	<span class="hljs-keyword">if</span> (pid == <span class="hljs-number">0</span>) &#123;<br>		<span class="hljs-comment">// 子进程写，需要先关闭子进程的读端</span><br>		close(fd[<span class="hljs-number">0</span>]);<br>		<span class="hljs-comment">// 子进程的写操作</span><br>		<span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;child process is writing...\n&quot;</span>);<br>		write(fd[<span class="hljs-number">1</span>], str, <span class="hljs-built_in">strlen</span>(str));<br>		close(fd[<span class="hljs-number">1</span>]);<br>	&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (pid &gt; <span class="hljs-number">0</span>)&#123;<br>		<span class="hljs-comment">// 父进程读，需要先关闭父进程的写端</span><br>		close(fd[<span class="hljs-number">1</span>]);<br>		<span class="hljs-comment">// 父进程的读操作</span><br>		<span class="hljs-type">int</span> bytes = read(fd[<span class="hljs-number">0</span>], buf, <span class="hljs-keyword">sizeof</span>(buf));<br>		<span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;parent process read %d bytes: %s\n&quot;</span>, bytes, buf);<br>		close(fd[<span class="hljs-number">0</span>]);<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/04/5r3f8.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<h3 id="3-5-pipe-管道读写行为">3.5 pipe 管道读写行为</h3>
+<p><strong>读管道</strong>：</p>
+<ul>
+<li><strong>有数据</strong>：返回实际读取的字节数</li>
+<li><strong>无数据</strong>：
+<ul>
+<li><strong>无写端打开</strong>：返回 <code>0</code>（类似于读到文件末尾没有数据的情况）</li>
+<li><strong>有写端打开</strong>：读取管道的进程会 <strong>阻塞等待</strong></li>
+</ul>
+</li>
+</ul>
+<p><strong>写管道</strong>：</p>
+<ul>
+<li><strong>无读端打开</strong>：触发 <code>SIGPIPE</code>，进程异常终止</li>
+<li><strong>有读端打开</strong>：
+<ul>
+<li><strong>管道数据已满</strong>：阻塞等待，直到管道有数据被读取，可以继续写入数据</li>
+<li><strong>管道数据未满</strong>：返回写入的字节数</li>
+</ul>
+</li>
+</ul>
+<hr>
+<br/>
+<h2 id="4-使用-pipe-管道实现父子进程-ls-wc-l">4 使用 pipe 管道实现父子进程 ls | wc -l</h2>
+<p>实现的命令为 <code>ls | wc -l</code>，用于统计并显示当前目录下文件的数量。</p>
+<p>可以创建父子进程，其中：</p>
+<ul>
+<li>
+<p>子进程负责执行 <code>ls</code> 命令（使用 <code>execlp</code> 函数）。</p>
+<p><code>ls</code> 命令会将当前目录下的所有文件名称打印到标准输出（STDOUT_FILENO），因此需要 <strong>借助 <code>dup2</code> 函数将标准输出（STDOUT_FILENO）重定向到管道的写端 <code>fd[1]</code></strong>。</p>
+</li>
+<li>
+<p>父进程负责执行 <code>wc -l</code> 命令（使用 <code>execlp</code> 函数）</p>
+<p><code>wc -l</code> 命令原本是从标准输入（STDIN_FILENO）中读取数据然后统计数据的行数，因此需要 <strong>借助 <code>dup2</code> 函数将标准输入（STDIN_FILENO）重定向到管道的读端 <code>fd[0]</code></strong>。</p>
+</li>
+</ul>
+<p>最终实现如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>	<span class="hljs-type">int</span> fd[<span class="hljs-number">2</span>];<br>	<span class="hljs-type">pid_t</span> pid;<br><br>	<span class="hljs-keyword">if</span> (pipe(fd) == <span class="hljs-number">-1</span>) &#123;<br>		perror(<span class="hljs-string">&quot;pipe error&quot;</span>);<br>		<span class="hljs-built_in">exit</span>(<span class="hljs-number">1</span>);<br>	&#125;<br><br>	pid = fork(); <span class="hljs-comment">// 创建子进程</span><br><br>	<span class="hljs-keyword">if</span> (pid == <span class="hljs-number">0</span>) &#123;<br>		<span class="hljs-comment">// 子进程负责执行 ls，先将标准输出重定向到写端</span><br>		close(fd[<span class="hljs-number">0</span>]);<br>		dup2(fd[<span class="hljs-number">1</span>], STDOUT_FILENO);<br>		execlp(<span class="hljs-string">&quot;ls&quot;</span>, <span class="hljs-string">&quot;ls&quot;</span>, (<span class="hljs-type">char</span>*)<span class="hljs-literal">NULL</span>);<br><br>		perror(<span class="hljs-string">&quot;execlp ls error&quot;</span>);<br>		<span class="hljs-built_in">exit</span>(<span class="hljs-number">1</span>);<br>	&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (pid &gt; <span class="hljs-number">0</span>) &#123;<br>		<span class="hljs-comment">// 父进程负责执行 wc -l，先将标准输入重定向到读端</span><br>		close(fd[<span class="hljs-number">1</span>]);<br>		dup2(fd[<span class="hljs-number">0</span>], STDIN_FILENO);<br>		execlp(<span class="hljs-string">&quot;wc&quot;</span>, <span class="hljs-string">&quot;wc&quot;</span>, <span class="hljs-string">&quot;-l&quot;</span>, (<span class="hljs-type">char</span>*)<span class="hljs-literal">NULL</span>);<br><br>		perror(<span class="hljs-string">&quot;execlp wc -l error&quot;</span>);<br>		<span class="hljs-built_in">exit</span>(<span class="hljs-number">1</span>);<br>	&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (pid == <span class="hljs-number">-1</span>) &#123;<br>		perror(<span class="hljs-string">&quot;fork error&quot;</span>);<br>		<span class="hljs-built_in">exit</span>(<span class="hljs-number">1</span>);<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/04/zlj3.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<br/>
+<h2 id="5-使用-pipe-管道实现兄弟进程间通信">5 使用 pipe 管道实现兄弟进程间通信</h2>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/04/1013c.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<p>同样可以以实现 <code>ls | wc -l</code> 命令为例，通过兄弟两个子进程之间管道通信来实现这一命令。</p>
+<p>父进程循环创建 2 个子进程，第 1 个子进程负责执行 <code>ls</code> 命令，将 <code>ls</code> 命令输出的数据写入到管道；第 2 个子进程负责执行 <code>wc -l</code> 命令，从管道中读取数据，作为输入传给 <code>wc -l</code> 命令。最终输出结果。</p>
+<p><strong>父进程需要关闭读写端</strong>，并且需要 <strong>等待 2 个子进程执行结束</strong> 才退出。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/wait.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>	<span class="hljs-type">int</span> fd[<span class="hljs-number">2</span>];<br>	<span class="hljs-type">pid_t</span> pid;<br>	<span class="hljs-type">int</span> i;<br><br>	<span class="hljs-keyword">if</span> (pipe(fd) == <span class="hljs-number">-1</span>) &#123;<br>		perror(<span class="hljs-string">&quot;pipe error&quot;</span>);<br>		<span class="hljs-built_in">exit</span>(<span class="hljs-number">1</span>);<br>	&#125;<br><br>	<span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">2</span>; i ++ ) &#123;<br>		pid = fork(); <span class="hljs-comment">// 创建子进程</span><br>		<span class="hljs-keyword">if</span> (pid == <span class="hljs-number">-1</span>) &#123;<br>			perror(<span class="hljs-string">&quot;fork error&quot;</span>);<br>			<span class="hljs-built_in">exit</span>(<span class="hljs-number">1</span>);<br>		&#125;<br>		<span class="hljs-keyword">if</span> (pid == <span class="hljs-number">0</span>) &#123;<br>			<span class="hljs-keyword">break</span>;  <span class="hljs-comment">// 子进程退出，不继续 fork</span><br>		&#125;<br>	&#125;<br><br>	<br>	<span class="hljs-keyword">if</span> (i == <span class="hljs-number">0</span>) &#123; <br>		<span class="hljs-comment">// 第 1 个子进程负责执行 ls，先将标准输出重定向到写端</span><br>		close(fd[<span class="hljs-number">0</span>]);<br>		dup2(fd[<span class="hljs-number">1</span>], STDOUT_FILENO);<br>		execlp(<span class="hljs-string">&quot;ls&quot;</span>, <span class="hljs-string">&quot;ls&quot;</span>, (<span class="hljs-type">char</span>*)<span class="hljs-literal">NULL</span>);<br><br>		perror(<span class="hljs-string">&quot;execlp ls error&quot;</span>);<br>		<span class="hljs-built_in">exit</span>(<span class="hljs-number">1</span>);<br>	&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (i == <span class="hljs-number">1</span>) &#123;<br>		<span class="hljs-comment">// 第 2 个进程负责执行 wc -l，先将标准输入重定向到读端</span><br>		close(fd[<span class="hljs-number">1</span>]);<br>		dup2(fd[<span class="hljs-number">0</span>], STDIN_FILENO);<br>		execlp(<span class="hljs-string">&quot;wc&quot;</span>, <span class="hljs-string">&quot;wc&quot;</span>, <span class="hljs-string">&quot;-l&quot;</span>, (<span class="hljs-type">char</span>*)<span class="hljs-literal">NULL</span>);<br><br>		perror(<span class="hljs-string">&quot;execlp wc -l error&quot;</span>);<br>		<span class="hljs-built_in">exit</span>(<span class="hljs-number">1</span>);<br>	&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pid &gt; <span class="hljs-number">0</span>) &#123;<br>		<span class="hljs-comment">// 父进程需要关闭读写端，还需要等待两个子进程执行结束</span><br>		close(fd[<span class="hljs-number">0</span>]);<br>		close(fd[<span class="hljs-number">1</span>]);<br>		<span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">2</span>; i ++ )&#123;<br>			wait(<span class="hljs-literal">NULL</span>);<br>		&#125;<br>	&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (pid == <span class="hljs-number">-1</span>) &#123;<br>		perror(<span class="hljs-string">&quot;fork error&quot;</span>);<br>		<span class="hljs-built_in">exit</span>(<span class="hljs-number">1</span>);<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/04/55sv.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<br/>
+<h2 id="6-使用-pipe-实现多个读写端操作">6 使用 pipe 实现多个读写端操作</h2>
+<p>一个 pipe 有一个写端多个读端，或者有多个写端一个读端，都是允许的。</p>
+<p>示例：父进程读，两个子进程写</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;string.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/wait.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>	<span class="hljs-type">int</span> fd[<span class="hljs-number">2</span>];<br>	<span class="hljs-type">pid_t</span> pid;<br>	<span class="hljs-type">char</span> buf[<span class="hljs-number">1024</span>];<br>	<span class="hljs-type">int</span> i;<br><br>	<span class="hljs-keyword">if</span> (pipe(fd) == <span class="hljs-number">-1</span>) &#123;<br>		perror(<span class="hljs-string">&quot;pipe error&quot;</span>);<br>		<span class="hljs-built_in">exit</span>(<span class="hljs-number">1</span>);<br>	&#125;<br><br>	<span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">2</span>; i ++ ) &#123;<br>		pid = fork(); <span class="hljs-comment">// 创建子进程</span><br>		<span class="hljs-keyword">if</span> (pid == <span class="hljs-number">-1</span>) &#123;<br>			perror(<span class="hljs-string">&quot;fork error&quot;</span>);<br>			<span class="hljs-built_in">exit</span>(<span class="hljs-number">1</span>);<br>		&#125;<br>		<span class="hljs-keyword">if</span> (pid == <span class="hljs-number">0</span>) &#123;<br>			<span class="hljs-keyword">break</span>;  <span class="hljs-comment">// 子进程退出，不继续 fork</span><br>		&#125;<br>	&#125;<br><br>	<span class="hljs-type">char</span>* str1 = <span class="hljs-string">&quot;Kirisame&quot;</span>;<br>	<span class="hljs-type">char</span>* str2 = <span class="hljs-string">&quot; Marisa&quot;</span>;<br>	<br>	<span class="hljs-keyword">if</span> (i == <span class="hljs-number">0</span>) &#123; <br>		<span class="hljs-comment">// 第 1 个子进程写数据</span><br>		close(fd[<span class="hljs-number">0</span>]);<br>		<span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;child 1 process is writing...\n&quot;</span>);<br>		write(fd[<span class="hljs-number">1</span>], str1, <span class="hljs-built_in">strlen</span>(str1));<br>		close(fd[<span class="hljs-number">1</span>]);<br>	&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (i == <span class="hljs-number">1</span>) &#123;<br>		<span class="hljs-comment">// 第 2 个进程也写数据</span><br>		close(fd[<span class="hljs-number">0</span>]);	<br>		<span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;child 2 process is writing...\n&quot;</span>);<br>		write(fd[<span class="hljs-number">1</span>], str2, <span class="hljs-built_in">strlen</span>(str2));<br>		close(fd[<span class="hljs-number">1</span>]);<br>	&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span>(pid &gt; <span class="hljs-number">0</span>) &#123;<br>		<span class="hljs-comment">// 父进程读数据</span><br>		close(fd[<span class="hljs-number">1</span>]);<br>		<span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">2</span>; i ++ ) &#123;<br>			wait(<span class="hljs-literal">NULL</span>); <span class="hljs-comment">// 等待两个子进程都写完</span><br>		&#125;<br>		<span class="hljs-type">int</span> bytes = read(fd[<span class="hljs-number">0</span>], buf, <span class="hljs-keyword">sizeof</span>(buf));<br>		<span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;parent process read %d bytes: %s\n&quot;</span>, bytes, buf);<br>		close(fd[<span class="hljs-number">0</span>]);<br>	&#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (pid == <span class="hljs-number">-1</span>) &#123;<br>		perror(<span class="hljs-string">&quot;fork error&quot;</span>);<br>		<span class="hljs-built_in">exit</span>(<span class="hljs-number">1</span>);<br>	&#125;<br><br>	<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/04/qxt.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Linux-%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B/" class="category-chain-item">Linux 系统编程</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Linux/" class="print-no-link">#Linux</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Linux 系统编程」进程间通信方式、管道基本使用方法</div>
+      <div>https://marisamagic.github.io/2025/09/04/20250904/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年9月4日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/09/03/20250903/" title="「Linux 系统编程」孤儿进程、僵尸进程、wait 和 waitpid 子进程回收">
+                        <span class="hidden-mobile">「Linux 系统编程」孤儿进程、僵尸进程、wait 和 waitpid 子进程回收</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
