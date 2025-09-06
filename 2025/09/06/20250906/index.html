@@ -1,0 +1,817 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="什么是命名管道（FIFO）；命名管道（FIFO）的创建方式；为什么命名管道可以实现无血缘关系进程之间的通信；文件用于进程间通信；文件用于血缘关系进程和非血缘关系进程通信的区别。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Linux 系统编程」命名管道（FIFO）、文件实现进程通信">
+<meta property="og:url" content="https://marisamagic.github.io/2025/09/06/20250906/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="什么是命名管道（FIFO）；命名管道（FIFO）的创建方式；为什么命名管道可以实现无血缘关系进程之间的通信；文件用于进程间通信；文件用于血缘关系进程和非血缘关系进程通信的区别。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/09/06/rsxq.jpg">
+<meta property="article:published_time" content="2025-09-06T08:24:21.053Z">
+<meta property="article:modified_time" content="2025-09-06T09:40:16.058Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2025/09/06/rsxq.jpg">
+  
+  
+  
+  <title>「Linux 系统编程」命名管道（FIFO）、文件实现进程通信 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2025/09/06/rsxq.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Linux 系统编程」命名管道（FIFO）、文件实现进程通信"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-09-06 16:24" pubdate>
+          2025年9月6日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          18 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Linux 系统编程」命名管道（FIFO）、文件实现进程通信</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="1-命名管道（FIFO）">1 命名管道（FIFO）</h2>
+<p><strong>管道</strong>（匿名管道）是一种半双工的通信方式，<strong>适用于有血缘关系的进程</strong>（例如，父子进程、兄弟进程）。但是，如果要实现两个无血缘关系进程间的通信呢？</p>
+<p><strong>FIFO</strong>（First In First Out）是一种 <strong>命名管道</strong>，它解决了普通管道只能用于血缘关系进程的问题。<strong>FIFO</strong> 在文件系统中以 <strong>一个特殊的文件形式</strong> 存在，不同进程可以通过该文件进行通信。</p>
+<hr>
+<br/>
+<h2 id="2-命名管道创建">2 命名管道创建</h2>
+<h3 id="2-1-命令方式创建">2.1 命令方式创建</h3>
+<p>Linux 和 Unix 系统提供了一个名为 mkfifo 的命令行工具，专门用于创建命名管道。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">mkfifo</span> [选项] &lt;命名管道名称&gt;<br></code></pre></td></tr></table></figure>
+<p><strong>常用选项</strong>：<code>-m</code>，<code>--mode=MODE</code>，即设置管道的权限模式（类似于 chmod），例如 <code>-m 0666</code></p>
+<p><strong>示例</strong>：</p>
+<p>在当前目录下创建一个名为 <code>myfifo1</code> 的管道：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">mkfifo</span> myfifo1<br></code></pre></td></tr></table></figure>
+<p>在指定的目录（例如 <code>/home/marisa/fifo_test</code>）创建一个名为 <code>myfifo2</code> 的管道：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">mkfifo</span> -m 0666 /home/marisa/fifo_test/myfifo2<br></code></pre></td></tr></table></figure>
+<p><strong>注意</strong>：权限 <code>666</code> 确保了其他非创建者的用户进程也有权限读写这个管道。</p>
+<p>创建成功后，使用 <code>ls -l</code> 命令查看。命名管道文件的类型标识是 <code>p</code>（代表 pipe）：</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/06/yatm.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<h3 id="2-2-在程序中创建">2.2 在程序中创建</h3>
+<p>在 C 语言程序中，我们使用 <code>mkfifo()</code> 系统函数来创建命名管道。这种方式提供了更大的灵活性，可以在程序逻辑中动态地创建和管理管道。</p>
+<p><strong>函数原型</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/types.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/stat.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">mkfifo</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">char</span> *pathname, <span class="hljs-type">mode_t</span> mode)</span>;<br></code></pre></td></tr></table></figure>
+<p><strong>参数说明</strong>：</p>
+<ul>
+<li><code>pathname</code>：创建的命名管道 FIFO 文件的路径</li>
+<li><code>mode</code>：指定命名管道 FIFO 文件的权限位。通常会被系统的 <code>umask</code> 值所修改，最终权限是 <code>(mode &amp; ~umask)</code>。例如，如果 <code>mode</code> 设为 <code>0666</code>，<code>umask</code> 是 <code>0022</code>，那么最终权限就是 <code>0644</code> (rw-r–r–)。</li>
+</ul>
+<p><strong>返回值</strong>：</p>
+<ul>
+<li>成功：返回 <code>0</code>。</li>
+<li>失败：返回 <code>-1</code>，设置 <code>errno</code>。</li>
+</ul>
+<p><strong>示例</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/types.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/stat.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;errno.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">char</span>* fifo_name = <span class="hljs-string">&quot;./myfifo3&quot;</span>;<br><br>    <span class="hljs-comment">// 尝试创建FIFO</span><br>    <span class="hljs-keyword">if</span> (mkfifo(fifo_name, <span class="hljs-number">0666</span>) == <span class="hljs-number">-1</span>) &#123;<br>        <span class="hljs-comment">// 如果错误原因是“文件已存在”，我们可以直接使用它，不算错误。</span><br>        <span class="hljs-keyword">if</span> (errno != EEXIST) &#123;<br>            perror(<span class="hljs-string">&quot;mkfifo failed&quot;</span>);<br>            <span class="hljs-built_in">exit</span>(EXIT_FAILURE);<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;FIFO already exists, using it.\n&quot;</span>);<br>        &#125;<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;FIFO created successfully.\n&quot;</span>);<br>    &#125;<br><br>    <span class="hljs-comment">// 可以添加后续的 open, read/write 等操作</span><br>    <span class="hljs-comment">// 例如： int fd = open(fifo_name, O_WRONLY);</span><br>    <span class="hljs-comment">//        write(fd, &quot;Hello&quot;, 6);</span><br><br>    <span class="hljs-comment">// 程序结束时可以选择是否删除FIFO</span><br>    <span class="hljs-comment">// unlink(fifo_name);</span><br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/06/ypdn.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<p><strong>程序方式的特点</strong>：</p>
+<ul>
+<li><strong>动态创建</strong>：可以根据程序运行时的条件和需要来决定是否创建、以及创建哪个管道。</li>
+<li><strong>错误处理</strong>：可以优雅地处理“文件已存在”等情况，决定是直接使用还是报错。</li>
+<li><strong>资源管理</strong>：程序可以在退出前使用 unlink() 删除管道文件，完成自动清理。</li>
+</ul>
+<hr>
+<h3 id="2-3-命名管道进程通信示例">2.3 命名管道进程通信示例</h3>
+<p>创建两个无血缘关系的进程，一个负责写入数据，另一个负责读取数据。</p>
+<p><strong>写者进程</strong> <code>write_process.c</code>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;string.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;fcntl.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">int</span> fd = open(<span class="hljs-string">&quot;./myfifo1&quot;</span>, O_WRONLY); <span class="hljs-comment">// 打开对应的命名管道文件</span><br><br>    <span class="hljs-type">char</span>* msg = <span class="hljs-string">&quot;This is writer Alice Margatroid.\n&quot;</span>;<br>    write(fd, msg, <span class="hljs-built_in">strlen</span>(msg));<br><br>    close(fd);<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><strong>读者进程</strong> <code>read_process.c</code>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;string.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;fcntl.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">char</span> buf[<span class="hljs-number">1024</span>];<br>    <span class="hljs-type">int</span> fd = open(<span class="hljs-string">&quot;./myfifo1&quot;</span>, O_RDONLY); <span class="hljs-comment">// 注意打开的命名管道一致</span><br><br>    <span class="hljs-type">int</span> bytes = read(fd, buf, <span class="hljs-keyword">sizeof</span>(buf) - <span class="hljs-number">1</span>);<br>    buf[bytes] = <span class="hljs-string">&#x27;\0&#x27;</span>; <span class="hljs-comment">// 添加终止符</span><br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;reader Kirisame Marisa get message: %s\n&quot;</span>, buf);<br>    <br>    close(fd);<br>    <br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><strong>运行方式</strong>：</p>
+<ul>
+<li>创建命名管道文件 <code>myfifo1</code></li>
+<li>先运行读者进程（此时命名管道还未写入数据，读者进程会阻塞等待）</li>
+<li>再运行写者进程</li>
+</ul>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/06/37ne.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<p>也可以多个写进程可以向同一个 FIFO 写入数据，读进程会按顺序读取所有写入的内容。或者，一个写进程写数据，多个读进程从同一个 FIFO 读取数据。<strong>注意</strong>：数据一旦被读取就会从管道中移除。一个写进程写、多个读进程读，这些读进程读取的数据都是不同的。</p>
+<hr>
+<br/>
+<h2 id="3-命名管道进程通信的原理">3 命名管道进程通信的原理</h2>
+<p><strong>命名管道</strong>（FIFO）之所以能实现无血缘关系进程间的通信，是因为它在文件系统中拥有一个 <strong>全局可见的、有名字</strong> 的 “入口点”（即特殊的管道文件）。这个文件名成为了所有想通信的进程之间一个预先约定好的 “联络点”。</p>
+<h3 id="3-1-命名管道和匿名管道的根本区别">3.1 命名管道和匿名管道的根本区别</h3>
+<ul>
+<li>
+<p><strong>匿名管道</strong>：</p>
+<p>通过 <code>pipe()</code> 系统调用创建。它 <strong>只存在于内核内存</strong> 中，<strong>不会在磁盘的文件系统里创建一个可见的文件</strong>。它<strong>只返回两个文件描述符（一个读端，一个写端）</strong>。由于没有名字，其他进程无法“找到”它。它的 <strong>文件描述符只能通过 <code>fork()</code> 由父进程传递给子进程</strong>，因此通信范围被严格限制在了有血缘关系的进程之间。</p>
+<p>比喻：就像父子俩在家里私下约定了一个暗号。外人不知道这个暗号，甚至不知道这个暗号的存在，所以无法加入对话。</p>
+</li>
+<li>
+<p><strong>命名管道</strong>：</p>
+<p>通过 <code>mkfifo()</code> 系统调用创建。它不仅 <strong>在内核中创建了数据缓冲区</strong>，更重要的是它在文件系统的目录树中 <strong>创建了一个确实存在、有名字的文件节点</strong>（例如 ./myfifo）。<strong>这个文件不存储实际数据，它只是一个标识，一个访问点</strong>。</p>
+<p>比喻：就像在市中心立了一个所有人都能看到的、写着“公共留言板”的牌子。任何知道这个牌子位置的人（进程），无论他们之间是什么关系，都可以去那里留言（写）或者看留言（读）。</p>
+</li>
+</ul>
+<hr>
+<h3 id="3-2-命名管道实现机制">3.2 命名管道实现机制</h3>
+<ol>
+<li>
+<p><strong>创建联络点</strong>：进程调用 <code>mkfifo(&quot;./myfifo&quot;, 0666)</code>。内核在文件系统中 <strong>创建了一个特殊类型的文件</strong> <code>./myfifo</code>。</p>
+</li>
+<li>
+<p><strong>打开联络点</strong>：</p>
+<ul>
+<li>
+<p>进程 A（写者）调用 <code>open(&quot;./myfifo&quot;, O_WRONLY)</code>。内核找到这个文件节点，知道它是一个 FIFO，然后为它 <strong>分配内核缓冲区</strong> 并 <strong>返回一个文件描述符</strong>。</p>
+</li>
+<li>
+<p>进程 B（读者）调用 <code>open(&quot;./myfifo&quot;, O_RDONLY)</code>。内核发现同一个 FIFO 文件节点，并 <strong>让进程 B 的文件描述符指向同一个内核缓冲区</strong>。</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>进程间通信</strong>：</p>
+<ul>
+<li>
+<p>进程 A 使用 <code>write()</code> 向它的文件描述符写入数据。<strong>数据被送入内核缓冲区</strong>。</p>
+</li>
+<li>
+<p>进程 B 使用 <code>read()</code> 从它的文件描述符读取数据。<strong>数据从同一个内核缓冲区中被取出</strong>。</p>
+</li>
+</ul>
+</li>
+</ol>
+<p><strong>内核的角色</strong>：内核负责管理这个共享的缓冲区，并处理所有复杂的同步和阻塞问题。例如，如果读者还没打开，写者先打开，写者会被阻塞，直到读者也打开管道，反之亦然。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/06/59alu.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<h3 id="3-3-命名管道的特质">3.3 命名管道的特质</h3>
+<ul>
+<li>
+<p><strong>全局可见的路径名</strong>：文件系统中的路径名（如 <code>/home/myfifo</code>）是一个所有进程都可以访问的全局唯一标识。它充当了一个约定的通信地址，任何知道这个地址的进程都可以尝试连接。</p>
+</li>
+<li>
+<p><strong>独立于进程的生命周期</strong>：这个管道文件一旦被创建，会 <strong>一直存在于文件系统中（除非被主动删除）</strong>，它的存在不依赖于任何一个创建它或使用它的进程。这使得进程可以在不同的时间点、甚至由不同的用户启动，只要它们都能访问这个路径。</p>
+</li>
+<li>
+<p><strong>内核缓冲区的共享</strong>：所有打开这个命名管道的进程，最终通过文件系统，<strong>连接到内核中同一块缓冲区</strong>。数据的流动是在这块共享的内核缓冲区中进行的，文件本身只是提供了一个访问途径。</p>
+</li>
+</ul>
+<hr>
+<br/>
+<h2 id="4-文件实现进程通信">4 文件实现进程通信</h2>
+<p><strong>文件实现进程间通信</strong>：打开的文件是内核中的一块缓冲区。多个无血缘关系的进程，可以同时访问该文件。</p>
+<ul>
+<li>有血缘关系的进程对于同一个文件，<strong>使用的同一个文件描述符</strong>；</li>
+<li>没有血缘关系的进程，<strong>对同一个文件使用的文件描述符可能不同</strong>。</li>
+</ul>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Linux-%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B/" class="category-chain-item">Linux 系统编程</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Linux/" class="print-no-link">#Linux</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Linux 系统编程」命名管道（FIFO）、文件实现进程通信</div>
+      <div>https://marisamagic.github.io/2025/09/06/20250906/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年9月6日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/09/04/20250904/" title="「Linux 系统编程」进程间通信方式、管道基本使用方法">
+                        <span class="hidden-mobile">「Linux 系统编程」进程间通信方式、管道基本使用方法</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
