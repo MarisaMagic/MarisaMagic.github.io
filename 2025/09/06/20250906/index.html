@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2025/09/06/rsxq.jpg">
 <meta property="article:published_time" content="2025-09-06T08:24:21.053Z">
-<meta property="article:modified_time" content="2025-09-06T12:15:28.881Z">
+<meta property="article:modified_time" content="2025-09-07T07:56:10.814Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="Linux">
 <meta name="twitter:card" content="summary_large_image">
@@ -253,7 +253,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          2.8k 字
+          3.1k 字
         
       </span>
     
@@ -264,7 +264,7 @@
         
         
         
-          24 分钟
+          26 分钟
         
       </span>
     
@@ -397,6 +397,37 @@
 <p>比喻：就像在市中心立了一个所有人都能看到的、写着“公共留言板”的牌子。任何知道这个牌子位置的人（进程），无论他们之间是什么关系，都可以去那里留言（写）或者看留言（读）。</p>
 </li>
 </ul>
+<p><strong>命名管道</strong> 在 <strong>大小和容量限制</strong> 机制上与 <strong>匿名管道</strong> 完全相同。都使用相同的内核缓冲区机制。</p>
+<blockquote>
+<p>在 Linux 系统中，管道缓冲区的大小默认是 64 KiB、在某些历史版本中，这个值可能是 4 KiB 或 8 KiB。允许管道容量系统上限 pipe-max-size</p>
+</blockquote>
+<p><strong>区别总结</strong>：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">特性</th>
+<th style="text-align:left">匿名管道</th>
+<th style="text-align:left">命名管道</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>存在形式</strong></td>
+<td style="text-align:left">仅存在于内存中，没有磁盘索引节点（inode）</td>
+<td style="text-align:left">在文件系统中有一个名称和索引节点（inode），但 <strong>不占用磁盘数据块</strong></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>持久性</strong></td>
+<td style="text-align:left">随进程的创建而创建，随最后一个使用它的进程的结束而销毁</td>
+<td style="text-align:left">一旦创建，除非被手动删除（<code>unlink</code>），否则会一直存在于文件系统中</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>访问控制</strong></td>
+<td style="text-align:left">只能由 <strong>有亲缘关系</strong> 的进程（如父子进程、兄弟进程）访问</td>
+<td style="text-align:left">任何知道其名称的进程都可以访问，<strong>无需亲缘关系</strong></td>
+</tr>
+</tbody>
+</table>
 <hr>
 <h3 id="3-2-命名管道实现机制">3.2 命名管道实现机制</h3>
 <ol>
@@ -612,6 +643,12 @@
                 <div class="post-prevnext my-3">
                   <article class="post-prev col-6">
                     
+                    
+                      <a href="/2025/09/07/20250907/" title="「Linux 系统编程」mmap 建立共享内存映射">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「Linux 系统编程」mmap 建立共享内存映射</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
                     
                   </article>
                   <article class="post-next col-6">
