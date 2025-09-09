@@ -19,28 +19,22 @@
   <meta name="author" content="MarisaMagic">
   <meta name="keywords" content="">
   
-    <meta name="description" content="Ubuntu 环境下在 VS Code 中运行 C++ 多线程程序">
+    <meta name="description" content="什么是信号；与信号相关的概念（信号的产生、未决、递达、信号的处理方式）；信号屏蔽字和未决信号集；信号四要素和常规信号">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Ubuntu 18.04 VS Code 运行 C++ 多线程程序">
-<meta property="og:url" content="https://marisamagic.github.io/2024/12/15/20241215/index.html">
+<meta property="og:title" content="「Linux 系统编程」信号的概念和相关机制">
+<meta property="og:url" content="https://marisamagic.github.io/2025/09/09/20250909/index.html">
 <meta property="og:site_name" content="MarisaMagic&#39;s Blog">
-<meta property="og:description" content="Ubuntu 环境下在 VS Code 中运行 C++ 多线程程序">
+<meta property="og:description" content="什么是信号；与信号相关的概念（信号的产生、未决、递达、信号的处理方式）；信号屏蔽字和未决信号集；信号四要素和常规信号">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://sukicdn.com/wyx/i/2024/12/15/wno.png">
-<meta property="article:published_time" content="2024-12-15T13:26:17.796Z">
-<meta property="article:modified_time" content="2025-01-06T05:22:04.577Z">
+<meta property="article:published_time" content="2025-09-09T13:49:56.153Z">
+<meta property="article:modified_time" content="2025-09-09T14:35:36.130Z">
 <meta property="article:author" content="MarisaMagic">
-<meta property="article:tag" content="C++">
-<meta property="article:tag" content="多线程">
-<meta property="article:tag" content="Ubuntu">
 <meta property="article:tag" content="Linux">
-<meta property="article:tag" content="VS Code">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2024/12/15/wno.png">
   
   
   
-  <title>Ubuntu 18.04 VS Code 运行 C++ 多线程程序 - MarisaMagic&#39;s Blog</title>
+  <title>「Linux 系统编程」信号的概念和相关机制 - MarisaMagic&#39;s Blog</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -223,13 +217,13 @@
   
 
 <div id="banner" class="banner" parallax=true
-     style="background: url('https://sukicdn.com/wyx/i/2024/12/15/wno.png') no-repeat center center; background-size: cover;">
+     style="background: url('https://sukicdn.com/wyx/i/2025/01/10/3lgax.png') no-repeat center center; background-size: cover;">
   <div class="full-bg-img">
     <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="Ubuntu 18.04 VS Code 运行 C++ 多线程程序"></span>
+            <span id="subtitle" data-typed-text="「Linux 系统编程」信号的概念和相关机制"></span>
           
         </div>
 
@@ -245,8 +239,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2024-12-15 21:26" pubdate>
-          2024年12月15日 晚上
+        <time datetime="2025-09-09 21:49" pubdate>
+          2025年9月9日 晚上
         </time>
       </span>
     
@@ -257,7 +251,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          801 字
+          1.7k 字
         
       </span>
     
@@ -268,7 +262,7 @@
         
         
         
-          7 分钟
+          15 分钟
         
       </span>
     
@@ -309,59 +303,228 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">Ubuntu 18.04 VS Code 运行 C++ 多线程程序</h1>
+            <h1 id="seo-header">「Linux 系统编程」信号的概念和相关机制</h1>
             
             
               <div class="markdown-body">
                 
-                <p>文章大图来源: <a target="_blank" rel="noopener" href="https://www.pixiv.net/artworks/105845465">pixiv_id=105845465</a></p>
-<h2 id="Ubuntu-对应-gcc-版本">Ubuntu 对应 gcc 版本</h2>
-<p>我之前配置的 VMWare 虚拟机采用的操作系统为 Ubuntu 18.04，对应的 g++ 版本为 g++ 7.5.0</p>
-<h2 id="Ubuntu-下-VS-Code-运行-C-多线程报错">Ubuntu 下 VS Code 运行 C++ 多线程报错</h2>
-<p>假设写了如下 C++ 多线程程序:</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;iostream&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;thread&gt;</span></span><br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">foo</span><span class="hljs-params">()</span></span>&#123;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;foo() start, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;Hello, this is Alice Margatroid.&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;foo() end, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">int</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span>&#123;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;main() start, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br>    std::cout &lt;&lt; <span class="hljs-string">&quot;Hello, this is MarisaMagic.&quot;</span> &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>    <span class="hljs-function">std::thread <span class="hljs-title">t</span><span class="hljs-params">(foo)</span></span>;<br>    t.<span class="hljs-built_in">join</span>();<br><br>    std::cout &lt;&lt; <span class="hljs-string">&quot;main(), end, thread id = &quot;</span> &lt;&lt; std::this_thread::<span class="hljs-built_in">get_id</span>() &lt;&lt; <span class="hljs-string">&quot;\n&quot;</span>;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
-<p>在 Ubuntu 环境下用 VS Code 中的 <strong>Code Runner 插件运行</strong> C++ 代码会出现如下报错:</p>
-<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs txt">In function `std::thread::thread&lt;void (&amp;)()&gt;(void (&amp;)())&#x27;:<br>test.cpp:(.text._ZNSt6threadC2IRFvvEJEEEOT_DpOT0_[_ZNSt6threadC5IRFvvEJEEEOT_DpOT0_]+0x2f): <br>undefined reference to `pthread_create&#x27;<br>collect2: error: ld returned 1 exit status<br></code></pre></td></tr></table></figure>
-<p>如果选择 <strong>生成 C/C++ g++ 生成活动文件</strong> 也会报错:</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/uhb.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
-<h2 id="报错原因">报错原因</h2>
-<p>在 Ubuntu 平台下创建线程时会调用 pthread_create() 函数，但是 pthread 库不是 Linux 系统默认的库，需要链接到 pthread 库。因此在使用 g++ 编译时，加上链接 pthread 库命令，即可编译成功:</p>
-<p>故我们可以打开终端，或者在 VS Code 中打开终端输入如下编译命令:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">g++ test.cpp -o <span class="hljs-built_in">test</span> -lpthread <br></code></pre></td></tr></table></figure>
-<p>运行生成可执行文件，发现多线程程序运行成功:</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">./test<br></code></pre></td></tr></table></figure>
-<p>可是我们还没有成功解决如何在 VS Code 中使用 <strong>Code Runner 插件</strong> 或者 <strong>生成 C/C++ g++ 生成活动文件</strong> 运行 C++ 多线程程序。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/61yn.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
-<h2 id="解决方法">解决方法</h2>
-<h3 id="Code-Runner-插件配置修改">Code Runner 插件配置修改</h3>
-<p>打开 Code Runner 扩展设置，输入关键词 Executor Map，点击第一个选项中“在 settings.json 中编辑”。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/88x9b.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
-<p>打开之后，看到如下界面。然后在 “cpp” 那一行的编译命令中，增加 -lpthread 链接命令并保存即可。</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-attr">&quot;cpp&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;cd $dir &amp;&amp; g++ $fileName -o $fileNameWithoutExt -lpthread &amp;&amp; $dir$fileNameWithoutExt&quot;</span><br></code></pre></td></tr></table></figure>
-<p>修改后大致如下图所示:</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/16ezi.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
-<p>之后点击右上角 <strong>Code Runner 插件</strong> 运行代码的按钮就可以运行成功 DA⭐ZE~</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/175xp.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
-<h3 id="生成-C-C-g-生成活动文件配置修改">生成 C/C++ g++ 生成活动文件配置修改</h3>
-<p>键盘按下 “Ctrl + Shift + P”，打开命令面板。输入关键词 “Tasks” 找到 “Tasks: Configure Default Build Task” 点开。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/8ewil.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
-<p>点开之后选择 “C/C++: g++ 生成活动文件”，会自动生成一个编译配置文件 tasks.json 。</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/179mu.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
-<p>在编译配置文件中找到 “args”，也就是执行编译命令时加入的参数。增加一条 “-lpthread”，保存文件即可。</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-attr">&quot;tasks&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><br>    <span class="hljs-punctuation">&#123;</span><br>        <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;cppbuild&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;label&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;C/C++: g++ 生成活动文件&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;command&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;/usr/bin/g++&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;args&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><br>            <span class="hljs-string">&quot;-fdiagnostics-color=always&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-string">&quot;-g&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-string">&quot;$&#123;file&#125;&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-string">&quot;-o&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-string">&quot;$&#123;fileDirname&#125;/$&#123;fileBasenameNoExtension&#125;&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-string">&quot;-lpthread&quot;</span><br>        <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;options&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>            <span class="hljs-attr">&quot;cwd&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;$&#123;fileDirname&#125;&quot;</span><br>        <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;problemMatcher&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><br>            <span class="hljs-string">&quot;$gcc&quot;</span><br>        <span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;group&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>            <span class="hljs-attr">&quot;kind&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;build&quot;</span><span class="hljs-punctuation">,</span><br>            <span class="hljs-attr">&quot;isDefault&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-literal"><span class="hljs-keyword">true</span></span><br>        <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;detail&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;编译器: /usr/bin/g++&quot;</span><br>    <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">]</span><br></code></pre></td></tr></table></figure>
-<p>修改配置后如下图所示:</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/8ewft.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
-<p>之后使用 <strong>生成 C/C++ g++ 生成活动文件</strong> 也可以运行成功 DA⭐ZE ~</p>
-<p><img src="https://sukicdn.com/wyx/i/2024/12/15/67gs.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
-<h2 id="参考">参考</h2>
+                <h2 id="1-什么是信号">1 什么是信号</h2>
+<h3 id="1-1-信号的定义">1.1 信号的定义</h3>
+<p><strong>信号（Signal）</strong> 是一种 <strong>异步通知机制</strong>，用于进程与内核之间或进程与进程之间的简单通信。其具有以下特性：</p>
+<ul>
+<li><strong>简单</strong>：信号本身不携带大量信息，仅表示某种事件的发生。</li>
+<li><strong>条件触发</strong>：只有在特定条件满足时才会发送。</li>
+<li><strong>异步处理</strong>：信号可以在进程执行的任何时刻到达，打断当前执行流程。</li>
+</ul>
+<hr>
+<h3 id="1-2-信号的特质">1.2 信号的特质</h3>
+<p><strong>信号</strong> 常被形容为 “软件层面的中断”。其特点包括：</p>
+<ul>
+<li>一旦信号产生，无论程序执行到何处，都必须 <strong>立即停止当前操作，转而去处理信号</strong>。</li>
+<li>信号的处理完成后，程序再恢复执行之前的指令。</li>
+<li>所有信号的产生和处理都是由 <strong>内核</strong> 完成的。</li>
+</ul>
+<p>可以把 信号 类比于现实生活中的 <strong>中断</strong> 或 <strong>警报</strong>：</p>
+<blockquote>
+<p>当你正在工作时，突然电话响了（信号产生），你会停下手中的工作（进程正常执行流程被中断），去接电话（执行信号处理函数），接完电话后再回来继续工作（恢复执行）。</p>
+</blockquote>
+<hr>
+<h3 id="1-3-信号的来源">1.3 信号的来源</h3>
 <ol>
 <li>
-<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/afgqwjgfjqwgfg/article/details/115737489">VS Code在ubuntu中执行多线程程序时报错：undefined reference to `pthread_create</a></p>
+<p><strong>内核</strong>：内核在检测到系统事件时，会向相关进程发送信号。</p>
+<p>用户按下 <code>Ctrl+C</code>（产生 <code>SIGINT</code>），除零操作（产生 <code>SIGFPE</code>），子进程退出（向父进程发送 <code>SIGCHLD</code>），进程访问非法内存（产生 <code>SIGSEGV</code>）。</p>
 </li>
 <li>
-<p><a target="_blank" rel="noopener" href="https://worktile.com/kb/ask/402685.html">编译多线程程序linux命令</a></p>
+<p><strong>其他进程</strong>：一个进程可以通过系统调用 <code>kill()</code> 向另一个进程（或进程组）发送信号。当然，发送者需要有相应的权限（通常是超级用户或目标进程的所有者）。</p>
+</li>
+<li>
+<p><strong>进程自身</strong>：进程可以通过 <code>kill()</code> 或 <code>raise()</code> 系统调用给自己发送信号。</p>
 </li>
 </ol>
+<hr>
+<h2 id="2-信号生命周期与处理">2 信号生命周期与处理</h2>
+<h3 id="2-1-信号的生命周期">2.1 信号的生命周期</h3>
+<p>一个信号从产生到被处理，经历了以下几个步骤：</p>
+<ul>
+<li>
+<p><strong>产生（Generation）</strong>：某个事件发生，导致一个信号被创建出来。</p>
+</li>
+<li>
+<p><strong>递送（Delivery）</strong>：将信号发送到目标进程，并使其被处理。</p>
+</li>
+<li>
+<p><strong>未决（Pending）</strong>：信号已经产生，但尚未被进程处理（可能因为信号被阻塞了）。这个状态下的信号被称为 <strong>未决信号</strong>。</p>
+</li>
+<li>
+<p><strong>阻塞/屏蔽（Blocking/Masking）</strong>：进程可以选择阻塞（block） 某些信号。如果 <strong>一个被阻塞的信号产生</strong> 了，它会 <strong>保持在未决状态</strong>，直到进程解除对该信号的阻塞，它才会被递送和处理。</p>
+</li>
+<li>
+<p><strong>处理（Handling）</strong>：当信号被递送给进程时，进程会采取相应的行动。处理方式主要有三种。</p>
+</li>
+</ul>
+<hr>
+<h3 id="2-2-信号的处理方式">2.2 信号的处理方式</h3>
+<p>当一个进程收到信号时，它可以选择以下 <strong>三种方式之一</strong> 来处理：</p>
+<ol>
+<li>
+<p><strong>默认动作（Default Action）</strong>：每个信号都有一个系统预设的默认行为。</p>
+<p>常见的默认动作有：</p>
+<ul>
+<li>
+<p><code>Terminate</code>：终止进程。（如 <code>SIGKILL</code>, <code>SIGTERM</code>）</p>
+</li>
+<li>
+<p><code>Ignore</code>：忽略信号。（如 <code>SIGCHLD</code> 的默认处理就是忽略，但父进程可以捕获它来做一些清理工作）</p>
+</li>
+<li>
+<p><code>Core</code>：终止进程并生成核心转储文件（core dump），用于调试。（如 <code>SIGSEGV</code>, <code>SIGABRT</code>）</p>
+</li>
+<li>
+<p><code>Stop</code>：停止进程（暂停执行）。（如 <code>SIGSTOP</code>, <code>SIGTSTP</code>）</p>
+</li>
+<li>
+<p><code>Continue</code>：如果进程被停止了，让它继续运行。（如 <code>SIGCONT</code>）</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>捕获（Catch）</strong>：进程可以预先注册一个函数，称为信号处理函数（Signal Handler）。</p>
+<p>当信号到来时，内核会中断进程当前的正常控制流，转而去执行这个注册好的处理函数。执行完毕后，进程再回到被中断的地方继续执行。</p>
+<ul>
+<li>使用 <code>signal()</code> 或 <code>sigaction()</code> 系统调用可以注册信号处理函数。</li>
+</ul>
+<p>示例：<code>SIGINT</code>（由 Ctrl+C 产生）的默认动作是终止进程。你可以捕获它，让它执行一个自定义的清理函数，然后再优雅地退出，而不是突然被杀死。</p>
+</li>
+<li>
+<p><strong>忽略（Ignore）</strong>：进程告诉内核，当这个信号到来时，直接丢弃它，什么都不做。</p>
+<p>注意：<code>SIGKILL</code> 和 <code>SIGSTOP</code> 这两个信号不能被捕获、阻塞或忽略。这是为了给系统管理员一个最终极的手段来杀死或停止失控的进程。</p>
+</li>
+</ol>
+<hr>
+<h3 id="2-3-信号屏蔽字与未决信号集">2.3 信号屏蔽字与未决信号集</h3>
+<ul>
+<li>
+<p><strong>阻塞信号集（信号屏蔽字）</strong></p>
+<p><strong>本质</strong>：一个位图（bitmap），用于记录哪些信号被屏蔽（阻塞）。</p>
+<p><strong>作用</strong>：被屏蔽的信号在解除屏蔽之前，即使产生也不会被递达，而是保持未决状态。</p>
+</li>
+<li>
+<p><strong>未决信号集</strong></p>
+<p><strong>本质</strong>：也是一个位图，用于记录哪些信号已经产生但尚未被处理。</p>
+<p><strong>作用</strong>：内核通过该集合管理所有处于未决状态的信号。</p>
+<p><strong>注意</strong>：信号屏蔽字和未决信号集都是由内核维护的，用户可以通过 <code>sigprocmask()</code> 等函数修改屏蔽字。</p>
+</li>
+</ul>
+<hr>
+<br/>
+<h2 id="3-信号四要素与常规信号">3 信号四要素与常规信号</h2>
+<h3 id="3-1-信号四要素">3.1 信号四要素</h3>
+<p>使用命令 <code>kill -l</code> 可以查看系统中所有可用的信号（包括常规信号和实时信号）。</p>
+<p>每个信号都有以下四个要素：</p>
+<ul>
+<li>
+<p><strong>编号</strong>：信号的唯一标识符。</p>
+</li>
+<li>
+<p><strong>名称</strong>：如 SIGINT、SIGTERM 等。</p>
+</li>
+<li>
+<p><strong>对应事件</strong>：触发该信号的条件或事件。</p>
+</li>
+<li>
+<p><strong>默认处理动作</strong>：如终止、忽略、停止、继续等。</p>
+</li>
+</ul>
+<blockquote>
+<p>注意：在使用信号之前，必须明确其四要素，尤其是默认处理动作，以避免不可预期的行为。</p>
+</blockquote>
+<hr>
+<h3 id="3-2-常规信号">3.2 常规信号</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">信号编号</th>
+<th style="text-align:left">信号名</th>
+<th style="text-align:left">默认行为</th>
+<th style="text-align:left">描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">1</td>
+<td style="text-align:left"><code>SIGHUP</code></td>
+<td style="text-align:left">Terminate</td>
+<td style="text-align:left">挂起。控制终端关闭或进程组领导终止时发送。也常用于让守护进程重新读取配置文件。</td>
+</tr>
+<tr>
+<td style="text-align:left">2</td>
+<td style="text-align:left"><code>SIGINT</code></td>
+<td style="text-align:left">Terminate</td>
+<td style="text-align:left"><strong>中断</strong>。来自键盘的中断，通常是用户按下了 <code>Ctrl+C</code>。</td>
+</tr>
+<tr>
+<td style="text-align:left">3</td>
+<td style="text-align:left"><code>SIGQUIT</code></td>
+<td style="text-align:left">Core</td>
+<td style="text-align:left"><strong>退出</strong>。来自键盘的退出，通常是用户按下了 <code>Ctrl+\</code>。会产生 core dump。</td>
+</tr>
+<tr>
+<td style="text-align:left">9</td>
+<td style="text-align:left"><code>SIGKILL</code></td>
+<td style="text-align:left">Terminate</td>
+<td style="text-align:left"><strong>杀死</strong>。立即无条件终止进程。<strong>此信号不能被捕获、阻塞或忽略。</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">11</td>
+<td style="text-align:left"><code>SIGSEGV</code></td>
+<td style="text-align:left">Core</td>
+<td style="text-align:left"><strong>段错误</strong>。进程进行了无效的内存访问（如访问不存在的内存，或写只读内存）。</td>
+</tr>
+<tr>
+<td style="text-align:left">13</td>
+<td style="text-align:left"><code>SIGPIPE</code></td>
+<td style="text-align:left">Terminate</td>
+<td style="text-align:left"><strong>管道破裂</strong>。向一个没有读端的管道写入数据。</td>
+</tr>
+<tr>
+<td style="text-align:left">14</td>
+<td style="text-align:left"><code>SIGALRM</code></td>
+<td style="text-align:left">Terminate</td>
+<td style="text-align:left"><strong>闹钟</strong>。由 <code>alarm()</code> 或 <code>setitimer()</code> 设置的定时器超时后产生。</td>
+</tr>
+<tr>
+<td style="text-align:left">15</td>
+<td style="text-align:left"><code>SIGTERM</code></td>
+<td style="text-align:left">Terminate</td>
+<td style="text-align:left"><strong>终止</strong>。这是 <code>kill</code> 命令默认发送的信号。它是一种要求进程<strong>优雅终止</strong>的请求。进程可以捕获它，完成清理工作后再退出。</td>
+</tr>
+<tr>
+<td style="text-align:left">17</td>
+<td style="text-align:left"><code>SIGCHLD</code></td>
+<td style="text-align:left">Ignore</td>
+<td style="text-align:left"><strong>子进程状态改变</strong>。当子进程停止、退出或被恢复时，内核会向父进程发送这个信号。</td>
+</tr>
+<tr>
+<td style="text-align:left">18</td>
+<td style="text-align:left"><code>SIGCONT</code></td>
+<td style="text-align:left">Continue</td>
+<td style="text-align:left"><strong>继续</strong>。让一个被停止的进程继续运行。</td>
+</tr>
+<tr>
+<td style="text-align:left">19</td>
+<td style="text-align:left"><code>SIGSTOP</code></td>
+<td style="text-align:left">Stop</td>
+<td style="text-align:left"><strong>停止</strong>。暂停进程的执行。<strong>此信号不能被捕获、阻塞或忽略。</strong></td>
+</tr>
+<tr>
+<td style="text-align:left">20</td>
+<td style="text-align:left"><code>SIGTSTP</code></td>
+<td style="text-align:left">Stop</td>
+<td style="text-align:left"><strong>终端停止</strong>。来自终端的停止信号，通常是用户按下了 <code>Ctrl+Z</code>。</td>
+</tr>
+</tbody>
+</table>
 
                 
               </div>
@@ -385,7 +548,7 @@
   
     <span>></span>
     
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/C-%E5%B0%8F%E6%8A%80%E5%B7%A7/" class="category-chain-item">C++ 小技巧</a>
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Linux-%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B/" class="category-chain-item">Linux 系统编程</a>
   
   
 
@@ -402,15 +565,7 @@
     <div class="post-meta">
       <i class="iconfont icon-tags"></i>
       
-        <a href="/tags/C/" class="print-no-link">#C++</a>
-      
-        <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" class="print-no-link">#多线程</a>
-      
-        <a href="/tags/Ubuntu/" class="print-no-link">#Ubuntu</a>
-      
         <a href="/tags/Linux/" class="print-no-link">#Linux</a>
-      
-        <a href="/tags/VS-Code/" class="print-no-link">#VS Code</a>
       
     </div>
   
@@ -422,8 +577,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>Ubuntu 18.04 VS Code 运行 C++ 多线程程序</div>
-      <div>https://marisamagic.github.io/2024/12/15/20241215/</div>
+      <div>「Linux 系统编程」信号的概念和相关机制</div>
+      <div>https://marisamagic.github.io/2025/09/09/20250909/</div>
     </div>
     <div class="license-meta">
       
@@ -435,7 +590,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2024年12月15日</div>
+          <div>2025年9月9日</div>
         </div>
       
       
@@ -467,18 +622,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2024/12/16/2024YZUGPLT/" title="2024 扬州大学与南通大学 GPLT 联谊选拔赛题解">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">2024 扬州大学与南通大学 GPLT 联谊选拔赛题解</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2024/12/14/YAC_Round_13/" title="2024 YAC Round 13 题解">
-                        <span class="hidden-mobile">2024 YAC Round 13 题解</span>
+                      <a href="/2025/09/07/20250907/" title="「Linux 系统编程」mmap 建立共享内存映射">
+                        <span class="hidden-mobile">「Linux 系统编程」mmap 建立共享内存映射</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
