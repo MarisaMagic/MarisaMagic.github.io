@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2025/09/09/15mxt.jpg">
 <meta property="article:published_time" content="2025-09-09T13:49:56.153Z">
-<meta property="article:modified_time" content="2025-09-09T14:38:46.625Z">
+<meta property="article:modified_time" content="2025-09-10T03:13:09.309Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="Linux">
 <meta name="twitter:card" content="summary_large_image">
@@ -253,7 +253,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.7k 字
+          2k 字
         
       </span>
     
@@ -264,7 +264,7 @@
         
         
         
-          15 分钟
+          18 分钟
         
       </span>
     
@@ -350,21 +350,43 @@
 <p>一个信号从产生到被处理，经历了以下几个步骤：</p>
 <ul>
 <li>
-<p><strong>产生（Generation）</strong>：某个事件发生，导致一个信号被创建出来。</p>
+<p>第 1 步：产生 (Generation)<br>
+信号旅程的起点。内核、其他进程或自身创建了一个信号事件。此时，信号只是一个“想法”，还没有真正送达目标进程。</p>
+<blockquote>
+<p>类比：手机收到新邮件的服务器推送通知（通知已生成，但还没到你手机上）。</p>
+</blockquote>
 </li>
 <li>
-<p><strong>递送（Delivery）</strong>：将信号发送到目标进程，并使其被处理。</p>
+<p>第 2 步：判断阻塞状态 (Blocking?)<br>
+信号产生后，系统会检查目标进程是否 <strong>阻塞（屏蔽）</strong> 了该信号。</p>
+<blockquote>
+<p>是进程主动告诉内核：“我现在不想处理信号A，如果它来了，先帮我留着。”</p>
+</blockquote>
 </li>
 <li>
-<p><strong>未决（Pending）</strong>：信号已经产生，但尚未被进程处理（可能因为信号被阻塞了）。这个状态下的信号被称为 <strong>未决信号</strong>。</p>
+<p>第 3a 步：未被阻塞 -&gt; 递送 (Delivery)</p>
+<p>如果进程<strong>没有阻塞</strong>这个信号，内核会立即将信号<strong>递送</strong>给进程。这意味着内核会中断进程当前的正常执行流，强制它去处理这个信号。</p>
+<blockquote>
+<p>类比：你的手机铃声大作，通知你立即查看邮件（推送被立即送达并提醒）。</p>
+</blockquote>
 </li>
 <li>
-<p><strong>阻塞/屏蔽（Blocking/Masking）</strong>：进程可以选择阻塞（block） 某些信号。如果 <strong>一个被阻塞的信号产生</strong> 了，它会 <strong>保持在未决状态</strong>，直到进程解除对该信号的阻塞，它才会被递送和处理。</p>
+<p>第 3b 步：被阻塞 -&gt; 未决 (Pending)</p>
+<p>如果进程 <strong>阻塞</strong> 了这个信号，那么这个信号会保持在 <strong>“未决”（Pending）</strong> 状态。它被添加到进程的一个待处理信号列表中，但不会立即送达。</p>
+<blockquote>
+<p>类比：你开启了手机的“勿扰模式”。新邮件通知来了，但手机不会响也不会亮屏，只会默默地出现在通知中心里（通知被静默保存，处于未决状态）。</p>
+</blockquote>
+<p><strong>重要特性</strong>：在阻塞期间，<strong>同种类型的未决信号通常只会被记录一次</strong>（除非使用实时信号）。即使用户按了十次 <code>Ctrl+C</code>，进程解除阻塞后也只会收到一个 <code>SIGINT</code>。</p>
 </li>
 <li>
-<p><strong>处理（Handling）</strong>：当信号被递送给进程时，进程会采取相应的行动。处理方式主要有三种。</p>
+<p>第 4 步：解除阻塞 -&gt; 递送</p>
+<p>当进程后来通过系统调用解除了对该信号的阻塞时，内核会检查未决信号列表。如果发现该信号在列表中处于未决状态，就会立即将它<strong>递送</strong>给进程。</p>
+<blockquote>
+<p>类比：你关闭了“勿扰模式”，手机立刻检查通知中心，并提醒你有未读邮件（递送之前未决的通知）。</p>
+</blockquote>
 </li>
 </ul>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/10/keu6.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Linux 信号生命周期示意图"></p>
 <hr>
 <h3 id="2-2-信号的处理方式">2.2 信号的处理方式</h3>
 <p>当一个进程收到信号时，它可以选择以下 <strong>三种方式之一</strong> 来处理：</p>
@@ -423,6 +445,8 @@
 <h2 id="3-信号四要素与常规信号">3 信号四要素与常规信号</h2>
 <h3 id="3-1-信号四要素">3.1 信号四要素</h3>
 <p>使用命令 <code>kill -l</code> 可以查看系统中所有可用的信号（包括常规信号和实时信号）。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/10/kp0d.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
 <p>每个信号都有以下四个要素：</p>
 <ul>
 <li>
