@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2025/09/09/15mxt.jpg">
 <meta property="article:published_time" content="2025-09-09T13:49:56.153Z">
-<meta property="article:modified_time" content="2025-09-10T03:13:09.309Z">
+<meta property="article:modified_time" content="2025-09-10T08:45:21.241Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="Linux">
 <meta name="twitter:card" content="summary_large_image">
@@ -253,7 +253,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          2k 字
+          3.7k 字
         
       </span>
     
@@ -264,7 +264,7 @@
         
         
         
-          18 分钟
+          32 分钟
         
       </span>
     
@@ -551,6 +551,129 @@
 </tr>
 </tbody>
 </table>
+<hr>
+<br/>
+<h2 id="4-信号产生示例">4 信号产生示例</h2>
+<h3 id="4-1-kill-命令和系统调用">4.1 kill 命令和系统调用</h3>
+<h4 id="4-1-1-kill-系统调用函数">4.1.1 kill 系统调用函数</h4>
+<p><code>kill</code> 函数 用于 <strong>发送信号给指定的进程</strong>。</p>
+<p><code>kill</code> <strong>函数原型</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;signal.h&gt;</span></span><br><span class="hljs-type">int</span> <span class="hljs-title function_">kill</span><span class="hljs-params">(<span class="hljs-type">pid_t</span> pid, <span class="hljs-type">int</span> signum)</span>;<br></code></pre></td></tr></table></figure>
+<p><strong>参数说明</strong>：</p>
+<ul>
+<li><code>pid</code>：
+<ul>
+<li><code>&gt; 0</code>：发送信号给 <strong>指定进程</strong>（进程ID为 pid）</li>
+<li><code>= 0</code>：发送给 <strong>当前进程组</strong> 的所有进程</li>
+<li><code>&lt; -1</code>：取绝对值 |pid|，发送给 <strong>指定进程组</strong> 的所有成员</li>
+<li><code>= -1</code>：发送给有权限的所有进程</li>
+</ul>
+</li>
+<li><code>signum</code>：要发送的信号（如 <code>SIGKILL</code>、<code>SIGTERM</code>）</li>
+</ul>
+<p><strong>返回值</strong>：</p>
+<ul>
+<li><strong>成功</strong>：返回 <code>0</code></li>
+<li><strong>失败</strong>：返回 <code>-1</code>，并设置 <code>errno</code></li>
+</ul>
+<hr>
+<h4 id="4-1-2-kill-命令用法">4.1.2 kill 命令用法</h4>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-built_in">kill</span> [选项] &lt;PID&gt;<br></code></pre></td></tr></table></figure>
+<p><strong>常用选项</strong>：</p>
+<ul>
+<li><code>-9</code> 或 <code>-SIGKILL</code>：强制杀死进程（立即无条件终止，此信号不能被捕获、阻塞或忽略。）</li>
+<li><code>-15</code> 或 <code>-SIGTERM</code>：优雅终止进程（默认，可以捕获）</li>
+</ul>
+<p><strong>示例</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash"><span class="hljs-comment"># 杀死进程ID为 1234 的进程</span><br><span class="hljs-built_in">kill</span> 1234<br><br><span class="hljs-comment"># 强制杀死进程</span><br><span class="hljs-built_in">kill</span> -9 1234<br><br><span class="hljs-comment"># 杀死进程组（如组ID为 5678）</span><br><span class="hljs-built_in">kill</span> -9 -5678<br></code></pre></td></tr></table></figure>
+<hr>
+<h4 id="4-1-3-kill-系统调用代码示例">4.1.3 kill 系统调用代码示例</h4>
+<ul>
+<li>子进程通过系统调用 <code>kill</code> 杀死父进程</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;signal.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/wait.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">pid_t</span> pid = fork();<br><br>    <span class="hljs-keyword">if</span> (pid == <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-comment">// 子进程</span><br>        sleep(<span class="hljs-number">3</span>);<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Child is killing parent...\n&quot;</span>);<br>        kill(getppid(), SIGKILL); <span class="hljs-comment">// 子进程杀死父进程</span><br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-comment">// 父进程</span><br>        <span class="hljs-keyword">while</span> (<span class="hljs-number">1</span>) &#123;<br>            <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Parent is running...\n&quot;</span>);<br>            sleep(<span class="hljs-number">1</span>);<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/10/6a695.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<ul>
+<li>父进程创建多个子进程，其中一个子进程杀死当前进程组的所有进程</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;signal.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/types.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/wait.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">pid_t</span> pid;<br>    <span class="hljs-type">int</span> i;<br>    <br>    <span class="hljs-comment">// 父进程循环创建多个子进程</span><br>    <span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">3</span>; i++) &#123;<br>        pid = fork();<br>        <span class="hljs-keyword">if</span> (pid == <span class="hljs-number">0</span>) &#123;<br>            <span class="hljs-comment">// 子进程</span><br>            <span class="hljs-keyword">break</span>;<br>        &#125;<br>    &#125;<br>    <br>    <span class="hljs-keyword">if</span> (pid == <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-comment">// 子进程</span><br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Child process %d (PID: %d, PGID: %d) is running\n&quot;</span>, <br>               i, getpid(), getpgid(<span class="hljs-number">0</span>));<br>        <br>        <span class="hljs-keyword">if</span> (i == <span class="hljs-number">1</span>) &#123;<br>            <span class="hljs-comment">// 第二个子进程负责杀死整个进程组</span><br>            sleep(<span class="hljs-number">3</span>); <span class="hljs-comment">// 等待其他进程启动</span><br>            <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Child %d is killing the whole process group (PGID: %d)\n&quot;</span>, <br>                   i, getpgid(<span class="hljs-number">0</span>));<br>            <br>            <span class="hljs-comment">// 发送SIGTERM信号给整个进程组</span><br>            <span class="hljs-comment">// 注意：负的PID表示进程组ID</span><br>            <span class="hljs-keyword">if</span> (kill(-getpgid(<span class="hljs-number">0</span>), SIGTERM) == <span class="hljs-number">-1</span>) &#123;<br>                perror(<span class="hljs-string">&quot;kill error&quot;</span>);<br>            &#125;<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            <span class="hljs-comment">// 其他子进程正常执行</span><br>            <span class="hljs-keyword">while</span> (<span class="hljs-number">1</span>) &#123;<br>                <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Child %d (PID: %d) is still running\n&quot;</span>, i, getpid());<br>                sleep(<span class="hljs-number">1</span>);<br>            &#125;<br>        &#125;<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-comment">// 父进程代码</span><br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Parent process (PID: %d, PGID: %d) is running\n&quot;</span>, <br>               getpid(), getpgid(<span class="hljs-number">0</span>));<br>        <br>        <span class="hljs-comment">// 等待所有子进程结束</span><br>        <span class="hljs-keyword">while</span> (wait(<span class="hljs-literal">NULL</span>) &gt; <span class="hljs-number">0</span>);<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;All child processes have been terminated\n&quot;</span>);<br>    &#125;<br>    <br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/10/6eo1z.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<ul>
+<li>父进程创建多个子进程，并杀死一个指定的子进程。</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/types.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/wait.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;signal.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">pid_t</span> pid, wpid, tmppid;<br>    <span class="hljs-type">int</span> i;<br><br>    <span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">5</span>; i ++ ) &#123;<br>        pid = fork();<br>        <span class="hljs-keyword">if</span> (pid == <span class="hljs-number">0</span>) &#123;<br>            <span class="hljs-comment">// 子进程</span><br>            <span class="hljs-keyword">break</span>;<br>        &#125;<br>        <span class="hljs-keyword">if</span> (i == <span class="hljs-number">2</span>) &#123;<br>            <span class="hljs-comment">// 保存第三个子进程的PID</span><br>            tmppid = pid;<br>            <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;------Target child process PID = %d------\n&quot;</span>, tmppid);<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-keyword">if</span> (pid == <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-comment">// 子进程执行一些工作</span><br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> j = <span class="hljs-number">0</span>; j &lt; <span class="hljs-number">5</span>; j ++ ) &#123;<br>            <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Child %d (PID: %d) working... %d/5\n&quot;</span>, i, getpid(), j+<span class="hljs-number">1</span>);<br>            sleep(<span class="hljs-number">1</span>);<br>        &#125;<br>    <br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Child %d (PID: %d) finished\n&quot;</span>, i, getpid());<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-comment">// 父进程</span><br>        sleep(<span class="hljs-number">3</span>); <span class="hljs-comment">// 等待子进程运行一会儿</span><br>        <br>        <span class="hljs-comment">// 使用kill系统调用杀死指定的子进程</span><br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Parent is killing child process %d\n&quot;</span>, tmppid);<br>        <span class="hljs-keyword">if</span> (kill(tmppid, SIGKILL) == <span class="hljs-number">-1</span>) &#123;<br>            perror(<span class="hljs-string">&quot;kill error&quot;</span>);<br>        &#125; <span class="hljs-keyword">else</span> &#123;<br>            <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Successfully killed process %d\n&quot;</span>, tmppid);<br>        &#125;<br>        <br>        <span class="hljs-comment">// 等待所有子进程结束</span><br>        <span class="hljs-keyword">while</span> ((wpid = waitpid(<span class="hljs-number">-1</span>, <span class="hljs-literal">NULL</span>, <span class="hljs-number">0</span>)) &gt; <span class="hljs-number">0</span>) &#123;<br>            <span class="hljs-keyword">if</span> (wpid == tmppid) &#123;<br>                <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Collected target child process %d (killed)\n&quot;</span>, wpid);<br>            &#125; <span class="hljs-keyword">else</span> &#123;<br>                <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Collected child process %d (exited)\n&quot;</span>, wpid);<br>            &#125;<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/10/6h9ct.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<br/>
+<h2 id="4-2-alarm-系统调用">4.2 alarm 系统调用</h2>
+<h3 id="4-2-1-alarm-函数介绍">4.2.1 alarm 函数介绍</h3>
+<p><code>alarm()</code> 是一个用于设置实时（或“闹钟”）信号的系统调用。功能：让内核在指定的 <strong>秒数</strong> 后<strong>向调用它的进程发送一个 <code>SIGALRM</code> 信号</strong>。</p>
+<p><strong>函数原型</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><span class="hljs-type">unsigned</span> <span class="hljs-type">int</span> <span class="hljs-title function_">alarm</span><span class="hljs-params">(<span class="hljs-type">unsigned</span> <span class="hljs-type">int</span> seconds)</span>;<br></code></pre></td></tr></table></figure>
+<p><strong>参数</strong>：</p>
+<ul>
+<li><code>seconds</code>：
+<ul>
+<li>指定一个时间间隔（以 <strong>秒</strong> 为单位）。</li>
+<li>经过 <code>seconds</code> 秒后，内核将向进程发送 <code>SIGALRM</code> 信号。</li>
+<li>如果 <code>seconds</code> 为 <code>0</code>，则 <strong>取消</strong> 之前设置的所有尚未触发的闹钟。</li>
+</ul>
+</li>
+</ul>
+<p><strong>返回值</strong>：</p>
+<ul>
+<li>返回 <strong>之前设置的闹钟剩余的秒数</strong>。</li>
+<li>如果之前没有设置闹钟，则返回 <code>0</code>。</li>
+</ul>
+<hr>
+<h3 id="4-2-2-工作机制和特点">4.2.2 工作机制和特点</h3>
+<ul>
+<li><strong>不可重入</strong>：一个进程在同一时间只能有一个活跃的 <code>alarm</code>。如果调用 <code>alarm()</code> 时，之前已经设置了一个尚未触发的闹钟，则 <strong>新的调用会覆盖旧的闹钟</strong>。</li>
+</ul>
+<blockquote>
+<p>示例：先设置 alarm(10)（10秒后响），3秒后又设置 alarm(5)。那么原来的10秒闹钟会被取消，新的闹钟将在5秒后触发。并且，第二次调用 alarm(5) 会返回 7（因为第一个闹钟还剩7秒）。</p>
+</blockquote>
+<ul>
+<li><strong>信号交付</strong>：<code>SIGALRM</code> 的默认动作是终止进程。这意味着如果你只设置了 <code>alarm</code> 而<strong>没有处理这个信号，程序到时会被杀死</strong>。</li>
+</ul>
+<p>因此，通常需要配合信号处理函数使用 <code>signal()</code> 来 <strong>捕获 <code>SIGALRM</code> 信号并执行自定义操作</strong>。</p>
+<ul>
+<li><strong>精度</strong>：<code>alarm()</code> 的精度是 <strong>秒级</strong>。对于需要更高精度（如微秒）的场景，可以使用 <code>setitimer()</code> 函数。</li>
+</ul>
+<hr>
+<h3 id="4-2-3-alarm-系统调用代码示例">4.2.3 alarm 系统调用代码示例</h3>
+<p>以下示例中，设置了 3 秒的闹钟，然后进入一个等待循环。当 3 秒后收到 <code>SIGALRM</code> 信号时，<strong>信号处理函数会被调用</strong>，修改全局变量 <code>alarm_fired</code> 的值，从而打破主循环。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;signal.h&gt;</span></span><br><br><br><span class="hljs-type">int</span> alarm_fired = <span class="hljs-number">0</span>;<br><br><span class="hljs-comment">// SIGALRM 信号处理函数</span><br><span class="hljs-type">void</span> <span class="hljs-title function_">alarm_handler</span><span class="hljs-params">(<span class="hljs-type">int</span> sig)</span> &#123;<br>    alarm_fired = <span class="hljs-number">1</span>;<br>&#125;<br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-comment">// 注册信号处理函数</span><br>    signal(SIGALRM, alarm_handler);<br><br>    <span class="hljs-comment">// 设置 2 秒后触发 alarm</span><br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Setting alarm for 2 seconds...\n&quot;</span>);<br>    alarm(<span class="hljs-number">2</span>);<br><br>    <span class="hljs-comment">// 进入一个等待循环，直到 alarm_fired 被信号处理函数修改</span><br>    <span class="hljs-keyword">while</span> (!alarm_fired) &#123;<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Waiting for alarm...\n&quot;</span>);<br>        sleep(<span class="hljs-number">1</span>); <span class="hljs-comment">// 每次等待1秒，避免忙等待</span><br>    &#125;<br><br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Alarm received! Program continuing.\n&quot;</span>);<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/10/1a4kdo.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<h2 id="4-3-setitimer-系统调用">4.3 setitimer() 系统调用</h2>
+<h3 id="4-3-1-setitimer-函数介绍">4.3.1 setitimer 函数介绍</h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/time.h&gt;</span></span><br><span class="hljs-type">int</span> <span class="hljs-title function_">setitimer</span><span class="hljs-params">(<span class="hljs-type">int</span> which, <span class="hljs-type">const</span> <span class="hljs-keyword">struct</span> itimerval *new_value, <span class="hljs-keyword">struct</span> itimerval *old_value)</span>;<br></code></pre></td></tr></table></figure>
+<p><strong>参数</strong>：</p>
+<ul>
+<li><code>which</code>：
+<ul>
+<li><code>ITIMER_REAL</code>：真实时间，到期发送 <code>SIGALRM</code></li>
+<li><code>ITIMER_VIRTUAL</code>：进程在用户态消耗的时间，到期发送 <code>SIGVTALRM</code></li>
+<li><code>ITIMER_PROF</code>：进程在内核态和用户态消耗的总时间，到期发送 <code>SIGPROF</code></li>
+</ul>
+</li>
+<li><code>new_value</code>：设置的新定时器值</li>
+<li><code>old_value</code>：返回之前的定时器设置（可为 <code>NULL</code>）</li>
+</ul>
+<p><strong>结构体定义</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">itimerval</span> &#123;</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">timeval</span> <span class="hljs-title">it_interval</span>;</span> <span class="hljs-comment">// 间隔时间</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">timeval</span> <span class="hljs-title">it_value</span>;</span>    <span class="hljs-comment">// 第一次触发时间</span><br>&#125;;<br><br><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">timeval</span> &#123;</span><br>    <span class="hljs-type">time_t</span>      tv_sec;         <span class="hljs-comment">// 秒</span><br>    <span class="hljs-type">suseconds_t</span> tv_usec;        <span class="hljs-comment">// 微秒</span><br>&#125;;<br></code></pre></td></tr></table></figure>
+<p>可以理解为有2个定时器：</p>
+<ul>
+<li>一个用于 <strong>第一个闹钟</strong> 什么时候触发打印</li>
+<li>一个用于之后 <strong>间隔多少时间再次触发</strong> 闹钟（周期性触发）。</li>
+</ul>
+<hr>
+<h3 id="4-3-2-setitimer-系统调用代码示例">4.3.2 setitimer 系统调用代码示例</h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/time.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;signal.h&gt;</span></span><br><br><span class="hljs-type">void</span> <span class="hljs-title function_">timer_handler</span><span class="hljs-params">(<span class="hljs-type">int</span> sig)</span> &#123;<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Hello! Signal: %d\n&quot;</span>, sig);<br>&#125;<br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">itimerval</span> <span class="hljs-title">timer</span>;</span><br>    <br>    <span class="hljs-comment">// 第一次触发时间：2秒</span><br>    timer.it_value.tv_sec = <span class="hljs-number">2</span>;<br>    timer.it_value.tv_usec = <span class="hljs-number">0</span>;<br>    <br>    <span class="hljs-comment">// 之后每隔5秒触发一次</span><br>    timer.it_interval.tv_sec = <span class="hljs-number">5</span>;<br>    timer.it_interval.tv_usec = <span class="hljs-number">0</span>;<br>    <br>    signal(SIGALRM, timer_handler);<br>    setitimer(ITIMER_REAL, &amp;timer, <span class="hljs-literal">NULL</span>);<br>    <br>    <span class="hljs-keyword">while</span> (<span class="hljs-number">1</span>); <br>    <br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/10/4xek.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
 
                 
               </div>
