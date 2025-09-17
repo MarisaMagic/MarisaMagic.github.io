@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2025/08/30/7gsr3.png">
 <meta property="article:published_time" content="2025-08-30T09:58:52.190Z">
-<meta property="article:modified_time" content="2025-08-30T13:44:20.908Z">
+<meta property="article:modified_time" content="2025-09-17T08:55:45.587Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="Linux">
 <meta name="twitter:card" content="summary_large_image">
@@ -253,7 +253,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          4.2k 字
+          4.5k 字
         
       </span>
     
@@ -264,7 +264,7 @@
         
         
         
-          35 分钟
+          38 分钟
         
       </span>
     
@@ -470,6 +470,56 @@
 <li><strong>速度</strong>：SRAM 的读写速度最快，适合用作 CPU 缓存；DRAM 速度较快（慢于 SRAM），但适合较大容量内存。</li>
 </ul>
 <p>当 CPU 请求数据时，<strong>首先查询 L1 Cache，若未命中则依次查询 L2 和 L3 Cache，最终访问主存（DRAM）</strong>。</p>
+<hr>
+<h3 id="4-1-4-栈空间和堆空间">4.1.4 栈空间和堆空间</h3>
+<p><strong>栈空间</strong> 是操作系统为每个线程分配的一块<strong>连续</strong>的内存区域，用于管理函数调用和局部变量。它的管理方式非常高效，遵循后进先出的原则。</p>
+<p><strong>堆空间</strong> 是操作系统提供给应用程序的一块<strong>不连续的</strong>、全局的、巨大的内存池。它的大小通常只受限于机器的物理内存和虚拟内存大小。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">特性</th>
+<th style="text-align:left">栈空间</th>
+<th style="text-align:left">堆空间</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>管理方式</strong></td>
+<td style="text-align:left">由编译器/操作系统<strong>自动</strong>管理</td>
+<td style="text-align:left"><strong>手动</strong>申请释放（C/C++）或由<strong>GC</strong>管理（Java/C#等）</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>分配速度</strong></td>
+<td style="text-align:left"><strong>非常快</strong>（移动指针）</td>
+<td style="text-align:left"><strong>相对较慢</strong>（寻找空闲块）</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>生命周期</strong></td>
+<td style="text-align:left">函数调用期间，<strong>随函数返回自动释放</strong></td>
+<td style="text-align:left"><strong>动态的</strong>，从 <code>malloc/new</code> 开始，到 <code>free/delete</code> 或GC回收结束</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>大小限制</strong></td>
+<td style="text-align:left"><strong>较小</strong>（通常MB级别）</td>
+<td style="text-align:left"><strong>很大</strong>（仅受限于系统虚拟内存）</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>存储内容</strong></td>
+<td style="text-align:left">局部变量、函数参数、返回地址等</td>
+<td style="text-align:left"><strong>动态分配</strong>的对象和大数据结构</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>内存结构</strong></td>
+<td style="text-align:left"><strong>连续</strong>的内存块</td>
+<td style="text-align:left"><strong>不连续</strong>的链表式结构，可能产生<strong>碎片</strong></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>主要错误</strong></td>
+<td style="text-align:left"><strong>栈溢出</strong>（Stack Overflow）</td>
+<td style="text-align:left"><strong>内存泄漏</strong>（Memory Leak）、<strong>use-after-free</strong></td>
+</tr>
+</tbody>
+</table>
 <hr>
 <h3 id="4-2-低速持久存储介质（外存，断电数据保留）">4.2 低速持久存储介质（外存，断电数据保留）</h3>
 <p>这类介质的核心特点是 <strong>容量大、成本低</strong>，但 <strong>读写速度慢</strong>（毫秒级或秒级），主要用于 <strong>OS 持久化存储用户数据</strong>（如文件、照片）、<strong>系统文件</strong>（如 Windows 的C:\Windows、Linux 的/boot）和 <strong>应用程序安装包</strong>。</p>
