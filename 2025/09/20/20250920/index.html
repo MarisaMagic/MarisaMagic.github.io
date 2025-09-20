@@ -1,0 +1,894 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Linux C 多线程中 条件变量及其相关函数、条件变量的生产者消费者模型及代码实现、用条件变量实现多生产者多消费者。另外还包含本篇和 C++ 多线程的一些区别">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Linux 系统编程」">
+<meta property="og:url" content="https://marisamagic.github.io/2025/09/20/20250920/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="Linux C 多线程中 条件变量及其相关函数、条件变量的生产者消费者模型及代码实现、用条件变量实现多生产者多消费者。另外还包含本篇和 C++ 多线程的一些区别">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/09/20/up6e.jpg">
+<meta property="article:published_time" content="2025-09-20T10:28:10.271Z">
+<meta property="article:modified_time" content="2025-09-20T11:51:19.048Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="多线程">
+<meta property="article:tag" content="Linux">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2025/09/20/up6e.jpg">
+  
+  
+  
+  <title>「Linux 系统编程」 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2025/09/20/up6e.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Linux 系统编程」"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-09-20 18:28" pubdate>
+          2025年9月20日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          28 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Linux 系统编程」</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="1-条件变量">1 条件变量</h2>
+<h3 id="1-1-条件变量概述">1.1 条件变量概述</h3>
+<p>在多线程编程中，<strong>条件变量</strong>（Condition Variable）是一种重要的同步机制，它允许<strong>线程在某个条件不满足时进入等待状态</strong>，<strong>当条件满足时再由其他线程唤醒</strong>。<strong>结合互斥量（Mutex）使用</strong>，条件变量能够高效地解决复杂的线程同步问题，特别是在生产者-消费者模型中。</p>
+<hr>
+<h3 id="1-2-Linux-C-条件变量相关函数">1.2 Linux C 条件变量相关函数</h3>
+<ul>
+<li>
+<p><strong>条件变量初始化与销毁</strong></p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;pthread.h&gt;</span></span><br><br><span class="hljs-comment">// 静态初始化条件变量</span><br><span class="hljs-type">pthread_cond_t</span> cond = PTHREAD_COND_INITIALIZER;<br><br><span class="hljs-comment">// 动态初始化条件变量</span><br>pthread_cond_init(&amp;cond, <span class="hljs-literal">NULL</span>);<br><br><span class="hljs-comment">// 条件变量销毁（静态初始化通常不用显式销毁）</span><br>pthread_cond_destroy(&amp;cond);<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong>等待条件满足</strong></p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 等待条件变量，同时释放互斥锁</span><br><span class="hljs-type">int</span> <span class="hljs-title function_">pthread_cond_wait</span><span class="hljs-params">(<span class="hljs-type">pthread_cond_t</span> *cond, <span class="hljs-type">pthread_mutex_t</span> *mutex)</span>;<br><br><span class="hljs-comment">// 带超时的等待</span><br><span class="hljs-type">int</span> <span class="hljs-title function_">pthread_cond_timedwait</span><span class="hljs-params">(<span class="hljs-type">pthread_cond_t</span> *cond, <span class="hljs-type">pthread_mutex_t</span> *mutex, </span><br><span class="hljs-params">                        <span class="hljs-type">const</span> <span class="hljs-keyword">struct</span> timespec *abstime)</span>;<br></code></pre></td></tr></table></figure>
+<ol>
+<li>阻塞等待条件变量满足</li>
+<li>解锁已经加锁成功的信号量 （相当于 pthread_mutex_unlock(&amp;mutex)）。12两步为一个原子操作</li>
+<li>当条件满足，函数返回时，解除阻塞并重新申请获取互斥锁。重新加锁信号量（相当于 pthread_mutex_lock(&amp;mutex)）</li>
+</ol>
+</li>
+<li>
+<p><strong>唤醒等待的线程</strong></p>
+  <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 唤醒至少一个等待该条件变量的线程</span><br><span class="hljs-type">int</span> <span class="hljs-title function_">pthread_cond_signal</span><span class="hljs-params">(<span class="hljs-type">pthread_cond_t</span> *cond)</span>;<br><br><span class="hljs-comment">// 唤醒所有等待该条件变量的线程</span><br><span class="hljs-type">int</span> <span class="hljs-title function_">pthread_cond_broadcast</span><span class="hljs-params">(<span class="hljs-type">pthread_cond_t</span> *cond)</span>;<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<hr>
+<br/>
+<h2 id="2-条件变量的生产者-消费者模型">2 条件变量的生产者-消费者模型</h2>
+<h3 id="2-1-实现代码">2.1 实现代码</h3>
+<p>生产者-消费者模型是一个经典的多线程同步问题，其中生产者生成数据，消费者处理数据，两者通过共享缓冲区进行通信。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;pthread.h&gt;</span></span><br><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> BUFFER_SIZE 10</span><br><br><span class="hljs-type">int</span> buffer[BUFFER_SIZE];<br><span class="hljs-type">int</span> count = <span class="hljs-number">0</span>; <span class="hljs-comment">// 统计缓冲区内数量</span><br><span class="hljs-type">int</span> in = <span class="hljs-number">0</span>, out = <span class="hljs-number">0</span>; <span class="hljs-comment">// 记录缓冲区取数据和放数据位置</span><br><br><span class="hljs-type">pthread_mutex_t</span> mtx = PTHREAD_MUTEX_INITIALIZER;<br><span class="hljs-type">pthread_cond_t</span> not_full = PTHREAD_COND_INITIALIZER;<br><span class="hljs-type">pthread_cond_t</span> not_empty = PTHREAD_COND_INITIALIZER;<br><br><br><span class="hljs-type">void</span>* <span class="hljs-title function_">producer</span><span class="hljs-params">(<span class="hljs-type">void</span>* arg)</span> &#123;<br>    <span class="hljs-type">int</span> i, item;<br>    <span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">30</span>; i ++ ) &#123;<br>        item = i;<br><br>        <span class="hljs-comment">// 生产者加锁</span><br>        pthread_mutex_lock(&amp;mtx);<br><br>        <span class="hljs-comment">// 缓冲区已满，生产者阻塞等待，并暂时释放锁</span><br>        <span class="hljs-keyword">if</span> (count == BUFFER_SIZE) &#123;<br>            pthread_cond_wait(&amp;not_full, &amp;mtx);<br>        &#125;<br><br>        <span class="hljs-comment">// 条件满足，生产者重新获得锁，并执行后续放入缓冲区操作</span><br>        buffer[in] = item;<br>        in = (in + <span class="hljs-number">1</span>) % BUFFER_SIZE;<br>        count ++ ;<br><br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;生产者生产: %d, 缓冲区数量: %d\n&quot;</span>, item, count);<br><br>        <span class="hljs-comment">// 生产者释放锁</span><br>        pthread_mutex_unlock(&amp;mtx); <br><br>        <span class="hljs-comment">// 通知缓冲区已经有数据，唤醒阻塞等待的消费者</span><br>        pthread_cond_signal(&amp;not_empty); <br><br>        <span class="hljs-comment">// 模拟生产过程</span><br>        usleep(<span class="hljs-number">10000</span>);<br>    &#125;<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>&#125;<br><br><span class="hljs-type">void</span>* <span class="hljs-title function_">consumer</span><span class="hljs-params">(<span class="hljs-type">void</span>* arg)</span> &#123;<br>    <span class="hljs-type">int</span> i, item;<br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">30</span>; i ++ ) &#123;<br>        item = i;<br><br>        <span class="hljs-comment">// 消费者加锁</span><br>        pthread_mutex_lock(&amp;mtx);<br><br>        <span class="hljs-comment">// 缓冲区无数据，消费者阻塞等待，并暂时释放锁</span><br>        <span class="hljs-keyword">if</span> (count == <span class="hljs-number">0</span>) &#123;<br>            pthread_cond_wait(&amp;not_empty, &amp;mtx);<br>        &#125;<br><br>        <span class="hljs-comment">// 条件满足，消费者重新获得锁，并执行后续缓冲区取数据操作</span><br>        item = buffer[out];<br>        out = (out + <span class="hljs-number">1</span>) % BUFFER_SIZE;<br>        count -- ;<br><br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;消费者消费: %d, 缓冲区数量: %d\n&quot;</span>, item, count);<br><br>        <span class="hljs-comment">// 消费者释放锁</span><br>        pthread_mutex_unlock(&amp;mtx); <br><br>        <span class="hljs-comment">// 通知缓冲区未满，唤醒阻塞等待的生产者</span><br>        pthread_cond_signal(&amp;not_full); <br><br>        <span class="hljs-comment">// 模拟消费过程</span><br>        usleep(<span class="hljs-number">15000</span>);<br>    &#125;<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>&#125;<br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">pthread_t</span> <span class="hljs-type">pro_t</span>, <span class="hljs-type">con_t</span>;<br>    pthread_create(&amp;<span class="hljs-type">pro_t</span>, <span class="hljs-literal">NULL</span>, producer, <span class="hljs-literal">NULL</span>);<br>    pthread_create(&amp;<span class="hljs-type">con_t</span>, <span class="hljs-literal">NULL</span>, consumer, <span class="hljs-literal">NULL</span>);<br><br>    pthread_join(<span class="hljs-type">pro_t</span>, <span class="hljs-literal">NULL</span>);<br>    pthread_join(<span class="hljs-type">con_t</span>, <span class="hljs-literal">NULL</span>);<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/20/icw.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<h3 id="2-2-条件变量状态变化分析">2.2 条件变量状态变化分析</h3>
+<p>在单生产者-单消费者模型中，两个条件变量 <code>not_full</code> 和 <code>not_empty</code> 的状态变化可以用二进制状态（0和1）来简化理解。</p>
+<p><strong>需要明确的是</strong>，条件变量本身并不存储状态信息。它们只是线程同步的机制，用于：</p>
+<ol>
+<li>让线程在某个条件不满足时进入等待状态</li>
+<li>当条件可能满足时唤醒等待的线程</li>
+</ol>
+<p><strong>真正的状态信息存储在共享变量（如 count）中</strong>，条件变量只是基于这些共享变量来控制线程的等待和唤醒。</p>
+<hr>
+<p>可以将条件变量关联的条件抽象为二进制状态：</p>
+<ul>
+<li><code>not_full</code> 关联的条件：<code>count &lt; BUFFER_SIZE</code> (缓冲区未满)</li>
+<li><code>not_empty</code> 关联的条件：<code>count &gt; 0</code> (缓冲区非空)</li>
+</ul>
+<p><strong>状态变化过程分析</strong>：</p>
+<ul>
+<li>
+<p><strong>初始状态</strong></p>
+<ul>
+<li><code>count = 0</code> (缓冲区为空)</li>
+<li><code>not_full</code> 状态: 1 (真，因为 0 &lt; BUFFER_SIZE)</li>
+<li><code>not_empty</code> 状态: 0 (假，因为 0 == 0)</li>
+</ul>
+</li>
+<li>
+<p><strong>生产者生产一个项目</strong></p>
+<ol>
+<li>生产者获取互斥锁</li>
+<li>检查 <code>count == BUFFER_SIZE</code>? 否，所以不等待</li>
+<li>将项目放入缓冲区，<code>count++</code></li>
+<li>现在 <code>count = 1</code></li>
+<li>发送 <code>not_empty</code> 信号</li>
+<li>释放互斥锁</li>
+</ol>
+<p>状态变化:</p>
+<ul>
+<li><code>not_full</code> 状态: 1 (真，因为 1 &lt; BUFFER_SIZE)</li>
+<li><code>not_empty</code> 状态: 1 (真，因为 1 &gt; 0)</li>
+</ul>
+</li>
+<li>
+<p><strong>消费者消费一个项目</strong></p>
+<ol>
+<li>消费者获取互斥锁</li>
+<li>检查 <code>count == 0</code>? 否，所以不等待</li>
+<li>从缓冲区取出项目，<code>count--</code></li>
+<li>现在 <code>count = 0</code></li>
+<li>发送 <code>not_full</code> 信号</li>
+<li>释放互斥锁</li>
+</ol>
+<p>状态变化:</p>
+<ul>
+<li><code>not_full</code> 状态: 1 (真，因为 0 &lt; BUFFER_SIZE)</li>
+<li><code>not_empty</code> 状态: 0 (假，因为 0 == 0)</li>
+</ul>
+</li>
+<li>
+<p><strong>缓冲区满时生产者尝试生产</strong></p>
+<ol>
+<li>假设缓冲区已满 (<code>count == BUFFER_SIZE</code>)</li>
+<li>生产者获取互斥锁</li>
+<li>检查 <code>count == BUFFER_SIZE</code>? 是，所以等待 <code>not_full</code></li>
+<li>生产者线程阻塞，释放互斥锁</li>
+</ol>
+<p>状态变化:</p>
+<ul>
+<li><code>not_full</code> 状态: 0 (假，因为 count == BUFFER_SIZE)</li>
+<li><code>not_empty</code> 状态: 1 (真，因为 count &gt; 0)</li>
+</ul>
+</li>
+<li>
+<p><strong>消费者消费后唤醒生产者</strong></p>
+<ol>
+<li>消费者获取互斥锁</li>
+<li>消费一个项目，<code>count--</code></li>
+<li>现在 <code>count = BUFFER_SIZE - 1</code></li>
+<li>发送 <code>not_full</code> 信号，唤醒等待的生产者</li>
+<li>释放互斥锁</li>
+</ol>
+<p>状态变化:</p>
+<ul>
+<li><code>not_full</code> 状态: 1 (真，因为 count &lt; BUFFER_SIZE)</li>
+<li><code>not_empty</code> 状态: 1 (真，因为 count &gt; 0)</li>
+</ul>
+</li>
+<li>
+<p><strong>缓冲区空时消费者者尝试消费</strong></p>
+<ol>
+<li>假设缓冲区为空 (<code>count == 0</code>)</li>
+<li>消费者获取互斥锁</li>
+<li>检查 <code>count == 0</code>? 是，所以等待 <code>not_empty</code></li>
+<li>消费者线程阻塞，释放互斥锁</li>
+</ol>
+<p>状态变化:</p>
+<ul>
+<li><code>not_full</code> 状态: 1 (真，因为 count &lt; BUFFER_SIZE)</li>
+<li><code>not_empty</code> 状态: 0 (假，因为 count == 0)</li>
+</ul>
+</li>
+</ul>
+<hr>
+<p><strong>条件变量特点</strong>：</p>
+<ol>
+<li>
+<p><strong>条件变量不是状态存储机制</strong>：条件变量本身不存储状态，它们只是基于共享变量（如 <code>count</code>）来控制线程的等待和唤醒。</p>
+</li>
+<li>
+<p><strong>二元状态是抽象的</strong>：将条件变量视为具有二元状态是一种简化理解的方式，实际上它们反映的是共享变量的状态。</p>
+</li>
+<li>
+<p><strong>条件变量总是成对出现</strong>：在生产者和消费者模型中，通常需要两个条件变量，一个用于生产者等待（缓冲区不满），一个用于消费者等待（缓冲区不空）。</p>
+</li>
+<li>
+<p><strong>状态转换是同步的</strong>：条件变量的状态变化总是与共享变量的修改同步发生，并通过互斥锁保护。</p>
+</li>
+<li>
+<p><strong>唤醒操作可能没有等待者</strong>：发送条件变量信号时，如果没有线程在等待该条件，信号会被忽略，不会产生任何效果。</p>
+</li>
+</ol>
+<hr>
+<br/>
+<h2 id="3-条件变量实现多生产者-多消费者">3 条件变量实现多生产者-多消费者</h2>
+<h3 id="3-1-实现代码">3.1 实现代码</h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;pthread.h&gt;</span></span><br><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> BUFFER_SIZE 10</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> PRODUCER_NUM 2</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> CONSUMER_NUM 4</span><br><br><span class="hljs-type">int</span> buffer[BUFFER_SIZE];<br><span class="hljs-type">int</span> count = <span class="hljs-number">0</span>; <span class="hljs-comment">// 统计缓冲区内数量</span><br><span class="hljs-type">int</span> in = <span class="hljs-number">0</span>, out = <span class="hljs-number">0</span>; <span class="hljs-comment">// 记录缓冲区取数据和放数据位置</span><br><br><span class="hljs-type">pthread_mutex_t</span> mtx = PTHREAD_MUTEX_INITIALIZER;<br><span class="hljs-type">pthread_cond_t</span> not_full = PTHREAD_COND_INITIALIZER;<br><span class="hljs-type">pthread_cond_t</span> not_empty = PTHREAD_COND_INITIALIZER;<br><br><br><span class="hljs-type">void</span>* <span class="hljs-title function_">producer</span><span class="hljs-params">(<span class="hljs-type">void</span>* arg)</span> &#123;<br>    <span class="hljs-type">int</span> producer_id = *(<span class="hljs-type">int</span>*)arg;<br>    <span class="hljs-type">int</span> i, item;<br>    <span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">20</span>; i ++ ) &#123;<br>        item = i;<br><br>        <span class="hljs-comment">// 生产者加锁</span><br>        pthread_mutex_lock(&amp;mtx);<br><br>        <span class="hljs-comment">// 缓冲区已满，生产者阻塞等待，并暂时释放锁</span><br>        <span class="hljs-keyword">while</span> (count == BUFFER_SIZE) &#123; <span class="hljs-comment">// 循环检查，防止虚假唤醒</span><br>            pthread_cond_wait(&amp;not_full, &amp;mtx);<br>        &#125;<br><br>        <span class="hljs-comment">// 条件满足，生产者重新获得锁，并执行后续放入缓冲区操作</span><br>        buffer[in] = item;<br>        in = (in + <span class="hljs-number">1</span>) % BUFFER_SIZE;<br>        count ++ ;<br><br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;生产者 %d 生产: %d, 缓冲区数量: %d\n&quot;</span>, producer_id, item, count);<br><br>        <span class="hljs-comment">// 生产者释放锁</span><br>        pthread_mutex_unlock(&amp;mtx); <br><br>        <span class="hljs-comment">// 通知缓冲区已经有数据，唤醒阻塞等待的消费者</span><br>        pthread_cond_broadcast(&amp;not_empty); <br><br>        <span class="hljs-comment">// 模拟生产过程</span><br>        usleep(<span class="hljs-number">10000</span>);<br>    &#125;<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>&#125;<br><br><span class="hljs-type">void</span>* <span class="hljs-title function_">consumer</span><span class="hljs-params">(<span class="hljs-type">void</span>* arg)</span> &#123;<br>    <span class="hljs-type">int</span> consumer_id = *(<span class="hljs-type">int</span>*)arg;<br>    <span class="hljs-type">int</span> i, item;<br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">10</span>; i ++ ) &#123;<br>        item = i;<br><br>        <span class="hljs-comment">// 消费者加锁</span><br>        pthread_mutex_lock(&amp;mtx);<br><br>        <span class="hljs-comment">// 缓冲区无数据，消费者阻塞等待，并暂时释放锁</span><br>        <span class="hljs-keyword">while</span> (count == <span class="hljs-number">0</span>) &#123; <span class="hljs-comment">// 循环检查，防止虚假唤醒</span><br>            pthread_cond_wait(&amp;not_empty, &amp;mtx);<br>        &#125;<br><br>        <span class="hljs-comment">// 条件满足，消费者重新获得锁，并执行后续缓冲区取数据操作</span><br>        item = buffer[out];<br>        out = (out + <span class="hljs-number">1</span>) % BUFFER_SIZE;<br>        count -- ;<br><br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;消费者 %d 消费: %d, 缓冲区数量: %d\n&quot;</span>, consumer_id, item, count);<br><br>        <span class="hljs-comment">// 消费者释放锁</span><br>        pthread_mutex_unlock(&amp;mtx); <br><br>        <span class="hljs-comment">// 通知缓冲区未满，唤醒阻塞等待的生产者</span><br>        pthread_cond_broadcast(&amp;not_full); <br><br>        <span class="hljs-comment">// 模拟消费过程</span><br>        usleep(<span class="hljs-number">15000</span>);<br>    &#125;<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>&#125;<br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">pthread_t</span> <span class="hljs-type">pro_t</span>[PRODUCER_NUM];<br>    <span class="hljs-type">pthread_t</span> <span class="hljs-type">con_t</span>[CONSUMER_NUM];<br>    <span class="hljs-type">int</span> pro_id[PRODUCER_NUM];<br>    <span class="hljs-type">int</span> con_id[CONSUMER_NUM];<br><br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; PRODUCER_NUM; i ++ ) &#123;<br>        pro_id[i] = i + <span class="hljs-number">1</span>;<br>        pthread_create(&amp;<span class="hljs-type">pro_t</span>[i], <span class="hljs-literal">NULL</span>, producer, &amp;pro_id[i]);<br>    &#125;<br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; CONSUMER_NUM; i ++ ) &#123;<br>        con_id[i] = i + <span class="hljs-number">1</span>;<br>        pthread_create(&amp;<span class="hljs-type">con_t</span>[i], <span class="hljs-literal">NULL</span>, consumer, &amp;con_id[i]);<br>    &#125;<br><br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; PRODUCER_NUM; i ++ ) &#123;<br>        pthread_join(<span class="hljs-type">pro_t</span>[i], <span class="hljs-literal">NULL</span>);<br>    &#125;<br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; CONSUMER_NUM; i ++ ) &#123;<br>        pthread_join(<span class="hljs-type">con_t</span>[i], <span class="hljs-literal">NULL</span>);<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/20/59kju.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<h3 id="3-2-虚假唤醒">3.2 虚假唤醒</h3>
+<p>虚假唤醒（Spurious Wakeup）是多线程编程中一个重要的概念，指的是等待在条件变量上的线程 <strong>在没有收到明确信号的情况下被意外唤醒</strong> 的现象。通常 <strong>虚假唤醒</strong> 的问题是由于多线程环境下 <strong>系统调度、信号传输</strong> 等原因导致的。</p>
+<p>虚假唤醒出现的情况：</p>
+<p>缓冲区为空，当一个生产者线程放入一个数据后（放入后缓冲区就这一个数据），通知唤醒了一个等待的消费者线程的时候，有另一个消费者线程消费了这个唯一的数据。这是 <strong>线程调度的不确定性</strong> 所导致的。</p>
+<p>此时，这个消费者线程收到被唤醒的通知，表面上条件成立了，但是实际上 缓冲区 还是为空。这就出现了 <strong>虚假唤醒</strong>。</p>
+<hr>
+<p>POSIX 标准明确允许虚假唤醒的发生，但需要避免虚假唤醒的发生。通常使用while循环而不是if语句来检查条件：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c">pthread_mutex_lock(&amp;mutex);<br><span class="hljs-keyword">while</span> (condition_is_false) &#123; <span class="hljs-comment">// 循环检查</span><br>    pthread_cond_wait(&amp;cond, &amp;mutex);<br>&#125;<br><span class="hljs-comment">// 处理条件满足的情况</span><br>pthread_mutex_unlock(&amp;mutex);<br></code></pre></td></tr></table></figure>
+<p>使用 while 循环 <strong>防止虚假唤醒</strong>（spurious wakeup），确保被 <strong>唤醒后再次检查条件是否满足</strong>。</p>
+<hr>
+<p><strong>为什么while循环能解决虚假唤醒问题</strong>：</p>
+<ul>
+<li>
+<p><strong>重新检查条件</strong>：当线程从 <code>pthread_cond_wait()</code> 返回时，它会重新获取互斥锁，然后 while 循环会再次检查条件。</p>
+</li>
+<li>
+<p><strong>确保条件真正满足</strong>：如果发生虚假唤醒，条件仍然不满足，<strong>线程会再次进入等待状态</strong>。</p>
+</li>
+</ul>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/20/kq5.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="虚假唤醒示意图"></p>
+<p>这种方法确保了线程只有在条件真正满足时才会继续执行。</p>
+<hr>
+<h3 id="3-3-消费者退出机制">3.3 消费者退出机制</h3>
+<p>如果生产者生产的数据数量达不到消费者的总取数据数量，那么在所有生产者执行完毕后，剩余的没有执行完的消费者线程会一直等待下去。</p>
+<p>因此，可以考虑添加一个消费者的退出机制：<strong>当没有生产者会再生产数据时，剩余的消费者直接退出</strong>。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;pthread.h&gt;</span></span><br><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> BUFFER_SIZE 10</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> PRODUCER_NUM 3</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> CONSUMER_NUM 5</span><br><br><span class="hljs-type">int</span> buffer[BUFFER_SIZE];<br><span class="hljs-type">int</span> count = <span class="hljs-number">0</span>; <span class="hljs-comment">// 统计缓冲区内数量</span><br><span class="hljs-type">int</span> in = <span class="hljs-number">0</span>, out = <span class="hljs-number">0</span>; <span class="hljs-comment">// 记录缓冲区取数据和放数据位置</span><br><span class="hljs-type">int</span> production_done = <span class="hljs-number">0</span>; <span class="hljs-comment">// 标志：生产者是否完成</span><br><br><span class="hljs-type">pthread_mutex_t</span> mtx = PTHREAD_MUTEX_INITIALIZER;<br><span class="hljs-type">pthread_cond_t</span> not_full = PTHREAD_COND_INITIALIZER;<br><span class="hljs-type">pthread_cond_t</span> not_empty = PTHREAD_COND_INITIALIZER;<br><br><span class="hljs-type">void</span>* <span class="hljs-title function_">producer</span><span class="hljs-params">(<span class="hljs-type">void</span>* arg)</span> &#123;<br>    <span class="hljs-type">int</span> producer_id = *(<span class="hljs-type">int</span>*)arg;<br>    <span class="hljs-type">int</span> i, item;<br>    <span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">10</span>; i ++ ) &#123;<br>        item = i;<br><br>        pthread_mutex_lock(&amp;mtx);<br><br>        <span class="hljs-keyword">while</span> (count == BUFFER_SIZE) &#123;<br>            pthread_cond_wait(&amp;not_full, &amp;mtx);<br>        &#125;<br><br>        buffer[in] = item;<br>        in = (in + <span class="hljs-number">1</span>) % BUFFER_SIZE;<br>        count ++ ;<br><br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;生产者 %d 生产: %d, 缓冲区数量: %d\n&quot;</span>, producer_id, item, count);<br><br>        pthread_mutex_unlock(&amp;mtx);<br>        pthread_cond_broadcast(&amp;not_empty);<br>        usleep(<span class="hljs-number">10000</span>);<br>    &#125;<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>&#125;<br><br><span class="hljs-type">void</span>* <span class="hljs-title function_">consumer</span><span class="hljs-params">(<span class="hljs-type">void</span>* arg)</span> &#123;<br>    <span class="hljs-type">int</span> consumer_id = *(<span class="hljs-type">int</span>*)arg;<br>    <span class="hljs-type">int</span> item;<br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">10</span>; i ++ ) &#123;<br>        pthread_mutex_lock(&amp;mtx);<br><br>        <span class="hljs-comment">// 等待条件：缓冲区不为空或生产者已完成且缓冲区为空（则退出）</span><br>        <span class="hljs-keyword">while</span> (count == <span class="hljs-number">0</span> &amp;&amp; !production_done) &#123;<br>            pthread_cond_wait(&amp;not_empty, &amp;mtx);<br>        &#125;<br><br>        <span class="hljs-comment">// 如果缓冲区为空且生产者已完成，则退出循环</span><br>        <span class="hljs-keyword">if</span> (count == <span class="hljs-number">0</span> &amp;&amp; production_done) &#123;<br>            pthread_mutex_unlock(&amp;mtx);<br>            <span class="hljs-keyword">break</span>;<br>        &#125;<br><br>        item = buffer[out];<br>        out = (out + <span class="hljs-number">1</span>) % BUFFER_SIZE;<br>        count -- ;<br><br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;消费者 %d 消费: %d, 缓冲区数量: %d\n&quot;</span>, consumer_id, item, count);<br><br>        pthread_mutex_unlock(&amp;mtx);<br>        pthread_cond_broadcast(&amp;not_full);<br>        usleep(<span class="hljs-number">15000</span>);<br>    &#125;<br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">NULL</span>;<br>&#125;<br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">pthread_t</span> <span class="hljs-type">pro_t</span>[PRODUCER_NUM];<br>    <span class="hljs-type">pthread_t</span> <span class="hljs-type">con_t</span>[CONSUMER_NUM];<br>    <span class="hljs-type">int</span> pro_id[PRODUCER_NUM];<br>    <span class="hljs-type">int</span> con_id[CONSUMER_NUM];<br><br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; PRODUCER_NUM; i ++ ) &#123;<br>        pro_id[i] = i + <span class="hljs-number">1</span>;<br>        pthread_create(&amp;<span class="hljs-type">pro_t</span>[i], <span class="hljs-literal">NULL</span>, producer, &amp;pro_id[i]);<br>    &#125;<br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; CONSUMER_NUM; i ++ ) &#123;<br>        con_id[i] = i + <span class="hljs-number">1</span>;<br>        pthread_create(&amp;<span class="hljs-type">con_t</span>[i], <span class="hljs-literal">NULL</span>, consumer, &amp;con_id[i]);<br>    &#125;<br><br>    <span class="hljs-comment">// 等待所有生产者完成</span><br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; PRODUCER_NUM; i ++ ) &#123;<br>        pthread_join(<span class="hljs-type">pro_t</span>[i], <span class="hljs-literal">NULL</span>);<br>    &#125;<br><br>    <span class="hljs-comment">// 设置生产者完成标志</span><br>    pthread_mutex_lock(&amp;mtx);<br>    production_done = <span class="hljs-number">1</span>;<br>    pthread_mutex_unlock(&amp;mtx);<br>    pthread_cond_broadcast(&amp;not_empty); <span class="hljs-comment">// 唤醒所有等待的消费者</span><br><br>    <span class="hljs-comment">// 等待所有消费者完成</span><br>    <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; CONSUMER_NUM; i ++ ) &#123;<br>        pthread_join(<span class="hljs-type">con_t</span>[i], <span class="hljs-literal">NULL</span>);<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<ol>
+<li>
+<p><strong>添加 <code>production_done</code> 标志</strong>：这是一个共享变量，用于指示所有生产者已经完成。</p>
+</li>
+<li>
+<p><strong>消费者检查终止条件</strong>：在消费者中，等待条件改为 <code>while (count == 0 &amp;&amp; !production_done)</code>。如果缓冲区为空且生产者已完成，消费者则退出循环。</p>
+</li>
+<li>
+<p><strong>主线程设置标志</strong>：在主线程中，等待所有生产者完成后，设置 <code>production_done</code> 为1，并广播 <code>not_empty</code> 条件以唤醒所有等待的消费者，让它们检查终止条件。</p>
+</li>
+</ol>
+<p>这样，即使消费者尝试消费的次数多于生产次数，它们也会在生产者结束后正常退出，避免程序卡住。</p>
+<hr>
+<br/>
+<h2 id="4-C-多线程-条件变量">4 C++ 多线程 条件变量</h2>
+<p>可见 <a href="https://marisamagic.github.io/2025/01/01/20250101/">「C++ 多线程」生产者-消费者问题及 std::condition_variable</a></p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Linux-%E7%B3%BB%E7%BB%9F%E7%BC%96%E7%A8%8B/" class="category-chain-item">Linux 系统编程</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" class="print-no-link">#多线程</a>
+      
+        <a href="/tags/Linux/" class="print-no-link">#Linux</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Linux 系统编程」</div>
+      <div>https://marisamagic.github.io/2025/09/20/20250920/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年9月20日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/09/19/20250919/" title="「Linux 系统编程」线程同步概念、互斥锁和读写锁、死锁的产生">
+                        <span class="hidden-mobile">「Linux 系统编程」线程同步概念、互斥锁和读写锁、死锁的产生</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
