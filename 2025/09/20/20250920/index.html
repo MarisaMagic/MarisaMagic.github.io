@@ -28,10 +28,10 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2025/09/20/up6e.jpg">
 <meta property="article:published_time" content="2025-09-20T10:28:10.271Z">
-<meta property="article:modified_time" content="2025-09-20T11:54:06.643Z">
+<meta property="article:modified_time" content="2025-09-21T09:09:47.619Z">
 <meta property="article:author" content="MarisaMagic">
-<meta property="article:tag" content="Linux">
 <meta property="article:tag" content="多线程">
+<meta property="article:tag" content="Linux">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://sukicdn.com/wyx/i/2025/09/20/up6e.jpg">
   
@@ -254,7 +254,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          3.3k 字
+          3.4k 字
         
       </span>
     
@@ -313,7 +313,8 @@
                 
                 <h2 id="1-条件变量">1 条件变量</h2>
 <h3 id="1-1-条件变量概述">1.1 条件变量概述</h3>
-<p>在多线程编程中，<strong>条件变量</strong>（Condition Variable）是一种重要的同步机制，它允许<strong>线程在某个条件不满足时进入等待状态</strong>，<strong>当条件满足时再由其他线程唤醒</strong>。<strong>结合互斥量（Mutex）使用</strong>，条件变量能够高效地解决复杂的线程同步问题，特别是在生产者-消费者模型中。</p>
+<p>在多线程编程中，<strong>条件变量</strong>（Condition Variable）是一种重要的同步机制，它允许<strong>线程在某个条件不满足时进入等待状态</strong>，<strong>当条件满足时再由其他线程唤醒</strong>。</p>
+<p>条件变量本质上就是 <strong>“条件等待 + 通知” 的一个机制</strong>，<strong>结合互斥量（Mutex）使用</strong>，条件变量能够高效地解决复杂的线程同步问题，特别是在生产者-消费者模型中。</p>
 <hr>
 <h3 id="1-2-Linux-C-条件变量相关函数">1.2 Linux C 条件变量相关函数</h3>
 <ul>
@@ -471,9 +472,21 @@
 <hr>
 <h3 id="3-2-虚假唤醒">3.2 虚假唤醒</h3>
 <p>虚假唤醒（Spurious Wakeup）是多线程编程中一个重要的概念，指的是等待在条件变量上的线程 <strong>在没有收到明确信号的情况下被意外唤醒</strong> 的现象。通常 <strong>虚假唤醒</strong> 的问题是由于多线程环境下 <strong>系统调度、信号传输</strong> 等原因导致的。</p>
-<p>虚假唤醒出现的情况：</p>
-<p>缓冲区为空，当一个生产者线程放入一个数据后（放入后缓冲区就这一个数据），通知唤醒了一个等待的消费者线程的时候，有另一个消费者线程消费了这个唯一的数据。这是 <strong>线程调度的不确定性</strong> 所导致的。</p>
-<p>此时，这个消费者线程收到被唤醒的通知，表面上条件成立了，但是实际上 缓冲区 还是为空。这就出现了 <strong>虚假唤醒</strong>。</p>
+<p>这是 POSIX 标准允许的行为，主要出于以下原因：</p>
+<ol>
+<li>
+<p><strong>系统调度/中断/信号干扰</strong>（历史原因）</p>
+<p>早期 Unix 系统中，当线程被信号（signal，如 SIGUSR1）中断时，可能从 wait 中提前返回。虽然现代系统大多已修复，但标准仍保留此行为以兼容。</p>
+</li>
+<li>
+<p><strong>多核 CPU 的内存一致性/缓存同步问题</strong></p>
+<p>在 SMP（对称多处理器）系统中，不同 CPU 核心的缓存状态可能暂时不一致，导致条件判断出现“幻读”，线程误以为条件满足而醒来。</p>
+</li>
+<li>
+<p><strong>操作系统实现的权衡</strong></p>
+<p>强制要求“绝对不虚假唤醒”会增加系统开销（如加更多锁、更多内存屏障）。POSIX 选择允许虚假唤醒，把正确性责任交给程序员 —— 你必须用 while 重检查条件。</p>
+</li>
+</ol>
 <hr>
 <p>POSIX 标准明确允许虚假唤醒的发生，但需要避免虚假唤醒的发生。通常使用while循环而不是if语句来检查条件：</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs c">pthread_mutex_lock(&amp;mutex);<br><span class="hljs-keyword">while</span> (condition_is_false) &#123; <span class="hljs-comment">// 循环检查</span><br>    pthread_cond_wait(&amp;cond, &amp;mutex);<br>&#125;<br><span class="hljs-comment">// 处理条件满足的情况</span><br>pthread_mutex_unlock(&amp;mutex);<br></code></pre></td></tr></table></figure>
@@ -551,9 +564,9 @@
     <div class="post-meta">
       <i class="iconfont icon-tags"></i>
       
-        <a href="/tags/Linux/" class="print-no-link">#Linux</a>
-      
         <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" class="print-no-link">#多线程</a>
+      
+        <a href="/tags/Linux/" class="print-no-link">#Linux</a>
       
     </div>
   
@@ -609,6 +622,12 @@
                 <div class="post-prevnext my-3">
                   <article class="post-prev col-6">
                     
+                    
+                      <a href="/2025/09/21/20250921/" title="「Linux 系统编程」信号量与生产者-消费者模型">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「Linux 系统编程」信号量与生产者-消费者模型</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
                     
                   </article>
                   <article class="post-next col-6">
