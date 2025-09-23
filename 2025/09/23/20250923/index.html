@@ -1,0 +1,1078 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="一篇文章了解计算机网络核心知识😉">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Linux 网络编程」计算机网络核心知识">
+<meta property="og:url" content="https://marisamagic.github.io/2025/09/23/20250923/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="一篇文章了解计算机网络核心知识😉">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/09/24/1qdau.jpg">
+<meta property="article:published_time" content="2025-09-23T14:13:11.241Z">
+<meta property="article:modified_time" content="2025-09-23T16:34:00.641Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="计算机网络、网络编程">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2025/09/24/1qdau.jpg">
+  
+  
+  
+  <title>「Linux 网络编程」计算机网络核心知识 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2025/09/24/1qdau.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Linux 网络编程」计算机网络核心知识"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-09-23 22:13" pubdate>
+          2025年9月23日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          40 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Linux 网络编程」计算机网络核心知识</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言：网络的起点——两台电脑的连接">0 前言：网络的起点——两台电脑的连接</h2>
+<p>我有一台电脑，我的老婆 <a target="_blank" rel="noopener" href="https://mzh.moegirl.org.cn/%E9%9B%BE%E9%9B%A8%E9%AD%94%E7%90%86%E6%B2%99">魔理沙</a> 也有一台电脑，现在我们想要互相发送消息进行聊天。</p>
+<p>最简单的方式就是用一根网线直接连接这两台电脑，这样我和可爱的魔理沙就可以尽情聊天啦😘！ 这就是网络中最基础的连接方式——<strong>点对点连接</strong>。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/23/1jzxc2.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="点对点连接"></p>
+<hr>
+<p>在上面的最简单的点对点连接方式中，没有任何路由器、没有任何交换机，仅通过物理介质（网线）实现两台设备的通信。</p>
+<p>然而，如果要实现 100 台、1000 台、10000 台甚至全世界的电脑都是先互通，怎么办呢？如果依旧采取点对点连接的方式，那么每两个设备之间都要连接一个网线，这在数量上完全不可取，况且还要造出可以跨越太平洋的网线… 🤔</p>
+<p>显然，我们需要一个完整的 “网络规则” 去实现这个看似不可能的事情。</p>
+<hr>
+<p>接下来，将从硬件设备到软件协议，从分层架构到数据传输流程，一步步拆解计算机网络的核心知识，理解“数据是如何通过网络跨越山海的”。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/23/15l23.jpeg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<hr>
+<br/>
+<h2 id="1-网络基本概念：什么是网络">1 网络基本概念：什么是网络</h2>
+<p>网络的基础定义、功能和分类——这些是理解后续计算机网络内容的根基。</p>
+<h3 id="1-1-网络的定义和组成">1.1 网络的定义和组成</h3>
+<p><strong>定义</strong>：将地理上分散的、具有独立功能的多台计算机，通过 <strong>传输介质</strong>（如网线、光纤）和 <strong>网络设备</strong>（如交换机、路由器）连接起来，再通过一套统一的 <strong>网络协议</strong>（如TCP/IP）实现数据通信和资源共享的系统。</p>
+<p>总的来说：设备+介质+协议 三者缺一不可。😌</p>
+<p><strong>组成</strong> 分为两部分：</p>
+<ul>
+<li>
+<p><em><strong>硬件部分</strong></em>：</p>
+<ul>
+<li><strong>终端设备</strong>：电脑、手机、服务器、打印机等；</li>
+<li><strong>传输介质</strong>：有线（网线、光纤）、无线（WiFi、5G）；</li>
+<li><strong>网络设备</strong>：中继器、集线器、交换机、路由器等。</li>
+</ul>
+</li>
+<li>
+<p><em><strong>软件部分</strong></em>：</p>
+<ul>
+<li><strong>网络协议</strong>：TCP、IP、HTTP 等（相当于“通信规则”）；</li>
+<li><strong>操作系统</strong>：Windows、Linux 等（提供网络接口）；</li>
+<li><strong>应用程序</strong>：浏览器、QQ、FTP 客户端等。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="1-2-网络的核心功能">1.2 网络的核心功能</h3>
+<p>网络存在的意义，本质是解决 <strong>信息传递</strong> 和 <strong>资源共享</strong> 的问题。</p>
+<p>主要核心功能如下：</p>
+<ol>
+<li><strong>数据通信</strong>：最基础的功能，比如微信发消息、视频通话、邮件传输；</li>
+<li><strong>资源共享</strong>：分为“硬件共享”（如共享公司打印机）和“软件/数据共享”（如共享服务器上的文件、访问百度的数据库）；</li>
+<li><strong>分布式处理</strong>：将复杂任务拆分给多台计算机协同完成，比如云计算（你用的在线文档，其实是多台服务器共同处理数据）；</li>
+<li><strong>提高可靠性</strong>：单台设备故障时，数据可通过其他路径传输，比如互联网中某条光缆断了，数据会自动走备用路线。</li>
+</ol>
+<hr>
+<h3 id="1-3-网络的分类">1.3 网络的分类</h3>
+<ul>
+<li>
+<p><em><strong>按覆盖范围划分</strong></em></p>
+<table>
+<thead>
+<tr>
+<th>分类</th>
+<th>覆盖范围</th>
+<th>典型场景</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>局域网</strong>（LAN）</td>
+<td>几百米到几公里</td>
+<td>家庭WiFi、公司内网</td>
+<td>速度快（100Mbps-10Gbps）、延迟低</td>
+</tr>
+<tr>
+<td><strong>城域网</strong>（MAN）</td>
+<td>一座城市</td>
+<td>城市政务网、运营商城域网</td>
+<td>连接多个LAN，速度中等</td>
+</tr>
+<tr>
+<td><strong>广域网</strong>（WAN）</td>
+<td>跨城市/国家</td>
+<td>互联网骨干网、企业分支互联</td>
+<td>覆盖广、速度较慢、延迟高</td>
+</tr>
+<tr>
+<td><strong>互联网</strong>（Internet）</td>
+<td>全球</td>
+<td>我们日常用的“上网”</td>
+<td>由无数LAN、MAN、WAN组成</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p><em><strong>按拓扑结构划分</strong></em></p>
+<p>“拓扑结构”指网络中设备的连接方式，决定了网络的稳定性和维护成本。</p>
+<ul>
+<li><strong>总线型</strong>：所有设备连在一条“总线”（如同轴电缆）上，成本低但故障难排查（某一点断了整个网络瘫痪），已淘汰😣；</li>
+</ul>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/23/v0k.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="总线型"></p>
+<ul>
+<li><strong>星型</strong>：所有设备连到一个中心设备（如交换机），故障只影响单台设备，维护方便，是现在最常用的结构；</li>
+</ul>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/23/168tc.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="星型"></p>
+<ul>
+<li><strong>环型</strong>：设备首尾相连成环，数据单向传输，稳定性高但扩容难（如早期的令牌环网）；</li>
+</ul>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/23/8cqnz.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="环型"></p>
+<ul>
+<li><strong>网状型</strong>：每台设备都和多台设备连接，可靠性最高（多条备用路径），但成本高，仅用于核心网络（如互联网骨干网）。</li>
+</ul>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/23/8f3my.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="网状型"></p>
+</li>
+<li>
+<p><em><strong>按使用者划分</strong></em></p>
+<ul>
+<li><strong>公用网</strong>：面向公众开放，由运营商维护，比如中国移动的宽带、联通的 5G 网络；</li>
+<li><strong>专用网</strong>：仅特定用户使用，比如企业内网、政府专网、银行内部网络，安全性高。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="1-4-网络性能指标">1.4 网络性能指标</h3>
+<p>我们常说“网速快”“网络卡”，其实是对性能指标的直观感受。网络核心指标如下：</p>
+<ol>
+<li>
+<p><em><strong>速率（比特率）</strong></em>：单位时间内传输的二进制位数（<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>bps</mtext></mrow><annotation encoding="application/x-tex">\text{bps}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">bps</span></span></span></span></span>，如 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mtext>Mbps</mtext><mo>=</mo><mn>1</mn><msup><mn>0</mn><mn>6</mn></msup><mtext>bps</mtext></mrow><annotation encoding="application/x-tex">1 \text{Mbps} = 10^6 \text{bps}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord">1</span><span class="mord text"><span class="mord">Mbps</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.0085em;vertical-align:-0.1944em;"></span><span class="mord">1</span><span class="mord"><span class="mord">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8141em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">6</span></span></span></span></span></span></span></span><span class="mord text"><span class="mord">bps</span></span></span></span></span>），是我们常说的“网速”，比如家庭宽带 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>100</mn><mtext>Mbps</mtext></mrow><annotation encoding="application/x-tex">100 \text{Mbps}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord">100</span><span class="mord text"><span class="mord">Mbps</span></span></span></span></span> 指的就是速率；</p>
+</li>
+<li>
+<p><em><strong>带宽</strong></em>：网络的 <strong>最大传输能力</strong>，比如 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>100</mn><mtext>Mbps</mtext></mrow><annotation encoding="application/x-tex">100 \text{Mbps}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord">100</span><span class="mord text"><span class="mord">Mbps</span></span></span></span></span> 带宽意味着最快能传 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>100</mn><mtext>Mbps</mtext></mrow><annotation encoding="application/x-tex">100 \text{Mbps}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord">100</span><span class="mord text"><span class="mord">Mbps</span></span></span></span></span>，实际速率会低于带宽（受信号衰减、设备性能影响）；</p>
+</li>
+<li>
+<p><em><strong>时延</strong></em>：<strong>数据从发送端到接收端的时间</strong>，分为4类：</p>
+<ul>
+<li><strong>传播时延</strong>：信号在介质中传输的时间（如光纤中光的传播速度）；</li>
+<li><strong>传输时延</strong>：数据全部发出的时间（如 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>100</mn><mtext>MB</mtext></mrow><annotation encoding="application/x-tex">100 \text{MB}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">100</span><span class="mord text"><span class="mord">MB</span></span></span></span></span> 数据用 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>100</mn><mtext>Mbps</mtext></mrow><annotation encoding="application/x-tex">100 \text{Mbps}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord">100</span><span class="mord text"><span class="mord">Mbps</span></span></span></span></span> 速率传，传输时延= <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mrow><mn>100</mn><mo>×</mo><mn>8</mn><mo>×</mo><mn>1</mn><msup><mn>0</mn><mn>6</mn></msup></mrow><mrow><mn>100</mn><mo>×</mo><mn>1</mn><msup><mn>0</mn><mn>6</mn></msup></mrow></mfrac><mo>=</mo><mn>8</mn></mrow><annotation encoding="application/x-tex">\frac{100 \times 8 \times 10^6}{100 \times 10^6} = 8</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.4213em;vertical-align:-0.4033em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0179em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">100</span><span class="mbin mtight">×</span><span class="mord mtight">1</span><span class="mord mtight"><span class="mord mtight">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7463em;"><span style="top:-2.786em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">6</span></span></span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">100</span><span class="mbin mtight">×</span><span class="mord mtight">8</span><span class="mbin mtight">×</span><span class="mord mtight">1</span><span class="mord mtight"><span class="mord mtight">0</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8913em;"><span style="top:-2.931em;margin-right:0.0714em;"><span class="pstrut" style="height:2.5em;"></span><span class="sizing reset-size3 size1 mtight"><span class="mord mtight">6</span></span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.4033em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">8</span></span></span></span> 秒）；</li>
+<li><strong>处理时延</strong>：设备（如路由器）处理数据的时间；</li>
+<li><strong>排队时延</strong>：数据在设备缓存中等待的时间（网络拥堵时排队时延会增加）；</li>
+</ul>
+</li>
+<li>
+<p><em><strong>丢包率</strong></em>：<strong>传输过程中丢失的数据包占总数据包的比例</strong>，丢包率高会导致视频卡顿、文件传输失败（正常网络丢包率应低于1%）；</p>
+</li>
+<li>
+<p><em><strong>吞吐量</strong></em>：<strong>实际传输的有效数据量</strong>（排除协议开销），比如 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>100</mn><mtext>Mbps</mtext></mrow><annotation encoding="application/x-tex">100 \text{Mbps}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord">100</span><span class="mord text"><span class="mord">Mbps</span></span></span></span></span> 带宽的吞吐量可能只有 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>80</mn><mtext>Mbps</mtext></mrow><annotation encoding="application/x-tex">80 \text{Mbps}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord">80</span><span class="mord text"><span class="mord">Mbps</span></span></span></span></span>（因为要传TCP/IP头部信息）。</p>
+</li>
+</ol>
+<hr>
+<br/>
+<h2 id="2-网络分层结构：为什么要分层？">2 网络分层结构：为什么要分层？</h2>
+<p>如果让一台电脑直接给另一台电脑发数据，需要处理 “转电信号、加地址、选路径、保证可靠” 等很多任务——这样逻辑太复杂了，而且有一个模块出了问题也难排查😣。</p>
+<p><strong>“分层”的思路就像“寄快递”</strong>：你（应用层）只需要把快递交给快递员（传输层），不用管快递怎么运到分拣中心（网络层）、怎么装车（数据链路层）、用什么交通工具（物理层）。每层只做自己的事，下层为上层提供服务，上层不用关心下层的细节。</p>
+<p>目前主流的分层模型有两种：<strong>OSI七层模型</strong> 和 <strong>TCP/IP四层模型</strong>。</p>
+<hr>
+<h3 id="2-1-OSI-七层模型（理论模型）">2.1 OSI 七层模型（理论模型）</h3>
+<p>OSI（开放式系统互联）是国际标准化组织（ISO）提出的理论模型，分为7层，从下到上依次是：</p>
+<p class="katex-block "><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>1. 物理层</mtext><mo>→</mo><mtext>2. 数据链路层</mtext><mo>→</mo><mtext>3. 网络层</mtext><mo>→</mo><mtext>4. 传输层</mtext><mo>→</mo><mtext>5. 会话层</mtext><mo>→</mo><mtext>6. 表示层</mtext><mo>→</mo><mtext>7. 应用层</mtext></mrow><annotation encoding="application/x-tex">\text{1. 物理层} \rightarrow \text{2. 数据链路层} \rightarrow \text{3. 网络层}  \rightarrow \text{4. 传输层}  \rightarrow \text{5. 会话层}  \rightarrow \text{6. 表示层} \rightarrow \text{7. 应用层}    
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord text"><span class="mord">1. </span><span class="mord cjk_fallback">物理层</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord text"><span class="mord">2. </span><span class="mord cjk_fallback">数据链路层</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord text"><span class="mord">3. </span><span class="mord cjk_fallback">网络层</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord text"><span class="mord">4. </span><span class="mord cjk_fallback">传输层</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord text"><span class="mord">5. </span><span class="mord cjk_fallback">会话层</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord text"><span class="mord">6. </span><span class="mord cjk_fallback">表示层</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">→</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord text"><span class="mord">7. </span><span class="mord cjk_fallback">应用层</span></span></span></span></span></span></p>
+<p><strong>每层的核心作用</strong>：</p>
+<ul>
+<li>下三层（1-3）：负责“数据传输”，处理硬件相关的工作（如信号、地址、路径）；</li>
+<li>上四层（4-7）：负责“数据处理”，处理软件相关的工作（如可靠传输、会话管理、应用服务）。</li>
+</ul>
+<p>但 OSI 模型太复杂（比如会话层和表示层功能重叠），实际中几乎没人用，仅作为理论参考。</p>
+<hr>
+<h3 id="2-2-TCP-IP-四层模型（实际模型）">2.2 TCP/IP 四层模型（实际模型）</h3>
+<p>TCP/IP 是互联网的“事实标准”，由美国国防部提出，更简洁实用，分为4层（也常被扩展为5层，将网络接口层分为数据链路层和物理层）。</p>
+<table>
+<thead>
+<tr>
+<th>TCP/IP四层模型</th>
+<th>对应OSI七层模型</th>
+<th>核心作用</th>
+<th>典型协议/设备</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>应用层</strong></td>
+<td>应用层+表示层+会话层</td>
+<td>为应用程序提供服务</td>
+<td>HTTP、DNS、FTP</td>
+</tr>
+<tr>
+<td><strong>传输层</strong></td>
+<td>传输层</td>
+<td>端到端可靠传输、流量控制</td>
+<td>TCP、UDP</td>
+</tr>
+<tr>
+<td><strong>网际层（网络层）</strong></td>
+<td>网络层</td>
+<td>路由选择、IP寻址</td>
+<td>IP、ARP、路由器</td>
+</tr>
+<tr>
+<td><strong>网络接口层</strong></td>
+<td>数据链路层+物理层</td>
+<td>MAC寻址、信号转换</td>
+<td>MAC、交换机、网线</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="2-3-发送消息的完整流程：从“封装”到“解封装”">2.3 发送消息的完整流程：从“封装”到“解封装”</h3>
+<p>以 “电脑A给电脑B发一条消息” 为例，解析数据在分层模型中怎么传输。核心是 “自上而下封装，自下而上解封装”。</p>
+<ul>
+<li>
+<p><em><strong>发送端（电脑A）：自上而下“封装”</strong></em></p>
+<ul>
+<li><strong>应用层</strong>：应用（例如 QQ）将消息（如“你好”）处理成“应用层数据”，加上HTTP/QQ自定义协议的“头部”（记录消息类型、发送时间）；</li>
+<li><strong>传输层</strong>：接收应用层的数据，<strong>加上 TCP 头部</strong>（记录源端口，比如QQ的端口号；目的端口，比如电脑B QQ的端口号），形成“段（Segment）”；</li>
+<li><strong>网络层</strong>：接收传输层的段，<strong>加上 IP 头部</strong>（记录源IP，比如A的  IP <code>192.168.1.2</code>；目的IP，比如B的 IP <code>192.168.1.3</code>），形成“数据包（Packet）”；</li>
+<li><strong>数据链路层</strong>：接收网络层的数据包，<strong>加上MAC头部</strong>（记录A的 MAC 地址；B的 MAC 地址）和尾部（校验信息），形成“帧（Frame）”；</li>
+<li><strong>物理层</strong>：将帧转换成电信号/光信号，通过网线/光纤传输。</li>
+</ul>
+</li>
+<li>
+<p><em><strong>接收端（电脑B）：自下而上“解封装”</strong></em></p>
+<ul>
+<li><strong>物理层</strong>：接收电信号，转换成帧，传给数据链路层；</li>
+<li><strong>数据链路层</strong>：验证尾部的校验信息，<strong>去掉 MAC 头部和尾部</strong>，将数据包传给网络层；</li>
+<li><strong>网络层</strong>：验证 IP 头部，<strong>去掉 IP 头部</strong>，将段传给传输层；</li>
+<li><strong>传输层</strong>：验证 TCP 头部，<strong>去掉 TCP 头部</strong>，将应用层数据传给应用层；</li>
+<li><strong>应用层</strong>：QQ 接收数据，解析后显示“你好”。</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/23/1892x.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="发送消息-接收消息完整流程"></p>
+<p>总结：<strong>发送端每层加“头部”（包装），接收端每层拆“头部”（拆包）</strong>，每层只处理自己加的头部信息，互不干扰。</p>
+<hr>
+<br/>
+<h2 id="3-物理层：网络的物理基础">3 物理层：网络的物理基础</h2>
+<p>物理层是网络的最底层，负责 <strong>将数据转换成物理信号</strong> 并传输，不关心数据的含义——就像快递的交通工具（卡车、飞机），只负责运货，不管货里装的是什么😋。</p>
+<p>物理层的核心设备是 <strong>中继器</strong> 和 <strong>集线器</strong>。</p>
+<hr>
+<h3 id="3-1-中继器：信号的放大器">3.1 中继器：信号的放大器</h3>
+<p>信号在传输介质中会衰减（比如网线超过 100 米，信号就会弱到无法识别），中继器的作用就是 <strong>放大信号</strong>，<strong>延长传输距离</strong>。</p>
+<ul>
+<li><strong>工作原理</strong>：接收衰减的信号，还原信号的波形和幅度，再发送出去；</li>
+<li><strong>特点</strong>：
+<ul>
+<li>仅工作在物理层，只处理信号，不理解数据内容；</li>
+<li>只能连接同类型的传输介质（如网线中继器不能连光纤）；</li>
+<li>不能隔离“冲突域”（多台设备同时发数据会冲突），现在很少单独使用。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<p>在日常生活中，WiFi 中继器（又称 WiFi 扩展器）是最常用的中继器类型，核心解决 “家庭 / 小空间 WiFi 覆盖死角” 的问题。多数家庭的 WiFi 主路由会放在客厅（方便接宽带），但卧室、阳台、卫生间等 “角落区域” 信号弱。</p>
+<p>把 WiFi 中继器插在客厅与卧室之间的 “过渡区域”（比如走廊插座、客厅靠近卧室的边柜插座），让中继器能稳定接收到客厅主路由的强信号，再通过中继器把信号 “放大延伸” 到卧室。</p>
+<hr>
+<h3 id="3-2-集线器（Hub）：多端口的“中继器”">3.2 集线器（Hub）：多端口的“中继器”</h3>
+<p>集线器就是“多端口的中继器”，可以将多个设备连接到同一个网络。</p>
+<h4 id="3-2-1-什么是集线器">3.2.1 什么是集线器</h4>
+<p><strong>集线器（Hub）</strong> 是一种简单的网络设备，有多个端口（常见4口、8口、16口），每个端口可以连接一台电脑或其他设备。⭐</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/24/32w.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="集线器模型"></p>
+<h4 id="3-2-2-集线器的工作模式：半双工">3.2.2 集线器的工作模式：半双工</h4>
+<p>集线器的所有端口共享同一带宽，且工作在 <strong>半双工模式</strong> —— 同一时间，一个端口只能发数据或收数据，不能同时进行。</p>
+<p>为了避免多台设备同时发数据导致冲突，集线器会使用 <strong>CSMA/CD协议</strong>（载波监听多点接入/碰撞检测）：</p>
+<ol>
+<li>设备发数据前，<strong>先监听线路是否空闲</strong>；</li>
+<li><strong>如果空闲，就发数据；如果忙，就等待</strong>；</li>
+<li>发数据时 <strong>如果检测到冲突</strong>（比如两台设备同时发），就 <strong>立即停止发送</strong>，并发送“冲突信号”，让其他设备知道有冲突；</li>
+<li><strong>所有设备等待随机时间后，再重新尝试发送</strong>。</li>
+</ol>
+<h4 id="3-2-3-集线器的特点：已被淘汰的“老古董”">3.2.3 集线器的特点：已被淘汰的“老古董”</h4>
+<p>集线器的缺点非常明显，现在几乎被交换机取代：</p>
+<ul>
+<li><strong>共享带宽</strong>：比如 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>8</mn></mrow><annotation encoding="application/x-tex">8</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">8</span></span></span></span> 口集线器，总带宽 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>100Mbps</mtext></mrow><annotation encoding="application/x-tex">\text{100Mbps}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">100Mbps</span></span></span></span></span>，每台设备平均只有 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>12.5Mbps</mtext></mrow><annotation encoding="application/x-tex">\text{12.5Mbps}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">12.5Mbps</span></span></span></span></span>；</li>
+<li><strong>所有端口在一个冲突域</strong>：一台设备发数据，<strong>所有端口都能收到</strong>（广播），不仅效率低，还不安全（别人能截获数据）😋；</li>
+<li><strong>半双工模式</strong>：无法同时收发数据，延迟高；</li>
+<li><strong>无智能转发</strong>：不管目的地址，一律广播，浪费带宽。</li>
+</ul>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/24/4ptc.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="集线器缺点：所有端口在一个冲突域"></p>
+<blockquote>
+<p>图片来源：<a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1813700">硬核图解！30张图带你搞懂！路由器，集线器，交换机，网桥，光猫有啥区别？</a></p>
+</blockquote>
+<hr>
+<br/>
+<h2 id="4-数据链路层：给数据“加MAC地址”">4 数据链路层：给数据“加MAC地址”</h2>
+<p>物理层 <strong>解决了信号传输</strong>，但 <strong>不知道“数据要发给谁”</strong>——数据链路层的核心作用就是“给数据加MAC地址”，实现设备到设备的精准通信。</p>
+<p>数据链路层的核心设备是 <strong>网桥</strong> 和 <strong>交换机</strong>。</p>
+<hr>
+<h3 id="4-1-网桥：连接两个局域网的“过滤器”">4.1 网桥：连接两个局域网的“过滤器”</h3>
+<p><strong>网桥（Bridge）</strong> 工作在数据链路层，用于连接两个不同的局域网（比如两个办公室的LAN），并根据 MAC 地址“过滤帧”——只把需要跨网段传输的帧转发过去，减少不必要的广播。</p>
+<ul>
+<li>
+<p><em><strong>工作原理</strong></em>：</p>
+<ol>
+<li>网桥有两个端口，分别连接两个 LAN；</li>
+<li><strong>学习</strong>：收到帧时，记录“源 MAC 地址”和对应的端口（比如 LAN1 的设备 MAC 都存在端口 1）；</li>
+<li><strong>转发</strong>：收到帧后，查看“目的 MAC 地址”，如果在另一个 LAN，就转发；如果在同一个 LAN，就丢弃（不转发）；</li>
+</ol>
+</li>
+<li>
+<p><em><strong>特点</strong></em>：</p>
+<ul>
+<li><strong>隔离冲突域</strong>：两个 LAN 分别是一个冲突域，减少冲突；</li>
+<li><strong>不能隔离广播域</strong>：如果收到广播帧（比如 ARP 请求），还是会转发到另一个 LAN；</li>
+<li><strong>端口少</strong>：通常只有 2 个端口，现在被多端口的交换机取代。</li>
+</ul>
+</li>
+</ul>
+<hr>
+<h3 id="4-2-交换机（Switch）：多端口的“智能网桥”">4.2 交换机（Switch）：多端口的“智能网桥”</h3>
+<p><strong>交换机</strong> 是数据链路层的核心设备，<strong>相当于“多端口的网桥”</strong>，更智能、更快，是现在局域网的核心连接设备（比如家庭的千兆交换机、公司的核心交换机）。</p>
+<h4 id="4-2-1-什么是交换机">4.2.1 什么是交换机</h4>
+<p><strong>交换机（Ethernet Switch）</strong> 有多个端口（常见 8口、16口、24口、48口），每个端口可以连接电脑、服务器、打印机等设备，<strong>能根据 MAC 地址“定向转发”数据</strong>，而不是像集线器那样广播。</p>
+<h4 id="4-2-2-交换机的工作模式：全双工">4.2.2 交换机的工作模式：全双工</h4>
+<p>交换机的每个端口都是 <strong>全双工模式</strong> —— 同一时间，<strong>一个端口可以同时发数据和收数据</strong>。因为每个端口独占带宽（比如 24口千兆交换机，每个端口都是 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>1000Mbps</mtext></mrow><annotation encoding="application/x-tex">\text{1000Mbps}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">1000Mbps</span></span></span></span></span> 带宽）。</p>
+<p>全双工模式下，不需要 CSMA/CD 协议 —— 因为每个端口的发送和接收链路是分开的，不会冲突。</p>
+<h4 id="4-2-3-交换机的核心特点">4.2.3 交换机的核心特点</h4>
+<ul>
+<li><strong>每个端口一个冲突域</strong>：设备之间通信互不干扰，冲突率极低；</li>
+<li><strong>基于MAC地址定向转发</strong>：不是广播（除了未知MAC地址），效率高；</li>
+<li><strong>全双工通信</strong>：速率快，延迟低；</li>
+<li><strong>支持VLAN（虚拟局域网）</strong>：可以将一个交换机分成多个“虚拟网段”，隔离广播域（后续进阶内容）。</li>
+</ul>
+<h4 id="4-2-4-交换机和集线器的核心对比">4.2.4 交换机和集线器的核心对比</h4>
+<p><strong>交换机和集线器两者差异</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>对比维度</th>
+<th>集线器（Hub）</th>
+<th>交换机（Switch）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>工作层级</strong></td>
+<td>物理层</td>
+<td>数据链路层</td>
+</tr>
+<tr>
+<td><strong>冲突域</strong></td>
+<td>所有端口共享一个冲突域</td>
+<td>每个端口一个冲突域</td>
+</tr>
+<tr>
+<td><strong>带宽分配</strong></td>
+<td>共享带宽（如8口100Mbps，每口12.5Mbps）</td>
+<td>独占带宽（每口都是100Mbps）</td>
+</tr>
+<tr>
+<td><strong>工作模式</strong></td>
+<td>半双工（不能同时收发）</td>
+<td>全双工（可同时收发）</td>
+</tr>
+<tr>
+<td><strong>转发依据</strong></td>
+<td>无（广播所有数据）</td>
+<td>MAC 地址（定向转发）</td>
+</tr>
+<tr>
+<td><strong>安全性</strong></td>
+<td>低（所有设备能收到数据）</td>
+<td>高（仅目的设备能收到数据）</td>
+</tr>
+<tr>
+<td><strong>适用场景</strong></td>
+<td>早期小网络（已淘汰）</td>
+<td>家庭、企业局域网（主流）</td>
+</tr>
+</tbody>
+</table>
+<h4 id="4-2-5-MAC-地址表：交换机的“通讯录”">4.2.5 MAC 地址表：交换机的“通讯录”</h4>
+<p>交换机之所以能定向转发，靠的是内部的 <strong>MAC地址表</strong>（也叫“CAM表”）——记录了“MAC地址”和“对应端口”的映射关系，就像我们手机里的通讯录（名字 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>→</mo></mrow><annotation encoding="application/x-tex">\rightarrow</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.3669em;"></span><span class="mrel">→</span></span></span></span> 手机号）。</p>
+<p><strong>MAC 地址表的工作流程</strong>：</p>
+<ol>
+<li><strong>初始化</strong>：刚通电时，MAC地址表是空的；</li>
+<li><strong>学习</strong>：比如电脑A（MAC-A）通过端口1给电脑B（MAC-B）发数据，交换机收到帧后，会把“MAC-A <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>→</mo></mrow><annotation encoding="application/x-tex">\rightarrow</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.3669em;"></span><span class="mrel">→</span></span></span></span> 端口1”记录到表中；</li>
+<li><strong>转发</strong>：交换机查看帧的目的MAC（MAC-B），如果表中有MAC-B对应的端口（比如端口2），就直接转发到端口2；如果没有（未知MAC），就广播到所有端口（除了入端口）；</li>
+<li><strong>老化</strong>：如果某个MAC地址长时间（比如5分钟）没有数据传输，交换机会删除该条目，避免表过大。</li>
+</ol>
+<p><strong>举个例子</strong>：第一次A给B发数据，交换机广播；B收到后回复A，交换机学习到“MAC-B <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>→</mo></mrow><annotation encoding="application/x-tex">\rightarrow</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.3669em;"></span><span class="mrel">→</span></span></span></span> 端口2”；之后A再给B发数据，交换机就直接转发到端口2，不再广播。</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/09/24/3gn.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="交换机和MAC地址表"></p>
+<blockquote>
+<p>图片来源：<a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1813700">硬核图解！30张图带你搞懂！路由器，集线器，交换机，网桥，光猫有啥区别？</a></p>
+</blockquote>
+<hr>
+<br/>
+<h2 id="5-网络层：实现“跨网段通信”">5 网络层：实现“跨网段通信”</h2>
+<p>数据链路层解决了同一局域网内的设备通信（比如 <code>192.168.1.2</code> 给 <code>192.168.1.3</code> 发数据），但 <strong>如果要跨网段通信</strong>（比如 <code>192.168.1.2</code> 给 <code>192.168.2.3</code> 发数据），就 <strong>需要网络层</strong>——核心是“IP地址”和“路由器”。</p>
+<hr>
+<h3 id="5-1-网络层的功能和服务">5.1 网络层的功能和服务</h3>
+<p>未完待续…</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Linux-%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/" class="category-chain-item">Linux 网络编程</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Linux/" class="print-no-link">#Linux</a>
+      
+        <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E3%80%81%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/" class="print-no-link">#计算机网络、网络编程</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Linux 网络编程」计算机网络核心知识</div>
+      <div>https://marisamagic.github.io/2025/09/23/20250923/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年9月23日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/09/21/20250921/" title="「Linux 系统编程」信号量与生产者-消费者模型">
+                        <span class="hidden-mobile">「Linux 系统编程」信号量与生产者-消费者模型</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
