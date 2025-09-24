@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2025/09/24/1qdau.jpg">
 <meta property="article:published_time" content="2025-09-23T14:13:11.241Z">
-<meta property="article:modified_time" content="2025-09-24T11:01:46.074Z">
+<meta property="article:modified_time" content="2025-09-24T11:10:07.250Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="Linux">
 <meta property="article:tag" content="计算机网络、网络编程">
@@ -761,7 +761,7 @@
 <hr>
 <h3 id="5-2-IP-协议（网际协议）">5.2 IP 协议（网际协议）</h3>
 <p>在讲 IP 协议前，先搞懂 “IP 地址” 本身 —— 它是网络层的核心 “定位工具”，没有 IP 地址，跨网段通信就像 “寄快递没有收件人地址”，数据根本找不到目的地。</p>
-<h3 id="5-2-1-什么是-IP-地址">5.2.1 什么是 IP 地址</h3>
+<h4 id="5-2-1-什么是-IP-地址">5.2.1 什么是 IP 地址</h4>
 <p><strong>IP 地址</strong>（Internet Protocol Address）是分配给网络中每台设备的  <strong>逻辑地址</strong>，相当于设备在网络中的 “居住地址”，格式为  <strong>点分十进制</strong>（如 <code>192.168.1.2</code>），由 <strong>32 位二进制数</strong> 组成（对应 <strong>IPv4</strong>，也是日常最常用的版本）。​</p>
 <p>前面提到的 <code>192.168.1.2</code> 就是一个 IP，同一个局域网内还可能会有一个IP是 <code>192.168.1.200</code>。它们都是 <code>192.168.1.xxx</code>，<strong>都处于 <code>192.168.1.0</code> 这一个网段中</strong>。</p>
 <p>具体来说，把 <code>192.168.1.2</code> 翻译成 “网络地址”，就是 <code>C 类私有网段.168细分段.1号局域网.2号设备</code></p>
@@ -776,7 +776,7 @@
 <li>跨网段通信时，数据靠 IP 地址 “找大方向”（比如从 <code>192.168.1.0</code> 网段到 <code>192.168.2.0</code> 网段），到了目标网段后，再靠 MAC 地址 “找具体设备”（这就是 ARP 协议的作用）。</li>
 </ul>
 <hr>
-<h3 id="5-2-2-为什么需要-IP-地址？">5.2.2 为什么需要 IP 地址？</h3>
+<h4 id="5-2-2-为什么需要-IP-地址？">5.2.2 为什么需要 IP 地址？</h4>
 <p>核心原因是解决 <strong>跨网段定位设备</strong> 的问题 —— 没有 IP 地址，数据只能在同一局域网内 “瞎逛”，无法跨网段传递。</p>
 <p>以 “快递运输” 类比：​</p>
 <p><em>同一局域网（如家庭 WiFi）内的设备通信，就像 “同一栋楼里的邻居递东西”：只需要知道对方的 “门牌号后几位”，直接递过去就行；​</em></p>
@@ -804,7 +804,7 @@
 <p>简单说：MAC 地址解决 “局域网内找设备”，IP 地址解决 “跨网段找区域”，两者配合才能实现全局通信。</p>
 <p>有了网段，就可以一次性表示一大批地址。不需要像交换机的一条一条MAC地址记录在表里（一张表里存巨多 MAC 地址也不现实）。</p>
 <hr>
-<h3 id="5-2-3-“公有-IP”-和-“私有-IP”">5.2.3 “公有 IP” 和 “私有 IP”</h3>
+<h4 id="5-2-3-“公有-IP”-和-“私有-IP”">5.2.3 “公有 IP” 和 “私有 IP”</h4>
 <p>家里的路由器、公司的内网设备，IP 地址几乎都是 <code>192.168.1.XX</code> 或 <code>192.168.0.XX</code>，核心原因是：<strong>192.168. 开头的 IP 属于 “私有 IP 地址” —— 专门给局域网内部使用，不占用公网资源</strong>。</p>
 <p>要理解这一点，先区分 “公有 IP” 和 “私有 IP”：</p>
 <ul>
