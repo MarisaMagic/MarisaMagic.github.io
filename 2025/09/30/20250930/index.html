@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2025/10/01/rwl4.jpg">
 <meta property="article:published_time" content="2025-09-30T08:47:16.332Z">
-<meta property="article:modified_time" content="2025-10-01T06:13:08.255Z">
+<meta property="article:modified_time" content="2025-10-07T09:06:00.193Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="Linux">
 <meta property="article:tag" content="计算机网络、网络编程">
@@ -254,7 +254,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          3.7k 字
+          3.8k 字
         
       </span>
     
@@ -265,7 +265,7 @@
         
         
         
-          31 分钟
+          32 分钟
         
       </span>
     
@@ -322,6 +322,7 @@
 <li><strong>流式传输</strong>：数据作为字节流传输</li>
 <li><strong>全双工</strong>：双方可以同时发送和接收数据</li>
 </ul>
+<p><strong>TCP 收发数据是无消息边界的</strong>：TCP 把数据看作一连串无结构的字节流，发送方调用 <code>send()</code> 多次发送的数据，在接收方可能被合并成一次 <code>recv()</code> 接收，也可能一次发送的数据被拆分成多次接收。</p>
 <p><a href="https://marisamagic.github.io/2025/09/23/20250923/#6-3-TCP%E5%8D%8F%E8%AE%AE%EF%BC%9A%E8%BF%BD%E6%B1%82%E2%80%9C%E5%8F%AF%E9%9D%A0%E6%80%A7%E2%80%9D%E7%9A%84%E6%A0%B8%E5%BF%83%E5%8D%8F%E8%AE%AE">「Linux 网络编程」计算机网络核心知识 6.3 TCP协议</a></p>
 <hr>
 <h3 id="1-2-本地回环地址">1.2 本地回环地址</h3>
@@ -481,6 +482,7 @@
 <h4 id="2-2-3-代码示例">2.2.3 代码示例</h4>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;arpa/inet.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;string.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-comment">// 示例1：IPv4转换</span><br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;=== IPv4 地址转换 ===\n&quot;</span>);<br>    <br>    <span class="hljs-type">const</span> <span class="hljs-type">char</span> *ipv4_str = <span class="hljs-string">&quot;192.168.1.100&quot;</span>;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">in_addr</span> <span class="hljs-title">ipv4_bin</span>;</span><br>    <span class="hljs-type">char</span> ipv4_str_back[INET_ADDRSTRLEN];<br>    <br>    <span class="hljs-comment">// 字符串 → 二进制</span><br>    <span class="hljs-keyword">if</span> (inet_pton(AF_INET, ipv4_str, &amp;ipv4_bin) == <span class="hljs-number">1</span>) &#123;<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;字符串 &#x27;%s&#x27; → 二进制: 0x%08x\n&quot;</span>, <br>               ipv4_str, ipv4_bin.s_addr);<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        perror(<span class="hljs-string">&quot;inet_pton failed&quot;</span>);<br>    &#125;<br>    <br>    <span class="hljs-comment">// 二进制 → 字符串</span><br>    <span class="hljs-keyword">if</span> (inet_ntop(AF_INET, &amp;ipv4_bin, ipv4_str_back, INET_ADDRSTRLEN)) &#123;<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;二进制 0x%08x → 字符串: &#x27;%s&#x27;\n&quot;</span>, <br>               ipv4_bin.s_addr, ipv4_str_back);<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        perror(<span class="hljs-string">&quot;inet_ntop failed&quot;</span>);<br>    &#125;<br>    <br>    <span class="hljs-comment">// 示例2：IPv6转换</span><br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;\n=== IPv6 地址转换 ===\n&quot;</span>);<br>    <br>    <span class="hljs-type">const</span> <span class="hljs-type">char</span> *ipv6_str = <span class="hljs-string">&quot;2001:0db8:85a3:0000:0000:8a2e:0370:7334&quot;</span>;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">in6_addr</span> <span class="hljs-title">ipv6_bin</span>;</span><br>    <span class="hljs-type">char</span> ipv6_str_back[INET6_ADDRSTRLEN];<br>    <br>    <span class="hljs-keyword">if</span> (inet_pton(AF_INET6, ipv6_str, &amp;ipv6_bin) == <span class="hljs-number">1</span>) &#123;<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;IPv6 字符串转换成功\n&quot;</span>);<br>    &#125;<br>    <br>    <span class="hljs-keyword">if</span> (inet_ntop(AF_INET6, &amp;ipv6_bin, ipv6_str_back, INET6_ADDRSTRLEN)) &#123;<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;IPv6 二进制转字符串: %s\n&quot;</span>, ipv6_str_back);<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
 <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs bash">=== IPv4 地址转换 ===<br>字符串 <span class="hljs-string">&#x27;192.168.1.100&#x27;</span> → 二进制: 0x6401a8c0<br>二进制 0x6401a8c0 → 字符串: <span class="hljs-string">&#x27;192.168.1.100&#x27;</span><br><br>=== IPv6 地址转换 ===<br>IPv6 字符串转换成功<br>IPv6 二进制转字符串: 2001:db8:85a3::8a2e:370:7334<br></code></pre></td></tr></table></figure>
+<p>以 IPv4 地址转换 <code>192.168.1.100</code> 为例，首先将 4 个部分分别转换为 二进制，例如 <code>192 -&gt; 11000000</code>、<code>168 -&gt; 10101000</code>、<code>1 -&gt; 00000001</code>、<code>100 -&gt; 01100100</code>，组合起来得到网络字节序（大端序） <code>0xc0a80164</code>。 在小端机器上，当我们用%X打印整个32位数时，字节顺序是反的，所以显示为 <code>0x6401a8c0</code>。</p>
 <hr>
 <h3 id="2-3-sockaddr-结构">2.3 sockaddr 结构</h3>
 <h4 id="2-3-1-为什么需要-sockaddr-结构">2.3.1 为什么需要 sockaddr 结构</h4>
@@ -664,6 +666,12 @@
                 <div class="post-prevnext my-3">
                   <article class="post-prev col-6">
                     
+                    
+                      <a href="/2025/10/07/20251007/" title="「Linux 网络编程」TCP 内部工作原理">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「Linux 网络编程」TCP 内部工作原理</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
                     
                   </article>
                   <article class="post-next col-6">
