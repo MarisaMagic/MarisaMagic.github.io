@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2025/10/09/3eii.jpg">
 <meta property="article:published_time" content="2025-10-09T03:58:05.552Z">
-<meta property="article:modified_time" content="2025-10-09T04:37:14.797Z">
+<meta property="article:modified_time" content="2025-10-09T06:38:15.737Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="Linux">
 <meta property="article:tag" content="计算机网络、网络编程">
@@ -254,7 +254,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          2k 字
+          2.1k 字
         
       </span>
     
@@ -325,11 +325,11 @@
 <ol>
 <li>
 <p><strong>第一次挥手</strong>：发送 FIN 报文</p>
-<p>表示&quot;我没有数据要发送了&quot;，<strong>但还可以接收数据</strong>。进入 <code>FIN_WAIT_1</code> 状态。</p>
+<p>表示&quot;我没有数据要发送了&quot;，<strong>但还可以接收数据</strong>。主动关闭方进入 <code>FIN_WAIT_1</code> 状态。</p>
 </li>
 <li>
 <p><strong>第二次挥手</strong>：接收对方的 ACK 响应</p>
-<p>对端确认收到 FIN，进入 <code>FIN_WAIT_2</code> 状态。<strong>此时连接处于半关闭状态</strong>。</p>
+<p>对端确认收到 FIN，主动关闭方进入 <code>FIN_WAIT_2</code> 状态。<strong>此时连接处于半关闭状态</strong>。</p>
 </li>
 </ol>
 <p>在代码中的体现：</p>
@@ -581,6 +581,12 @@
                 <div class="post-prevnext my-3">
                   <article class="post-prev col-6">
                     
+                    
+                      <a href="/2025/10/10/20251010/" title="「Linux 网络编程」DNS 域名解析、域名与 IP 地址的转换">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「Linux 网络编程」DNS 域名解析、域名与 IP 地址的转换</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
                     
                   </article>
                   <article class="post-next col-6">

@@ -1,0 +1,984 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="什么是域名，以及 DNS 服务器介绍；通过命令进行 IP 地址与域名之间的转换；通过 Linux 系统函数实现 IP 地址与域名之间的转换。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Linux 网络编程」DNS 域名解析、域名与 IP 地址的转换">
+<meta property="og:url" content="https://marisamagic.github.io/2025/10/10/20251010/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="什么是域名，以及 DNS 服务器介绍；通过命令进行 IP 地址与域名之间的转换；通过 Linux 系统函数实现 IP 地址与域名之间的转换。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/10/10/y6ax.jpg">
+<meta property="article:published_time" content="2025-10-10T03:42:38.854Z">
+<meta property="article:modified_time" content="2025-10-10T08:36:15.977Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="计算机网络、网络编程">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2025/10/10/y6ax.jpg">
+  
+  
+  
+  <title>「Linux 网络编程」DNS 域名解析、域名与 IP 地址的转换 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2025/10/10/y6ax.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Linux 网络编程」DNS 域名解析、域名与 IP 地址的转换"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-10-10 11:42" pubdate>
+          2025年10月10日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          39 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Linux 网络编程」DNS 域名解析、域名与 IP 地址的转换</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="1-域名">1 域名</h2>
+<h3 id="1-1-什么是域名">1.1 什么是域名</h3>
+<p><strong>域名</strong>（Domain Name）是一串可读的文本（例如 <code>www.deepseek.com</code>、<code>openai.com</code>），用于在互联网上 <strong>标识某台主机或服务</strong>。域名为人类提供了友好的命名方式 —— 比起难记的数字地址（如 <code>93.184.216.34</code>），域名更易于识别与记忆。</p>
+<hr>
+<h3 id="1-2-域名的作用">1.2 域名的作用</h3>
+<ul>
+<li><strong>易记</strong>：便于用户访问（例如输入 <code>google.com</code>）。</li>
+<li><strong>抽象</strong>：把具体服务器地址（IP）与服务分离，便于迁移或负载管理。</li>
+<li><strong>管理</strong>：可以为不同子域设置不同服务（<code>www.</code>, <code>mail.</code>, <code>api.</code> 等）。</li>
+</ul>
+<hr>
+<h3 id="1-3-域名的层次结构">1.3 域名的层次结构</h3>
+<p>域名是分层的，最右侧是顶级域（TLD，例如 <code>.com</code>, <code>.cn</code>）；向左逐层是二级域、三级域等（例如 <code>www</code> 是三级域）。DNS 按层次逐级解析。</p>
+<p>以 <code>www.google.com</code> 为例，对这个域名进行层次分解：</p>
+<ol>
+<li>
+<p><strong>根域</strong></p>
+<ul>
+<li><strong>位置</strong>：层次结构的最高点，在域名的最右边，通常被省略不写。</li>
+<li><strong>表示</strong>：用一个点 <code>.</code> 来表示。例如，<code>www.google.com.</code> 最后的那个点就是根域。在大多数日常使用中，不需要输入这个点，浏览器会自动补全。</li>
+<li><strong>作用</strong>：<strong>根域是 DNS 查询的起点</strong>。全球有13组根域名服务器，它们知道所有顶级域名的信息。</li>
+</ul>
+</li>
+<li>
+<p><strong>顶级域</strong></p>
+<ul>
+<li><strong>位置</strong>：紧靠在根域的左边，是域名的最后一部分。</li>
+<li><strong>例子</strong>：<code>.com</code>, <code>.org</code>, <code>.net</code>, <code>.cn</code>, <code>.uk</code> 等。</li>
+<li><strong>作用</strong>：TLD 对域名进行分类。它主要分为两类：
+<ul>
+<li><strong>通用顶级域</strong>：如 <code>.com</code>（商业机构）、<code>.org</code>（非营利组织）、<code>.net</code>（网络机构）、<code>.edu</code>（教育机构）等。</li>
+<li><strong>国家/地区顶级域</strong>：如 <code>.cn</code>（中国）、<code>.uk</code>（英国）、<code>.jp</code>（日本）等。</li>
+</ul>
+</li>
+</ul>
+<p>在例子 <code>www.google.com</code> 中，<code>.com</code> 就是顶级域。</p>
+</li>
+<li>
+<p><strong>二级域</strong></p>
+<ul>
+<li><strong>位置</strong>：在顶级域的左边。</li>
+<li><strong>例子</strong>：<code>google.com</code> 中的 <code>google</code> 就是二级域。</li>
+<li><strong>作用</strong>：这是向域名注册商 <strong>注册的、独一无二的</strong> 的名称。代表了组织、品牌或项目。例如 <code>baidu.com</code>, <code>microsoft.com</code> 中的 <code>baidu</code> 和 <code>microsoft</code> 都是二级域。</li>
+</ul>
+</li>
+<li>
+<p><strong>子域</strong></p>
+<ul>
+<li><strong>位置</strong>：在二级域的左边，是可选的。</li>
+<li><strong>例子</strong>：<code>www.google.com</code> 中的 <code>www</code> 就是子域。</li>
+<li><strong>作用</strong>：二级域的所有者可以自由创建子域，用来将网站或服务划分为不同的部分。常见的子域有：
+<ul>
+<li><code>www</code>：通常指向网站的主服务器。</li>
+<li><code>mail</code>：可能指向邮件服务器。</li>
+<li><code>blog</code>：可能指向博客站点。</li>
+<li><code>shop</code>：可能指向在线商店。</li>
+</ul>
+</li>
+</ul>
+<p>可以创建任意名称的子域，例如 <code>drive.google.com</code> 或 <code>maps.google.com</code>。</p>
+</li>
+</ol>
+<hr>
+<br/>
+<h2 id="2-DNS-域名系统">2 DNS 域名系统</h2>
+<h3 id="2-1-DNS-解决的问题">2.1 DNS 解决的问题</h3>
+<p>在 <strong>DNS（Domain Name System）</strong> 诞生之前，互联网主要依靠一个名为 “HOSTS.TXT” 的中央文件来进行主机名到 IP 地址的映射。所有联网的计算机都需要定期从中央服务器下载并更新这个文件。</p>
+<p>随着网络规模扩大，这种机制带来了 3 个难以克服的问题：</p>
+<ol>
+<li>
+<p><strong>难以维护</strong></p>
+<ul>
+<li>
+<p><strong>单点瓶颈和更新压力</strong>：任何一台新主机接入网络，或者任何一台现有主机更改 IP 地址都需要向中央服务器发起请求，然后等待中央服务器更新那个唯一的 “HOST.TXT” 的文件。随着主机数量的不断增加，中央服务器的更新压力无疑是很大的。</p>
+</li>
+<li>
+<p><strong>巨大的流量消耗</strong>：全球成千上万台计算机，每天甚至每小时，都需要连接到同一台服务器，重复下载一个越来越庞大的文件。这对中央服务器造成了巨大的流量压力，也浪费了大量的网络带宽。</p>
+</li>
+<li>
+<p><strong>数据不一致</strong>：数据同步不是实时的，总有一些机器还没来得及下载最新的版本。用户可能根据自己机器上过时的 HOSTS 文件，尝试访问一个已经变更的 IP 地址，导致连接失败。</p>
+</li>
+</ul>
+<blockquote>
+<p>就像在手机通讯录出现之前，所有人都必须每天去市政厅抄写一份最新的全市居民电话号码本。市政厅忙得不可开交，全市的交通也都被去抄号码本的人堵死了，而且你拿到的版本还可能是昨天的。</p>
+</blockquote>
+</li>
+<li>
+<p><strong>缺乏唯一性（命名冲突和混乱）</strong></p>
+<ul>
+<li>
+<p><strong>命名的局限性</strong>： HOSTS 文件是一个扁平的命名空间，无法支持层次化的结构。这意味着所有主机名都必须是全局唯一的。</p>
+</li>
+<li>
+<p><strong>无法避免命名冲突</strong>：当两个不同的组织（比如一家公司和一所大学）都想用自己的邮件服务器主机名 “mail” 时，就产生了命名冲突。后注册的机构将无法使用这个简单直观的名字，必须被迫改为 “mail2”、“our_mail” 等不直观的名称。</p>
+</li>
+</ul>
+<blockquote>
+<p>就像在一个只能使用“小黑”、“小黄”作为称呼的学校里，一旦有两个“小黑”，老师点名时就会一片混乱。而 DNS 引入了姓氏和家庭住址的层次概念（如 <code>mail.google.com</code> 和 <code>mail.harvard.edu</code>），完美地解决了这个问题。</p>
+</blockquote>
+</li>
+<li>
+<p><strong>不够灵活（变更的延迟）</strong></p>
+<ul>
+<li>
+<p><strong>僵化的映射关系</strong>：IP 地址与主机名的绑定关系被“写死”在每台电脑的本地 HOSTS 文件里。这是一个 <strong>静态的、非动态</strong> 的映射。</p>
+</li>
+<li>
+<p><strong>变更无法及时生效</strong>：如果一台服务器因为维护、扩容或故障需要更换 IP 地址，那么从它更换 IP 的那一刻起，到全球最后一台计算机更新其 HOSTS 文件为止的这段漫长时期内，所有仍在使用旧 HOSTS 文件的用户都将无法访问该服务。这个延迟可能是数小时甚至数天，这显然难以接受。</p>
+</li>
+<li>
+<p><strong>无法实现高级功能</strong>：基于 HOSTS 文件的方式，根本 <strong>无法负载均衡</strong>（将一个域名指向多个IP）<strong>或故障转移</strong>（一个服务器宕机自动切换到备用服务器）这样的高级网络功能。</p>
+</li>
+</ul>
+<blockquote>
+<p>这就像一家搬了家的公司，它需要亲自通知到全世界每一个潜在的客户。在通知完所有人之前，总会有人跑到它的旧地址去，发现已经人去楼空。而 DNS 就像一个实时更新的“114查号台”，公司只需在查号台更新自己的新地址，所有打电话查询的人立刻就能得到最新、最准确的信息。</p>
+</blockquote>
+</li>
+</ol>
+<hr>
+<h3 id="2-2-DNS-的核心组成">2.2 DNS 的核心组成</h3>
+<p>DNS 主要由 <strong>DNS 递归解析器</strong>、<strong>根域名服务器</strong>、<strong>顶级域名服务器</strong>、<strong>权威域名服务器</strong> 组成。</p>
+<ol>
+<li>
+<p><strong>DNS 递归解析器</strong>（Recursive Resolver）</p>
+<p>面向客户端的 <strong>服务代理</strong>。</p>
+<p><strong>功能</strong>：DNS 递归解析器接收来自客户端（电脑、手机）的查询请求，并代表客户端 <strong>进行整个查询流程</strong>。包括向后续的各级服务器发起域名查询、获得对应的 IP 地址、最终将获取的 IP 地址返回给客户端。</p>
+<p><strong>特点</strong>：通常由 <strong>互联网服务提供商</strong>（ISP）或 <strong>公共 DNS 服务</strong>（如 <code>223.5.5.5</code>, <code>8.8.8.8</code>, <code>1.1.1.1</code>）提供。具备 <strong>缓存功能</strong>，以提升查询效率。</p>
+</li>
+<li>
+<p><strong>根域名服务器</strong>（Root DNS）</p>
+<p>DNS 查询的 <strong>“起点”</strong>。</p>
+<p><strong>功能</strong>：不存储具体域名的 IP 地址，但存储了所有 <strong>顶级域（TLD）服务器的地址</strong>。当递归解析器向它查询时，其 <strong>返回一个指向对应 TLD 服务器的指引</strong>。</p>
+<p><strong>特点</strong>：全球共有 13 组逻辑根服务器集群（从A到M），但通过任播技术，每个集群都在全球有数百个物理镜像节点，从而构成了一个庞大且稳健的网络。</p>
+</li>
+<li>
+<p><strong>顶级域名服务器</strong>（TLD DNS）</p>
+<p>管理特定顶级域的 <strong>“区域管理员”</strong>。</p>
+<p><strong>功能</strong>：负责管理其下所有的二级域名。例如，<code>.com</code> TLD服务器 <strong>知道所有以 <code>.com</code> 结尾的域名</strong>（如 <code>google.com</code>, <code>deepseek.com</code>）是 <strong>由哪台权威服务器（Authoritative DNS）管理</strong>。当递归解析器向它查询时，其返回对应域名的权威服务器地址。</p>
+</li>
+<li>
+<p><strong>权威域名服务器</strong>（Authoritative DNS）</p>
+<p>域名记录的 <strong>“档案管理员”</strong>。</p>
+<p><strong>功能</strong>：是域名所有者（或其托管商）维护的服务器，最终负责存储并提供该域名下的所有 DNS 记录（如 A 记录、AAAA 记录、MX 记录等）。当递归解析器最终查询到它时，<strong>会返回所请求域名的确切 IP 地址</strong>。</p>
+<p><strong>特点</strong>：一个域名通常有至少两台权威服务器（主和备）以确保高可用性。</p>
+</li>
+</ol>
+<hr>
+<br/>
+<h3 id="2-3-DNS-域名解析过程">2.3 DNS 域名解析过程</h3>
+<p>以查询 <code>www.example.com</code> 为例：</p>
+<p><img src="https://sukicdn.com/wyx/i/2025/10/10/63y3r.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="DNS 域名解析过程"></p>
+<ol>
+<li>
+<p><strong>接收请求</strong></p>
+<p>在浏览器输入 <code>www.example.com</code> 并按回车后，一开始会在浏览器 DNS 缓存中查询是否有对应的地址，然后会查看操作系统缓存及 Host 文件。如果这些缓存中都没有找到，操作系统会将查询请求发送到预先配置好的 <strong>本地 DNS 服务器</strong>。</p>
+</li>
+<li>
+<p><strong>查询本地 DNS 服务器缓存</strong></p>
+<p>本地 DNS 服务器收到请求后，首先不会立即向外查询，而是 <strong>检查自己的缓存数据库</strong>。</p>
+<ul>
+<li>
+<p><strong>如果缓存中存在且未过期</strong>：</p>
+<p>直接返回对应的 IP 地址给客户端。这个过程在毫秒级内完成，解析结束。</p>
+</li>
+<li>
+<p><strong>如果缓存中不存在（或已过期）</strong></p>
+<p>本地 DNS 服务器将启动一次 <strong>完整的递归查询</strong> 过程。</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>执行递归/迭代查询</strong></p>
+<p>本地 DNS 服务器此时扮演客户端的“全权代理”。这个过程通常是它自己进行迭代查询。</p>
+<ol>
+<li>
+<p><strong>询问根服务器</strong>：它向全球 13 组根服务器之一发起查询。根服务器不给出答案，但返回一个指引：“我不知道 <code>www.example.com</code>，但你可以去问负责 <code>.com</code> 域的 <strong>顶级域（TLD）服务器</strong>。”（返回 TLD 服务器的地址）</p>
+</li>
+<li>
+<p><strong>询问 TLD 服务器</strong>：本地 DNS 服务器接着向其中一个 <code>.com</code> TLD 服务器发起查询。TLD 服务器同样不给出最终答案，但返回另一个指引：“我不知道 <code>www.example.com</code>，但 <code>example.com</code> 这个域归那台 <strong>权威服务器</strong> 管理。”（返回对应权威域名服务器的地址）</p>
+</li>
+<li>
+<p><strong>询问权威服务器</strong>：最后，本地 DNS 服务器向 <code>example.com</code> 的权威域名服务器发起查询。权威服务器是记录的“最终源头”，它会返回 <code>www.example.com</code> 对应的 A记录 或 AAAA记录，也就是 <strong>最终的IP地址</strong>。</p>
+</li>
+</ol>
+</li>
+<li>
+<p><strong>缓存并返回结果</strong></p>
+<p><strong>缓存答案</strong>：本地 DNS 服务器在拿到 IP 地址后，会将这个结果 <strong>存储在自己的缓存中</strong>。存储时间由记录中的 TTL 值决定。为后续所有向它查询相同域名的用户提供极快的响应。</p>
+<p><strong>返回客户端</strong>：将最终的 IP 地址返回给操作系统，再由操作系统传递给浏览器。</p>
+</li>
+<li>
+<p><strong>客户端建立连接</strong></p>
+<p>浏览器拿到 IP 地址后，终于可以与 <code>www.example.com</code> 的服务器<strong>建立 TCP 连接</strong>，<strong>发送 HTTP 请求</strong>，渲染并加载网页内容。</p>
+</li>
+</ol>
+<hr>
+<h3 id="2-4-常见的-DNS-记录类型">2.4 常见的 DNS 记录类型</h3>
+<ul>
+<li><strong>A</strong>：IPv4 地址（例如 <code>93.184.216.34</code>）。</li>
+<li><strong>AAAA</strong>：IPv6 地址（例如 <code>2606:2800:220:1:248:1893:25c8:1946</code>）。</li>
+<li><strong>CNAME</strong>：别名记录，把一个域名指向另一个域名（例如 <code>www.example.com</code> → <code>example.com</code>）。</li>
+<li><strong>MX</strong>：邮件交换记录，指定邮件服务器。</li>
+<li><strong>PTR</strong>：指针记录，用于反向解析（IP → 域名）。</li>
+<li><strong>NS</strong>：指定某个域名的权威 DNS 服务器。</li>
+<li><strong>TXT</strong>：文本记录（常用于 SPF、DKIM、验证等）。</li>
+</ul>
+<hr>
+<br/>
+<h2 id="3-IP-与域名的转换（常用命令）">3 IP 与域名的转换（常用命令）</h2>
+<h3 id="3-1-正向解析（域名-→-IP）">3.1 正向解析（域名 → IP）</h3>
+<p>常用命令：</p>
+<ul>
+<li>
+<p><code>dig example.com A</code> 或 <code>dig example.com AAAA</code> —— 灵活，显示完整 DNS 响应。</p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs bash">; &lt;&lt;&gt;&gt; DiG 9.11.3-1ubuntu1.18-Ubuntu &lt;&lt;&gt;&gt; example.com A<br>;; global options: +cmd<br>;; Got answer:<br>;; -&gt;&gt;HEADER&lt;&lt;- <span class="hljs-string">opcode: QUERY, status: NOERROR, id: 51645</span><br><span class="hljs-string">;; flags: qr rd ra; QUERY: 1, ANSWER: 6, AUTHORITY: 0, ADDITIONAL: 1</span><br><span class="hljs-string"></span><br><span class="hljs-string">;; OPT PSEUDOSECTION:</span><br><span class="hljs-string">; EDNS: version: 0, flags:; udp: 65494</span><br><span class="hljs-string">;; QUESTION SECTION:</span><br><span class="hljs-string">;example.com.			IN	A</span><br><span class="hljs-string"></span><br><span class="hljs-string">;; ANSWER SECTION:</span><br><span class="hljs-string">example.com.		5	IN	A	23.192.228.80</span><br><span class="hljs-string">example.com.		5	IN	A	23.215.0.138</span><br><span class="hljs-string">example.com.		5	IN	A	23.192.228.84</span><br><span class="hljs-string">example.com.		5	IN	A	23.220.75.232</span><br><span class="hljs-string">example.com.		5	IN	A	23.220.75.245</span><br><span class="hljs-string">example.com.		5	IN	A	23.215.0.136</span><br><span class="hljs-string"></span><br><span class="hljs-string">;; Query time: 8 msec</span><br><span class="hljs-string">;; SERVER: 127.0.0.53#53(127.0.0.53)</span><br><span class="hljs-string">;; WHEN: Fri Oct 10 15:54:04 CST 2025</span><br><span class="hljs-string">;; MSG SIZE  rcvd: 136</span><br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p><code>host example.com</code> —— 直接显示 IP。</p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs bash">example.com has address 23.215.0.138<br>example.com has address 23.192.228.84<br>example.com has address 23.220.75.232<br>example.com has address 23.220.75.245<br>example.com has address 23.215.0.136<br>example.com has address 23.192.228.80<br>example.com has IPv6 address 2600:1406:bc00:53::b81e:94ce<br>example.com has IPv6 address 2600:1408:ec00:36::1736:7f24<br>example.com has IPv6 address 2600:1406:5e00:6::17ce:bc12<br>example.com has IPv6 address 2600:1406:bc00:53::b81e:94c8<br>example.com has IPv6 address 2600:1408:ec00:36::1736:7f31<br>example.com has IPv6 address 2600:1406:5e00:6::17ce:bc1b<br>example.com mail is handled by 0 .<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p><code>nslookup example.com</code> —— 交互式/简单查询（逐步被 <code>dig</code>/<code>host</code> 取代）。</p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs bash">Server:		127.0.0.53<br>Address:	127.0.0.53#53<br><br>Non-authoritative answer:<br>Name:	example.com<br>Address: 23.220.75.232<br>Name:	example.com<br>Address: 23.220.75.245<br>Name:	example.com<br>Address: 23.215.0.136<br>Name:	example.com<br>Address: 23.192.228.80<br>Name:	example.com<br>Address: 23.215.0.138<br>Name:	example.com<br>Address: 23.192.228.84<br>Name:	example.com<br>Address: 2600:1406:bc00:53::b81e:94ce<br>Name:	example.com<br>Address: 2600:1408:ec00:36::1736:7f24<br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p><code>ping example.com</code> / <code>ping6</code> —— 实际向主机发送 ICMP（也会先解析域名）。</p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs bash">PING example.com (23.192.228.84) 56(84) bytes of data.<br>64 bytes from 23.192.228.84 (23.192.228.84): icmp_seq=1 ttl=128 time=164 ms<br>64 bytes from 23.192.228.84 (23.192.228.84): icmp_seq=2 ttl=128 time=164 ms<br>64 bytes from 23.192.228.84 (23.192.228.84): icmp_seq=3 ttl=128 time=164 ms<br>64 bytes from 23.192.228.84 (23.192.228.84): icmp_seq=4 ttl=128 time=163 ms<br>64 bytes from 23.192.228.84 (23.192.228.84): icmp_seq=5 ttl=128 time=161 ms<br>64 bytes from 23.192.228.84 (23.192.228.84): icmp_seq=7 ttl=128 time=161 ms<br>64 bytes from 23.192.228.84 (23.192.228.84): icmp_seq=9 ttl=128 time=161 ms<br>64 bytes from 23.192.228.84 (23.192.228.84): icmp_seq=11 ttl=128 time=164 ms<br>64 bytes from 23.192.228.84 (23.192.228.84): icmp_seq=13 ttl=128 time=167 ms<br>64 bytes from 23.192.228.84 (23.192.228.84): icmp_seq=14 ttl=128 time=166 ms<br>...<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<hr>
+<h3 id="3-2-反向解析（IP-→-域名）">3.2 反向解析（IP → 域名）</h3>
+<ul>
+<li>
+<p><code>dig -x 60.204.2.4</code> —— 查询 PTR 记录。</p>
+<p>如果反向解析不成功，可以尝试更换指定的公共 DNS，例如 <code>8.8.8.8</code>。命令改为 <code>dig -x 60.204.2.4 @8.8.8.8</code>。</p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><code class="hljs bash">; &lt;&lt;&gt;&gt; DiG 9.11.3-1ubuntu1.18-Ubuntu &lt;&lt;&gt;&gt; -x 60.204.2.4 @8.8.8.8<br>;; global options: +cmd<br>;; Got answer:<br>;; -&gt;&gt;HEADER&lt;&lt;- <span class="hljs-string">opcode: QUERY, status: NOERROR, id: 63863</span><br><span class="hljs-string">;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1</span><br><span class="hljs-string"></span><br><span class="hljs-string">;; OPT PSEUDOSECTION:</span><br><span class="hljs-string">; EDNS: version: 0, flags:; udp: 512</span><br><span class="hljs-string">;; QUESTION SECTION:</span><br><span class="hljs-string">;4.2.204.60.in-addr.arpa.	IN	PTR</span><br><span class="hljs-string"></span><br><span class="hljs-string">;; ANSWER SECTION:</span><br><span class="hljs-string">4.2.204.60.in-addr.arpa. 112	IN	PTR	ecs-60-204-2-4.compute.hwclouds-dns.com.</span><br><span class="hljs-string"></span><br><span class="hljs-string">;; Query time: 186 msec</span><br><span class="hljs-string">;; SERVER: 8.8.8.8#53(8.8.8.8)</span><br><span class="hljs-string">;; WHEN: Fri Oct 10 16:08:13 CST 2025</span><br><span class="hljs-string">;; MSG SIZE  rcvd: 105</span><br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p><code>host 60.204.2.4</code> —— 会尝试反向查找。</p>
+<p>如果反向解析不成功，可以尝试更换指定的公共 DNS，例如 <code>8.8.8.8</code>。命令改为 <code>host 60.204.2.4 8.8.8.8</code>。</p>
+  <figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs bash">Using domain server:<br>Name: 8.8.8.8<br>Address: 8.8.8.8#53<br>Aliases: <br><br>4.2.204.60.in-addr.arpa domain name pointer ecs-60-204-2-4.compute.hwclouds-dns.com.<br></code></pre></td></tr></table></figure>
+</li>
+</ul>
+<p>注意：并非所有 IP 都有 PTR 记录；有时反向解析返回空或返回 ISP/宿主单位的默认 PTR。反向解析依赖于 IP 的 <strong>拥有者/ISP</strong> 在对应的 <code>in-addr.arpa</code> 或 <code>ip6.arpa</code> 区域里设置 PTR。</p>
+<hr>
+<br/>
+<h2 id="4-Linux-系统函数实现域名和-IP-的转换">4 Linux 系统函数实现域名和 IP 的转换</h2>
+<p>现代推荐使用 <code>getaddrinfo</code>（域名到 socket 地址）和 <code>getnameinfo</code>（socket 地址到主机名）。这两者是可移植、支持 IPv4/IPv6、线程安全的现代接口。旧接口 <code>gethostbyname</code> / <code>gethostbyaddr</code> 已过时（非线程安全），只在遗留代码中看到。</p>
+<hr>
+<h3 id="4-1-getaddrinfo-freeaddrinfo">4.1 <code>getaddrinfo</code> / <code>freeaddrinfo</code></h3>
+<p><strong>函数原型</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/types.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/socket.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;netdb.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">getaddrinfo</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-type">char</span> *node,          <span class="hljs-comment">// 主机名（域名）或数字字符串（&quot;127.0.0.1&quot; / &quot;::1&quot;）</span></span><br><span class="hljs-params">                <span class="hljs-type">const</span> <span class="hljs-type">char</span> *service,       <span class="hljs-comment">// 服务名或端口号字符串（&quot;http&quot; 或 &quot;80&quot;）</span></span><br><span class="hljs-params">                <span class="hljs-type">const</span> <span class="hljs-keyword">struct</span> addrinfo *hints, <span class="hljs-comment">// 可选，指定希望的地址族/套接字类型等</span></span><br><span class="hljs-params">                <span class="hljs-keyword">struct</span> addrinfo **res)</span>;    <span class="hljs-comment">// 输出，结果链表</span><br><br><span class="hljs-type">void</span> <span class="hljs-title function_">freeaddrinfo</span><span class="hljs-params">(<span class="hljs-keyword">struct</span> addrinfo *res)</span>;<br></code></pre></td></tr></table></figure>
+<p><strong>返回值</strong>：0 表示成功；非 0 表示错误（可用 <code>gai_strerror()</code> 转为字符串）。</p>
+<p><strong>常用字段（struct addrinfo）</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">addrinfo</span> &#123;</span><br>    <span class="hljs-type">int</span> ai_flags;<br>    <span class="hljs-type">int</span> ai_family;    <span class="hljs-comment">// AF_INET / AF_INET6 / AF_UNSPEC</span><br>    <span class="hljs-type">int</span> ai_socktype;  <span class="hljs-comment">// SOCK_STREAM / SOCK_DGRAM / 0</span><br>    <span class="hljs-type">int</span> ai_protocol;  <span class="hljs-comment">// IPPROTO_TCP / IPPROTO_UDP / 0</span><br>    <span class="hljs-type">socklen_t</span> ai_addrlen;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr</span> *<span class="hljs-title">ai_addr</span>;</span><br>    <span class="hljs-type">char</span> *ai_canonname;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">addrinfo</span> *<span class="hljs-title">ai_next</span>;</span><br>&#125;;<br></code></pre></td></tr></table></figure>
+<hr>
+<p><strong>代码示例</strong>（域名 → IP，支持 IPv4/IPv6）：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// resolve.c</span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;string.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;netdb.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;arpa/inet.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/socket.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">(<span class="hljs-type">int</span> argc, <span class="hljs-type">char</span> *argv[])</span> &#123;<br>    <span class="hljs-keyword">if</span> (argc != <span class="hljs-number">2</span>) &#123;<br>        <span class="hljs-built_in">fprintf</span>(<span class="hljs-built_in">stderr</span>, <span class="hljs-string">&quot;Usage: %s hostname\n&quot;</span>, argv[<span class="hljs-number">0</span>]);<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>;<br>    &#125;<br>    <span class="hljs-type">const</span> <span class="hljs-type">char</span> *hostname = argv[<span class="hljs-number">1</span>];   <span class="hljs-comment">// 需要解析的域名</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">addrinfo</span> <span class="hljs-title">hints</span>;</span>            <span class="hljs-comment">// 指定希望的地址族/套接字类型等</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">addrinfo</span>* <span class="hljs-title">res</span>;</span>             <span class="hljs-comment">// 返回的 ip 地址列表</span><br>    <span class="hljs-type">char</span> ipstr[INET6_ADDRSTRLEN];<br><br>    <span class="hljs-built_in">memset</span>(&amp;hints, <span class="hljs-number">0</span>, <span class="hljs-keyword">sizeof</span> hints);<br>    hints.ai_family = AF_UNSPEC;      <span class="hljs-comment">// AF_INET or AF_INET6，满足 IPv4 和 IPv6</span><br>    hints.ai_socktype = SOCK_STREAM; <br><br>    <span class="hljs-type">int</span> val = getaddrinfo(hostname, <span class="hljs-literal">NULL</span>, &amp;hints, &amp;res);<br>    <span class="hljs-keyword">if</span> (val != <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-built_in">fprintf</span>(<span class="hljs-built_in">stderr</span>, <span class="hljs-string">&quot;getaddrinfo: %s\n&quot;</span>, gai_strerror(val));<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">2</span>;<br>    &#125;<br><br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;IP addresses for %s:\n\n&quot;</span>, hostname);<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">addrinfo</span>* <span class="hljs-title">p</span>;</span>  <span class="hljs-comment">// 遍历 ip 地址链表的指针</span><br>    <span class="hljs-keyword">for</span> (p = res; p != <span class="hljs-literal">NULL</span>; p = p-&gt;ai_next) &#123;<br>        <span class="hljs-type">void</span>* addr;         <span class="hljs-comment">// 存储 IP 地址二进制格式</span><br>        <span class="hljs-type">const</span> <span class="hljs-type">char</span>* ipver;  <span class="hljs-comment">// IP 地址类型，IPv4 or IPv6</span><br><br>        <span class="hljs-keyword">if</span> (p-&gt;ai_family == AF_INET) &#123; <span class="hljs-comment">// IPv4</span><br>            <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr_in</span>* <span class="hljs-title">ipv4</span> =</span> (<span class="hljs-keyword">struct</span> sockaddr_in *)p-&gt;ai_addr;<br>            addr = &amp;(ipv4-&gt;sin_addr);<br>            ipver = <span class="hljs-string">&quot;IPv4&quot;</span>;<br>        &#125; <span class="hljs-keyword">else</span> &#123; <span class="hljs-comment">// IPv6</span><br>            <span class="hljs-keyword">struct</span> sockaddr_in6* ipv6 = (<span class="hljs-keyword">struct</span> sockaddr_in6 *)p-&gt;ai_addr;<br>            addr = &amp;(ipv6-&gt;sin6_addr);<br>            ipver = <span class="hljs-string">&quot;IPv6&quot;</span>;<br>        &#125;<br>        inet_ntop(p-&gt;ai_family, addr, ipstr, <span class="hljs-keyword">sizeof</span> ipstr); <span class="hljs-comment">// IP地址 二进制转换为字符串格式</span><br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;  %s: %s\n&quot;</span>, ipver, ipstr);<br>    &#125;<br><br>    freeaddrinfo(res);  <span class="hljs-comment">// 释放空间</span><br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><strong>编译运行</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">gcc resolve.c -o resolve <br>./resolve example.com<br></code></pre></td></tr></table></figure>
+<p><strong>运行结果</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs bash">IP addresses <span class="hljs-keyword">for</span> example.com:<br><br>  IPv4: 23.215.0.136<br>  IPv4: 23.192.228.80<br>  IPv4: 23.215.0.138<br>  IPv4: 23.192.228.84<br>  IPv4: 23.220.75.232<br>  IPv4: 23.220.75.245<br>  IPv6: 2600:1406:bc00:53::b81e:94ce<br>  IPv6: 2600:1408:ec00:36::1736:7f24<br></code></pre></td></tr></table></figure>
+<hr>
+<h3 id="4-2-getnameinfo">4.2 <code>getnameinfo</code></h3>
+<p>将 <code>struct sockaddr</code>（例如来自 <code>accept()</code> 或 <code>getaddrinfo</code>）转换为主机名与服务名（反向解析）。</p>
+<p><strong>函数原型</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/socket.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;netdb.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">getnameinfo</span><span class="hljs-params">(<span class="hljs-type">const</span> <span class="hljs-keyword">struct</span> sockaddr *sa, <span class="hljs-type">socklen_t</span> salen,</span><br><span class="hljs-params">                <span class="hljs-type">char</span> *host, <span class="hljs-type">socklen_t</span> hostlen,</span><br><span class="hljs-params">                <span class="hljs-type">char</span> *serv, <span class="hljs-type">socklen_t</span> servlen,</span><br><span class="hljs-params">                <span class="hljs-type">int</span> flags)</span>;<br></code></pre></td></tr></table></figure>
+<p><strong>返回值</strong>：0 成功；非 0 使用 <code>gai_strerror</code> 获取错误信息。</p>
+<p><strong>常用 flags</strong>：</p>
+<ul>
+<li><code>NI_NAMEREQD</code>：需要名字（否则报错）；默认可返回数字地址字符串。</li>
+<li><code>NI_NUMERICHOST</code> / <code>NI_NUMERICSERV</code>：返回数字形式（跳过 DNS/服务名解析）。</li>
+</ul>
+<hr>
+<p><strong>代码示例</strong>（IP → 域名，反向解析）：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// reverse.c</span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;string.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;arpa/inet.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;netdb.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/socket.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">(<span class="hljs-type">int</span> argc, <span class="hljs-type">char</span> *argv[])</span> &#123;<br>    <span class="hljs-keyword">if</span> (argc != <span class="hljs-number">2</span>) &#123;<br>        <span class="hljs-built_in">fprintf</span>(<span class="hljs-built_in">stderr</span>, <span class="hljs-string">&quot;Usage: %s ip-address\n&quot;</span>, argv[<span class="hljs-number">0</span>]);<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>;<br>    &#125;<br>    <span class="hljs-type">const</span> <span class="hljs-type">char</span>* ip = argv[<span class="hljs-number">1</span>];<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr_storage</span> <span class="hljs-title">sa</span>;</span><br>    <span class="hljs-type">socklen_t</span> sa_len;<br>    <span class="hljs-type">char</span> host[NI_MAXHOST];<br><br>    <span class="hljs-comment">// 判断 IPv4 或 IPv6</span><br>    <span class="hljs-keyword">if</span> (<span class="hljs-built_in">strchr</span>(ip, <span class="hljs-string">&#x27;:&#x27;</span>)) &#123; <span class="hljs-comment">// 有冒号，可能 IPv6</span><br>        <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr_in6</span> *<span class="hljs-title">sa6</span> =</span> (<span class="hljs-keyword">struct</span> sockaddr_in6*)&amp;sa;<br>        sa6-&gt;sin6_family = AF_INET6;<br>        inet_pton(AF_INET6, ip, &amp;(sa6-&gt;sin6_addr));<br>        sa_len = <span class="hljs-keyword">sizeof</span>(<span class="hljs-keyword">struct</span> sockaddr_in6);<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        <span class="hljs-keyword">struct</span> sockaddr_in *sa4 = (<span class="hljs-keyword">struct</span> sockaddr_in*)&amp;sa;<br>        sa4-&gt;sin_family = AF_INET;<br>        inet_pton(AF_INET, ip, &amp;(sa4-&gt;sin_addr));<br>        sa_len = <span class="hljs-keyword">sizeof</span>(<span class="hljs-keyword">struct</span> sockaddr_in);<br>    &#125;<br><br>    <span class="hljs-type">int</span> rc = getnameinfo((<span class="hljs-keyword">struct</span> sockaddr*)&amp;sa, sa_len, host, <span class="hljs-keyword">sizeof</span> host, <span class="hljs-literal">NULL</span>, <span class="hljs-number">0</span>, NI_NAMEREQD);<br>    <span class="hljs-keyword">if</span> (rc != <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-built_in">fprintf</span>(<span class="hljs-built_in">stderr</span>, <span class="hljs-string">&quot;getnameinfo: %s\n&quot;</span>, gai_strerror(rc));<br>        <span class="hljs-keyword">return</span> <span class="hljs-number">2</span>;<br>    &#125;<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Reverse lookup: %s -&gt; %s\n&quot;</span>, ip, host);<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><strong>编译运行</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs bash">gcc reverse.c -o reverse <br>./reverse 60.204.2.4<br></code></pre></td></tr></table></figure>
+<p><strong>运行结果</strong>：</p>
+<p>如果反向解析失败，可以 <code>sudo vim /etc/resolv.conf</code>，改为 <code>nameserver 8.8.8.8</code> 或者 <code>nameserver 1.1.1.1</code>。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs bash">Reverse lookup: 60.204.2.4 -&gt; ecs-60-204-2-4.compute.hwclouds-dns.com<br></code></pre></td></tr></table></figure>
+<hr>
+<h3 id="4-3-旧接口">4.3 旧接口</h3>
+<ul>
+<li><code>struct hostent *gethostbyname(const char *name);</code></li>
+<li><code>struct hostent *gethostbyaddr(const void *addr, socklen_t len, int type);</code></li>
+</ul>
+<p>这些接口返回 <code>struct hostent</code>，但 <strong>不是线程安全</strong>（会返回静态缓冲区），并且在面对 IPv6/多记录情况时不够灵活。现代程序应使用 <code>getaddrinfo</code>/<code>getnameinfo</code>。若必须在多线程中使用遗留接口，可考虑 <code>gethostbyname_r</code>，但推荐迁移到 POSIX 的 <code>getaddrinfo</code>。</p>
+<hr>
+<h3 id="4-4-Linux-DNS-解析流程">4.4 Linux DNS 解析流程</h3>
+<figure class="highlight txt"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs txt">应用（例如：curl www.example.com）<br>      |<br>      v<br>libc resolver（/etc/resolv.conf 指定 nameserver） -&gt; 检查 /etc/hosts（由 nsswitch.conf 指定顺序）<br>      |<br>      v<br>本地缓存/转发器（可选：systemd-resolved、dnsmasq）<br>      |<br>      v<br>递归解析器（ISP 或 公共 DNS，如 1.1.1.1/8.8.8.8）<br>      |<br>      v<br>根服务器 -&gt; TLD 服务器 -&gt; 权威域名服务器（最终返回 A/AAAA/PTR 等记录）<br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Linux-%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/" class="category-chain-item">Linux 网络编程</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Linux/" class="print-no-link">#Linux</a>
+      
+        <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E3%80%81%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/" class="print-no-link">#计算机网络、网络编程</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Linux 网络编程」DNS 域名解析、域名与 IP 地址的转换</div>
+      <div>https://marisamagic.github.io/2025/10/10/20251010/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年10月10日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/10/09/20251009/" title="「Linux 网络编程」基于 TCP 的半关闭">
+                        <span class="hidden-mobile">「Linux 网络编程」基于 TCP 的半关闭</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
