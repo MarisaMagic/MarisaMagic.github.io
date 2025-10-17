@@ -1,0 +1,940 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="poll 函数的功能和使用；poll 原理；BACK_LOG 和 MAX_CLIENTS；基于 poll 的 I&#x2F;O 复用并发服务器实现。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Linux 网络编程」基于 poll 的 I&#x2F;O 复用服务器">
+<meta property="og:url" content="https://marisamagic.github.io/2025/10/16/20251016/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="poll 函数的功能和使用；poll 原理；BACK_LOG 和 MAX_CLIENTS；基于 poll 的 I&#x2F;O 复用并发服务器实现。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2025/10/17/wr670.jpg">
+<meta property="article:published_time" content="2025-10-16T14:44:32.019Z">
+<meta property="article:modified_time" content="2025-10-17T04:35:50.708Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="Linux">
+<meta property="article:tag" content="计算机网络、网络编程">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2025/10/17/wr670.jpg">
+  
+  
+  
+  <title>「Linux 网络编程」基于 poll 的 I/O 复用服务器 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2025/10/17/wr670.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Linux 网络编程」基于 poll 的 I/O 复用服务器"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2025-10-16 22:44" pubdate>
+          2025年10月16日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          42 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Linux 网络编程」基于 poll 的 I/O 复用服务器</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-回顾">0 回顾</h2>
+<p><strong>I/O 多路复用</strong> 允许单个进程同时监视多个文件描述符（如网络套接字），当其中任何一个准备就绪时（可读、可写或发生异常），进程就能得到通知。这种机制避免了为每个连接创建线程或进程的开销。</p>
+<p>I/O 多路复用的本质是：<strong>一个“消息通知”机制</strong>。它的核心工作不是同时处理多个 I/O，而是 高效地查看到哪个 I/O 已经准备就绪。</p>
+<p>相比 <strong>多进程/多线程</strong> 的并发服务器的 <strong>真正并行</strong> 的实现方式，I/O 多路复用实际上采用的是 <strong>时分复用</strong> 技术，通过高效地轮询和响应大量任务的事件。</p>
+<p><a href="https://marisamagic.github.io/2025/10/13/20251013/">「Linux 网络编程」基于 select 的 I/O 复用服务器</a></p>
+<hr>
+<br/>
+<h2 id="1-poll-函数使用和工作原理">1 poll 函数使用和工作原理</h2>
+<p><code>poll</code> 也是一个在 Unix/Linux 系统中用于 <strong>I/O 多路复用</strong> 的系统调用。它的核心功能是允许一个进程（或线程）同时监视多个文件描述符（如网络套接字、管道等），并 <strong>检查其中哪些已经就绪</strong>，可以进行非阻塞的读、写或错误处理。</p>
+<hr>
+<h3 id="1-1-poll-函数">1.1 poll 函数</h3>
+<p><strong>函数原型</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;poll.h&gt;</span></span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">poll</span><span class="hljs-params">(<span class="hljs-keyword">struct</span> pollfd *fds, <span class="hljs-type">nfds_t</span> nfds, <span class="hljs-type">int</span> timeout)</span>;<br></code></pre></td></tr></table></figure>
+<p><strong>参数说明</strong>：</p>
+<ul>
+<li><code>fds</code>: 指向 <code>pollfd</code> 结构体数组的指针</li>
+<li><code>nfds</code>: 数组中元素的数量</li>
+<li><code>timeout</code>: 超时时间（毫秒），-1 表示无限等待</li>
+</ul>
+<p><strong>返回值</strong>：</p>
+<ul>
+<li><code>&gt; 0</code>: <strong>就绪的文件描述符数量</strong></li>
+<li><code>0</code>: 超时</li>
+<li><code>-1</code>: 出错</li>
+</ul>
+<hr>
+<h3 id="1-2-pollfd-结构体">1.2 pollfd 结构体</h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">pollfd</span> &#123;</span><br>    <span class="hljs-type">int</span> fd;        <span class="hljs-comment">/* 文件描述符 */</span><br>    <span class="hljs-type">short</span> events;  <span class="hljs-comment">/* 请求的事件 */</span><br>    <span class="hljs-type">short</span> revents; <span class="hljs-comment">/* 返回的事件 */</span><br>&#125;;<br></code></pre></td></tr></table></figure>
+<p><strong>成员说明</strong>：</p>
+<ul>
+<li><code>fd</code>: 要监视的文件描述符。</li>
+<li><code>events</code>: 你关心的事件（例如，POLLIN 表示数据可读，POLLOUT 表示可以写数据）。</li>
+<li><code>revents</code>: 由内核返回的事件，表示哪些你关心的事件真正发生了。</li>
+</ul>
+<p><strong>常用事件标志</strong>：</p>
+<ul>
+<li><code>POLLIN</code>: 数据可读</li>
+<li><code>POLLOUT</code>: 数据可写</li>
+<li><code>POLLERR</code>: 发生错误</li>
+<li><code>POLLHUP</code>: 连接挂起</li>
+</ul>
+<p><strong>代码示例</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;poll.h&gt;</span></span><br><br><span class="hljs-comment">// 假设有两个套接字文件描述符：sock1 和 sock2</span><br><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">pollfd</span> <span class="hljs-title">fds</span>[2];</span><br><span class="hljs-type">int</span> ret;<br><br><span class="hljs-comment">// 设置监视 sock1 的读事件</span><br>fds[<span class="hljs-number">0</span>].fd = sock1;<br>fds[<span class="hljs-number">0</span>].events = POLLIN;<br><br><span class="hljs-comment">// 设置监视 sock2 的写事件</span><br>fds[<span class="hljs-number">1</span>].fd = sock2;<br>fds[<span class="hljs-number">1</span>].events = POLLOUT;<br><br><span class="hljs-comment">// 等待，无限期阻塞直到有事件发生</span><br>ret = poll(fds, <span class="hljs-number">2</span>, <span class="hljs-number">-1</span>);<br><br><span class="hljs-keyword">if</span> (ret &gt; <span class="hljs-number">0</span>) &#123;<br>    <span class="hljs-comment">// 检查 sock1 是否可读</span><br>    <span class="hljs-keyword">if</span> (fds[<span class="hljs-number">0</span>].revents &amp; POLLIN) &#123;<br>        <span class="hljs-comment">// 从 sock1 读取数据，这不会阻塞</span><br>        read(sock1, buffer, <span class="hljs-keyword">sizeof</span>(buffer));<br>    &#125;<br>    <span class="hljs-comment">// 检查 sock2 是否可写</span><br>    <span class="hljs-keyword">if</span> (fds[<span class="hljs-number">1</span>].revents &amp; POLLOUT) &#123;<br>        <span class="hljs-comment">// 向 sock2 写入数据</span><br>        write(sock2, data, data_len);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<hr>
+<h3 id="1-3-poll-在服务端的工作流程">1.3 poll 在服务端的工作流程</h3>
+<ol>
+<li>
+<p><strong>准备文件描述符列表</strong>： 服务端首先准备一个 <code>struct pollfd</code> 类型的数组。每个结构体包含三个主要字段：</p>
+<ul>
+<li><code>fd</code>: 要监视的文件描述符。</li>
+<li><code>events</code>: 关心的事件（例如，<code>POLLIN</code> 表示数据可读，<code>POLLOUT</code> 表示可以写数据）。</li>
+<li><code>revents</code>: 由内核返回的事件，表示哪些你关心的事件真正发生了。</li>
+</ul>
+</li>
+<li>
+<p><strong>发起系统调用</strong>： 服务端调用 <code>poll(fds, nfds, timeout)</code> 函数，将这个数组、数组长度和一个超时时间传递给内核。调用 <code>poll</code> 函数并 <strong>阻塞等待</strong> 有事件发生或超时。</p>
+</li>
+<li>
+<p><strong>内核监视与等待</strong>： 内核会挂起这个进程，直到发生以下情况之一：</p>
+<ul>
+<li>一个或多个被监视的文件描述符 <strong>就绪</strong>（有数据可读、可以写等）。</li>
+<li><strong>超时</strong>，指定的超时时间到了。</li>
+</ul>
+</li>
+<li>
+<p><strong>返回结果</strong>： <code>poll</code> 调用返回，并填充每个 <code>struct pollfd</code> 中的 <code>revents</code> 字段。服务端中遍历这个 <code>pollfd</code> 数组，检查哪些文件描述符的 <code>revents</code> 被设置了相应标志，然后<strong>对这些就绪的文件描述符进行相应的 I/O 操作</strong>。</p>
+</li>
+</ol>
+<hr>
+<h3 id="1-4-poll-相比-select-的优势">1.4 poll 相比 select 的优势</h3>
+<ol>
+<li>
+<p><strong>没有文件描述符数量限制</strong></p>
+<p>这是最核心的优势。</p>
+<ul>
+<li><strong><code>select</code></strong>：使用一个固定大小的位数组（<code>fd_set</code>）来存储文件描述符。这个数组的大小通常由 <code>FD_SETSIZE</code> 宏定义（在很多系统上，比如 1024）。这意味着 <code>select</code> 能监视的文件描述符数量 <strong>有硬性上限</strong>（例如 1024）。对于需要处理大量并发连接的高性能服务器来说，这是一个致命的缺陷。</li>
+<li><strong><code>poll</code></strong>：使用一个由 <code>struct pollfd</code> 结构体组成的数组，这个数组由调用者分配。<strong>理论上，这个数组的大小只受系统内存和进程文件描述符上限的限制</strong>。这使得 <code>poll</code> 能够轻松处理成千上万的并发连接。</li>
+</ul>
+</li>
+<li>
+<p><strong>更高效的事件处理</strong></p>
+<ul>
+<li>
+<p><strong><code>select</code></strong>：它使用三个独立的位集合（<code>readfds</code>）。每次调用时，需要设置这集合，告诉内核你关心哪些事件。当 <code>select</code> 返回时，它会 <strong>修改传入的集合</strong>，将其置为就绪的文件描述符。因此，每次调用前，你必须 <strong>重置</strong> 这些集合（通常通过 <code>FD_ZERO</code> 和 <code>FD_SET</code>），增加了额外的开销。</p>
+</li>
+<li>
+<p><strong><code>poll</code></strong>：使用一个统一的 <code>struct pollfd</code> 数组。每个结构体包含：</p>
+</li>
+</ul>
+ <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">pollfd</span> &#123;</span><br>    <span class="hljs-type">int</span> fd;        <span class="hljs-comment">// 文件描述符</span><br>    <span class="hljs-type">short</span> events;  <span class="hljs-comment">// 我们关心的事件（输入）</span><br>    <span class="hljs-type">short</span> revents; <span class="hljs-comment">// 实际发生的事件（输出）</span><br>&#125;;<br></code></pre></td></tr></table></figure>
+<p><code>events</code> 和 <code>revents</code> 是分离的。设置 <code>events</code> 来告知内核你关心什么，内核通过修改 <code>revents</code> 来返回结果。这意味着 <strong>不需要在每次调用 <code>poll</code> 时重新初始化整个数组</strong>，只需根据上一轮的结果重置 <code>revents</code> 字段（或者直接检查）即可。</p>
+</li>
+</ol>
+<hr>
+<br/>
+<h2 id="2-基于-poll-的-I-O-复用服务器">2 基于 poll 的 I/O 复用服务器</h2>
+<h3 id="2-1-头文件与宏定义">2.1 头文件与宏定义</h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;string.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/socket.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;netinet/in.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;arpa/inet.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;poll.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;errno.h&gt;</span></span><br><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> MAX_CLIENTS 1024  <span class="hljs-comment">// 最大连接数</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> BUFFER_SIZE 1024  <span class="hljs-comment">// 数据缓冲区大小</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> PORT 8080         <span class="hljs-comment">// 服务器监听端口</span></span><br></code></pre></td></tr></table></figure>
+<p><strong>参数说明</strong>：</p>
+<ul>
+<li><code>MAX_CLIENTS</code>: <strong>服务器支持的最大并发客户端数</strong></li>
+<li><code>BUFFER_SIZE</code>: 数据读写缓冲区大小</li>
+<li><code>PORT</code>: 服务器监听端口号</li>
+</ul>
+<hr>
+<h3 id="2-2-服务器-Socket-创建和地址配置">2.2 服务器 Socket 创建和地址配置</h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">server_init</span><span class="hljs-params">(<span class="hljs-type">int</span> port)</span> &#123;<br>    <span class="hljs-type">int</span> server_fd;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr_in</span> <span class="hljs-title">server_addr</span>;</span><br>    <br>    <span class="hljs-comment">// 创建TCP套接字</span><br>    <span class="hljs-keyword">if</span> ((server_fd = socket(AF_INET, SOCK_STREAM, <span class="hljs-number">0</span>)) == <span class="hljs-number">-1</span>) &#123;<br>        perror(<span class="hljs-string">&quot;socket 创建失败&quot;</span>);<br>        <span class="hljs-built_in">exit</span>(EXIT_FAILURE);<br>    &#125;<br>    <br>    <span class="hljs-comment">// 设置SO_REUSEADDR选项，避免地址占用</span><br>    <span class="hljs-type">int</span> opt = <span class="hljs-number">1</span>;<br>    <span class="hljs-keyword">if</span> (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &amp;opt, <span class="hljs-keyword">sizeof</span>(opt)) == <span class="hljs-number">-1</span>) &#123;<br>        perror(<span class="hljs-string">&quot;setsockopt 失败&quot;</span>);<br>        close(server_fd);<br>        <span class="hljs-built_in">exit</span>(EXIT_FAILURE);<br>    &#125;<br>    <br>    <span class="hljs-comment">// 配置服务器地址</span><br>    server_addr.sin_family = AF_INET;<br>    server_addr.sin_addr.s_addr = INADDR_ANY;  <span class="hljs-comment">// 监听所有网络接口</span><br>    server_addr.sin_port = htons(port);        <span class="hljs-comment">// 端口号转换为网络字节序</span><br><br>    <span class="hljs-comment">// 绑定地址和端口</span><br>    <span class="hljs-keyword">if</span> (bind(server_fd, (<span class="hljs-keyword">struct</span> sockaddr*)&amp;server_addr, <span class="hljs-keyword">sizeof</span>(server_addr)) == <span class="hljs-number">-1</span>) &#123;<br>        perror(<span class="hljs-string">&quot;bind 失败&quot;</span>);<br>        close(server_fd);<br>        <span class="hljs-built_in">exit</span>(EXIT_FAILURE);<br>    &#125;<br>    <br>    <span class="hljs-comment">// 开始监听，等待队列长度为128</span><br>    <span class="hljs-keyword">if</span> (listen(server_fd, <span class="hljs-number">128</span>) == <span class="hljs-number">-1</span>) &#123;<br>        perror(<span class="hljs-string">&quot;listen 失败&quot;</span>);<br>        close(server_fd);<br>        <span class="hljs-built_in">exit</span>(EXIT_FAILURE);<br>    &#125;<br>    <br>    <span class="hljs-keyword">return</span> server_fd;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><strong>功能说明：</strong></p>
+<ul>
+<li>
+<p><code>socket(AF_INET, SOCK_STREAM, 0)</code>：创建 TCP socket</p>
+<ul>
+<li><code>AF_INET</code>：IPv4 地址族</li>
+<li><code>SOCK_STREAM</code>：面向连接的 TCP socket</li>
+</ul>
+</li>
+<li>
+<p><code>setsockopt(SO_REUSEADDR)</code>：设置地址重用，避免&quot;client_addr already in use&quot;错误，允许快速重启服务器。</p>
+</li>
+<li>
+<p><code>bind()</code>：将 socket 绑定到指定地址和端口</p>
+<ul>
+<li><code>INADDR_ANY</code>：监听所有可用网络接口</li>
+<li><code>htons(PORT)</code>：将端口号转换为网络字节序</li>
+</ul>
+</li>
+<li>
+<p><code>listen(server_fd, 128)</code>：开始监听连接，backlog=128</p>
+</li>
+</ul>
+<hr>
+<h3 id="2-3-主函数设计">2.3 主函数设计</h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">int</span> server_fd;<br>    <span class="hljs-type">char</span> buffer[BUFFER_SIZE];<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">pollfd</span> <span class="hljs-title">fds</span>[<span class="hljs-title">MAX_CLIENTS</span> + 1];</span>  <span class="hljs-comment">// +1 给服务器套接字</span><br>    <span class="hljs-type">int</span> nfds = <span class="hljs-number">1</span>;  <span class="hljs-comment">// 初始只有服务器套接字</span><br>    <span class="hljs-type">int</span> timeout = <span class="hljs-number">-1</span>;  <span class="hljs-comment">// 无限等待</span><br>    <br>    <span class="hljs-comment">// 初始化pollfd数组</span><br>    <span class="hljs-built_in">memset</span>(fds, <span class="hljs-number">0</span>, <span class="hljs-keyword">sizeof</span>(fds));<br>    <br>    server_fd = server_init(PORT);<br>    <br>    <span class="hljs-comment">// 添加服务器套接字到监视列表</span><br>    fds[<span class="hljs-number">0</span>].fd = server_fd;<br>    fds[<span class="hljs-number">0</span>].events = POLLIN;  <span class="hljs-comment">// 监视可读事件（新连接）</span><br>    <br>    <span class="hljs-keyword">while</span> (<span class="hljs-number">1</span>) &#123;<br>        <span class="hljs-comment">// 调用poll等待事件</span><br>        <span class="hljs-type">int</span> ret = poll(fds, nfds, timeout);<br>        <br>        <span class="hljs-keyword">if</span> (ret &lt; <span class="hljs-number">0</span>) &#123;<br>            perror(<span class="hljs-string">&quot;poll 失败&quot;</span>);<br>            <span class="hljs-keyword">break</span>;<br>        &#125;<br>        <br>        <span class="hljs-keyword">if</span> (ret == <span class="hljs-number">0</span>) &#123;<br>            <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;poll 超时\n&quot;</span>);<br>            <span class="hljs-keyword">continue</span>;<br>        &#125;<br>        <br>        <span class="hljs-comment">// 遍历所有文件描述符检查事件</span><br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; nfds; i++) &#123;<br>            <span class="hljs-keyword">if</span> (fds[i].revents == <span class="hljs-number">0</span>)<br>                <span class="hljs-keyword">continue</span>;<br>                <br>            <span class="hljs-comment">// 服务器套接字就绪 - 处理新连接</span><br>            <span class="hljs-keyword">if</span> (fds[i].fd == server_fd) &#123;<br>                handle_new_connection(server_fd, fds, &amp;nfds, MAX_CLIENTS);<br>            &#125; <span class="hljs-keyword">else</span> &#123; <span class="hljs-comment">// 客户端套接字就绪 - 处理数据</span><br>                handle_client_data(fds[i].fd, fds, &amp;nfds, i, buffer);<br>            &#125;<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><strong>流程说明</strong>：</p>
+<ul>
+<li>初始化服务器和 poll 数据结构</li>
+<li>进入主事件循环</li>
+<li><strong>调用 poll 等待事件发生</strong></li>
+<li>处理超时和错误情况</li>
+<li>遍历检查所有文件描述符的事件</li>
+<li>分发事件到相应的处理函数</li>
+</ul>
+<hr>
+<h3 id="2-4-处理新的客户端连接请求">2.4 处理新的客户端连接请求</h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">void</span> <span class="hljs-title function_">handle_new_connection</span><span class="hljs-params">(<span class="hljs-type">int</span> server_fd, <span class="hljs-keyword">struct</span> pollfd fds[], <span class="hljs-type">int</span> *nfds, <span class="hljs-type">int</span> max_clients)</span> &#123;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr_in</span> <span class="hljs-title">client_addr</span>;</span><br>    <span class="hljs-type">socklen_t</span> addr_len = <span class="hljs-keyword">sizeof</span>(client_addr);<br>    <span class="hljs-type">int</span> client_fd;<br>    <br>    <span class="hljs-comment">// 接受新连接</span><br>    <span class="hljs-keyword">if</span> ((client_fd = accept(server_fd, (<span class="hljs-keyword">struct</span> sockaddr *)&amp;client_addr, &amp;addr_len)) &lt; <span class="hljs-number">0</span>) &#123;<br>        perror(<span class="hljs-string">&quot;accept&quot;</span>);<br>        <span class="hljs-keyword">return</span>;<br>    &#125;<br>    <br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;新的客户端连接, socket fd: %d, IP: %s, port: %d\n&quot;</span>,<br>           client_fd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));<br>    <br>    <span class="hljs-comment">// 检查客户端数量限制</span><br>    <span class="hljs-keyword">if</span> (*nfds &gt;= max_clients + <span class="hljs-number">1</span>) &#123;<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;连接过多, rejecting...\n&quot;</span>);<br>        close(client_fd);<br>        <span class="hljs-keyword">return</span>;<br>    &#125;<br><br>    <span class="hljs-comment">// 发送欢迎消息</span><br>    <span class="hljs-type">const</span> <span class="hljs-type">char</span> *welcome_msg = <span class="hljs-string">&quot;欢迎连接到TCP服务器！输入 &#x27;quit&#x27; 退出连接。\n&quot;</span>;<br>    send(client_fd, welcome_msg, <span class="hljs-built_in">strlen</span>(welcome_msg), <span class="hljs-number">0</span>);<br>    <br>    <span class="hljs-comment">// 添加新客户端到poll监视列表</span><br>    fds[*nfds].fd = client_fd;<br>    fds[*nfds].events = POLLIN;  <span class="hljs-comment">// 监视可读事件</span><br>    fds[*nfds].revents = <span class="hljs-number">0</span>;<br>    (*nfds)++;<br>    <br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;当前客户端数量: %d\n&quot;</span>, *nfds - <span class="hljs-number">1</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><strong>流程说明</strong>：</p>
+<ul>
+<li>接受新的客户端连接</li>
+<li>检查是否达到最大客户端限制</li>
+<li>发送欢迎消息</li>
+<li>将新客户端添加到 poll 监视列表</li>
+</ul>
+<p><strong>参数说明</strong>：</p>
+<ul>
+<li><code>server_fd</code>: 服务器监听套接字</li>
+<li><code>fds[]</code>: poll 文件描述符数组</li>
+<li><code>nfds</code>: 当前监视的文件描述符数量（指针）</li>
+<li><code>max_clients</code>: 最大客户端数</li>
+</ul>
+<hr>
+<h3 id="2-5-处理客户端数据通信">2.5 处理客户端数据通信</h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">void</span> <span class="hljs-title function_">handle_client_data</span><span class="hljs-params">(<span class="hljs-type">int</span> client_fd, <span class="hljs-keyword">struct</span> pollfd fds[], <span class="hljs-type">int</span> *nfds, <span class="hljs-type">int</span> index, <span class="hljs-type">char</span> buffer[])</span> &#123;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr_in</span> <span class="hljs-title">client_addr</span>;</span><br>    <span class="hljs-type">socklen_t</span> addr_len = <span class="hljs-keyword">sizeof</span>(client_addr);<br>    <br>    <span class="hljs-built_in">memset</span>(buffer, <span class="hljs-number">0</span>, BUFFER_SIZE);  <span class="hljs-comment">// 清空缓冲区</span><br>    <br>    <span class="hljs-type">ssize_t</span> bytes_received = recv(client_fd, buffer, BUFFER_SIZE - <span class="hljs-number">1</span>, <span class="hljs-number">0</span>); <br>    <br>    <span class="hljs-keyword">if</span> (bytes_received == <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-comment">// 客户端正常断开连接</span><br>        getpeername(client_fd, (<span class="hljs-keyword">struct</span> sockaddr*)&amp;client_addr, &amp;addr_len);<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;客户端断开连接, IP: %s, port: %d\n&quot;</span>,<br>               inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));<br>        remove_client(fds, nfds, index);<br>    &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (bytes_received &gt; <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-comment">// 处理接收到的数据</span><br>        buffer[<span class="hljs-built_in">strcspn</span>(buffer, <span class="hljs-string">&quot;\r\n&quot;</span>)] = <span class="hljs-string">&#x27;\0&#x27;</span>;  <span class="hljs-comment">// 去除换行符</span><br>        <br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;接收到客户端信息 %d: %s\n&quot;</span>, client_fd, buffer);<br><br>        <span class="hljs-comment">// 检查是否为退出命令</span><br>        <span class="hljs-keyword">if</span> (<span class="hljs-built_in">strncmp</span>(<span class="hljs-string">&quot;quit&quot;</span>, buffer, <span class="hljs-number">4</span>) == <span class="hljs-number">0</span>) &#123;<br>            <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;客户端请求断开连接\n&quot;</span>);<br>            getpeername(client_fd, (<span class="hljs-keyword">struct</span> sockaddr*)&amp;client_addr, &amp;addr_len);<br>            remove_client(fds, nfds, index);<br>            <span class="hljs-keyword">return</span>;<br>        &#125;<br>        <br>        <span class="hljs-comment">// 回显数据给客户端</span><br>        send(client_fd, buffer, <span class="hljs-built_in">strlen</span>(buffer), <span class="hljs-number">0</span>);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><strong>流程说明：</strong></p>
+<ul>
+<li>接收客户端数据</li>
+<li>处理连接断开情况</li>
+<li>处理&quot;quit&quot;退出命令</li>
+<li>回显数据给客户端</li>
+</ul>
+<p><strong>参数说明：</strong></p>
+<ul>
+<li><code>client_fd</code>: 客户端套接字描述符</li>
+<li><code>index</code>: 客户端在 fds 数组中的索引</li>
+<li><code>buffer[]</code>: 数据缓冲区</li>
+</ul>
+<hr>
+<h3 id="2-6-客户端移除">2.6 客户端移除</h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-type">void</span> <span class="hljs-title function_">remove_client</span><span class="hljs-params">(<span class="hljs-keyword">struct</span> pollfd fds[], <span class="hljs-type">int</span> *nfds, <span class="hljs-type">int</span> index)</span> &#123;<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;移除客户端 fd: %d\n&quot;</span>, fds[index].fd);<br>    <br>    <span class="hljs-comment">// 用最后一个元素覆盖要删除的元素，保持数组紧凑</span><br>    fds[index] = fds[*nfds - <span class="hljs-number">1</span>];<br>    fds[*nfds - <span class="hljs-number">1</span>].fd = <span class="hljs-number">-1</span>;<br>    fds[*nfds - <span class="hljs-number">1</span>].events = <span class="hljs-number">0</span>;<br>    fds[*nfds - <span class="hljs-number">1</span>].revents = <span class="hljs-number">0</span>;<br>    (*nfds)--;<br>    <br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;当前客户端数量: %d\n&quot;</span>, *nfds - <span class="hljs-number">1</span>);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><strong>流程说明：</strong></p>
+<ol>
+<li>关闭客户端连接</li>
+<li>从 poll 监视列表中移除客户端</li>
+<li>维护 fds 数组的紧凑性</li>
+</ol>
+<hr>
+<h3 id="2-7-完整实现代码">2.7 完整实现代码</h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;string.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/socket.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;netinet/in.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;arpa/inet.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;poll.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;errno.h&gt;</span></span><br><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> MAX_CLIENTS 1024  <span class="hljs-comment">// 同时处理的活跃连接数上限</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> BUFFER_SIZE 1024</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> PORT 8080</span><br><br><span class="hljs-comment">// 函数声明</span><br><span class="hljs-type">int</span> <span class="hljs-title function_">server_init</span><span class="hljs-params">(<span class="hljs-type">int</span> port)</span>;<br><span class="hljs-type">void</span> <span class="hljs-title function_">handle_new_connection</span><span class="hljs-params">(<span class="hljs-type">int</span> server_fd, <span class="hljs-keyword">struct</span> pollfd fds[], <span class="hljs-type">int</span> *nfds, <span class="hljs-type">int</span> max_clients)</span>;<br><span class="hljs-type">void</span> <span class="hljs-title function_">handle_client_data</span><span class="hljs-params">(<span class="hljs-type">int</span> client_fd, <span class="hljs-keyword">struct</span> pollfd fds[], <span class="hljs-type">int</span> *nfds, <span class="hljs-type">int</span> index, <span class="hljs-type">char</span> buffer[])</span>;<br><span class="hljs-type">void</span> <span class="hljs-title function_">remove_client</span><span class="hljs-params">(<span class="hljs-keyword">struct</span> pollfd fds[], <span class="hljs-type">int</span> *nfds, <span class="hljs-type">int</span> index)</span>;<br><br><span class="hljs-type">int</span> <span class="hljs-title function_">server_init</span><span class="hljs-params">(<span class="hljs-type">int</span> port)</span> &#123;<br>    <span class="hljs-type">int</span> server_fd;   <span class="hljs-comment">// 服务器端套接字文件描述符</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr_in</span> <span class="hljs-title">server_addr</span>;</span>  <span class="hljs-comment">// 配置的服务器地址</span><br>    <br>    <span class="hljs-comment">// 创建socket, IPv4, TCP</span><br>    <span class="hljs-keyword">if</span> ((server_fd = socket(AF_INET, SOCK_STREAM, <span class="hljs-number">0</span>)) == <span class="hljs-number">-1</span>) &#123;<br>        perror(<span class="hljs-string">&quot;socket 创建失败&quot;</span>);<br>        <span class="hljs-built_in">exit</span>(EXIT_FAILURE);<br>    &#125;<br>    <br>    <span class="hljs-comment">// 设置 socket 选项</span><br>    <span class="hljs-comment">// TCP 服务器被杀死后尝试重启，一段时间处于 TIME_WAIT 状态</span><br>    <span class="hljs-comment">// SO_REUSEADDR 可以使得服务器快速重启，避免服务器重启绑定同一端口出现失败</span><br>    <span class="hljs-type">int</span> opt = <span class="hljs-number">1</span>;<br>    <span class="hljs-keyword">if</span> (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR, &amp;opt, <span class="hljs-keyword">sizeof</span>(opt)) == <span class="hljs-number">-1</span>) &#123;<br>        perror(<span class="hljs-string">&quot;setsockopt 失败&quot;</span>);<br>        close(server_fd);<br>        <span class="hljs-built_in">exit</span>(EXIT_FAILURE);<br>    &#125;<br>    <br>    <span class="hljs-comment">// 配置服务器地址</span><br>    server_addr.sin_family = AF_INET;  <span class="hljs-comment">// IPv4</span><br>    server_addr.sin_addr.s_addr = INADDR_ANY;  <span class="hljs-comment">// 监听任何端口</span><br>    server_addr.sin_port = htons(port);<br><br>    <span class="hljs-comment">// 绑定地址</span><br>    <span class="hljs-keyword">if</span> (bind(server_fd, (<span class="hljs-keyword">struct</span> sockaddr*)&amp;server_addr, <span class="hljs-keyword">sizeof</span>(server_addr)) == <span class="hljs-number">-1</span>) &#123;<br>        perror(<span class="hljs-string">&quot;bind 失败&quot;</span>);<br>        close(server_fd);<br>        <span class="hljs-built_in">exit</span>(EXIT_FAILURE);<br>    &#125;<br>    <br>    <span class="hljs-comment">// 开始监听</span><br>    <span class="hljs-comment">// 这个10控制的是已完成三次握手但尚未被accept的连接队列长度</span><br>    <span class="hljs-keyword">if</span> (listen(server_fd, <span class="hljs-number">128</span>) == <span class="hljs-number">-1</span>) &#123; <span class="hljs-comment">// 设置监听数量上限</span><br>        perror(<span class="hljs-string">&quot;listen 失败&quot;</span>);<br>        close(server_fd);<br>        <span class="hljs-built_in">exit</span>(EXIT_FAILURE);<br>    &#125;<br>    <br>    <span class="hljs-keyword">return</span> server_fd;<br>&#125;<br><br><span class="hljs-type">void</span> <span class="hljs-title function_">handle_new_connection</span><span class="hljs-params">(<span class="hljs-type">int</span> server_fd, <span class="hljs-keyword">struct</span> pollfd fds[], <span class="hljs-type">int</span> *nfds, <span class="hljs-type">int</span> max_clients)</span> &#123;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr_in</span> <span class="hljs-title">client_addr</span>;</span><br>    <span class="hljs-type">socklen_t</span> addr_len = <span class="hljs-keyword">sizeof</span>(client_addr);<br>    <span class="hljs-type">int</span> client_fd;<br>    <br>    <span class="hljs-comment">// 接受新连接</span><br>    <span class="hljs-keyword">if</span> ((client_fd = accept(server_fd, (<span class="hljs-keyword">struct</span> sockaddr *)&amp;client_addr, &amp;addr_len)) &lt; <span class="hljs-number">0</span>) &#123;<br>        perror(<span class="hljs-string">&quot;accept&quot;</span>);<br>        <span class="hljs-keyword">return</span>;<br>    &#125;<br>    <br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;新的客户端连接, socket fd: %d, IP: %s, port: %d\n&quot;</span>,<br>           client_fd, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));<br>    <br>    <span class="hljs-comment">// 检查是否达到最大客户端数</span><br>    <span class="hljs-keyword">if</span> (*nfds &gt;= max_clients + <span class="hljs-number">1</span>) &#123;<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;连接过多, rejecting...\n&quot;</span>);<br>        close(client_fd);<br>        <span class="hljs-keyword">return</span>;<br>    &#125;<br><br>    <span class="hljs-comment">// 发送欢迎消息</span><br>    <span class="hljs-type">const</span> <span class="hljs-type">char</span> *welcome_msg = <span class="hljs-string">&quot;欢迎连接到TCP服务器！输入 &#x27;quit&#x27; 退出连接。\n&quot;</span>;<br>    send(client_fd, welcome_msg, <span class="hljs-built_in">strlen</span>(welcome_msg), <span class="hljs-number">0</span>);<br>    <br>    <span class="hljs-comment">// 添加新客户端到 poll 监视列表</span><br>    fds[*nfds].fd = client_fd;<br>    fds[*nfds].events = POLLIN;<br>    fds[*nfds].revents = <span class="hljs-number">0</span>;<br>    (*nfds)++;<br>    <br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;当前客户端数量: %d\n&quot;</span>, *nfds - <span class="hljs-number">1</span>);<br>&#125;<br><br><span class="hljs-type">void</span> <span class="hljs-title function_">handle_client_data</span><span class="hljs-params">(<span class="hljs-type">int</span> client_fd, <span class="hljs-keyword">struct</span> pollfd fds[], <span class="hljs-type">int</span> *nfds, <span class="hljs-type">int</span> index, <span class="hljs-type">char</span> buffer[])</span> &#123;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr_in</span> <span class="hljs-title">client_addr</span>;</span><br>    <span class="hljs-type">socklen_t</span> addr_len = <span class="hljs-keyword">sizeof</span>(client_addr);<br>    <br>    <span class="hljs-built_in">memset</span>(buffer, <span class="hljs-number">0</span>, BUFFER_SIZE);  <span class="hljs-comment">// 清空缓冲区</span><br>    <br>    <span class="hljs-type">ssize_t</span> bytes_received = recv(client_fd, buffer, BUFFER_SIZE - <span class="hljs-number">1</span>, <span class="hljs-number">0</span>); <br>    <br>    <span class="hljs-keyword">if</span> (bytes_received == <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-comment">// 客户端断开连接处理</span><br>        getpeername(client_fd, (<span class="hljs-keyword">struct</span> sockaddr*)&amp;client_addr, &amp;addr_len);<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;客户端断开连接, IP: %s, port: %d\n&quot;</span>,<br>               inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));<br>        remove_client(fds, nfds, index);<br>    &#125; <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (bytes_received &gt; <span class="hljs-number">0</span>) &#123;<br>        <span class="hljs-comment">// 去除换行符</span><br>        buffer[<span class="hljs-built_in">strcspn</span>(buffer, <span class="hljs-string">&quot;\r\n&quot;</span>)] = <span class="hljs-string">&#x27;\0&#x27;</span>;<br>        <br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;接收到客户端信息 %d: %s\n&quot;</span>, client_fd, buffer);<br><br>        <span class="hljs-comment">// 如果是 &quot;quit&quot; 命令，关闭连接</span><br>        <span class="hljs-keyword">if</span> (<span class="hljs-built_in">strncmp</span>(<span class="hljs-string">&quot;quit&quot;</span>, buffer, <span class="hljs-number">4</span>) == <span class="hljs-number">0</span>) &#123;<br>            <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;客户端请求断开连接\n&quot;</span>);<br>            getpeername(client_fd, (<span class="hljs-keyword">struct</span> sockaddr*)&amp;client_addr, &amp;addr_len);<br>            remove_client(fds, nfds, index);<br>            <span class="hljs-keyword">return</span>;<br>        &#125;<br>        <br>        <span class="hljs-comment">// 回显数据</span><br>        send(client_fd, buffer, <span class="hljs-built_in">strlen</span>(buffer), <span class="hljs-number">0</span>);<br>    &#125;<br>&#125;<br><br><span class="hljs-type">void</span> <span class="hljs-title function_">remove_client</span><span class="hljs-params">(<span class="hljs-keyword">struct</span> pollfd fds[], <span class="hljs-type">int</span> *nfds, <span class="hljs-type">int</span> index)</span> &#123;<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;移除客户端 fd: %d\n&quot;</span>, fds[index].fd);<br>    <br>    <span class="hljs-comment">// 用最后一个元素覆盖要删除的元素</span><br>    fds[index] = fds[*nfds - <span class="hljs-number">1</span>];<br>    fds[*nfds - <span class="hljs-number">1</span>].fd = <span class="hljs-number">-1</span>;<br>    fds[*nfds - <span class="hljs-number">1</span>].events = <span class="hljs-number">0</span>;<br>    fds[*nfds - <span class="hljs-number">1</span>].revents = <span class="hljs-number">0</span>;<br>    (*nfds)--;<br>    <br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;当前客户端数量: %d\n&quot;</span>, *nfds - <span class="hljs-number">1</span>);<br>&#125;<br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">int</span> server_fd; <span class="hljs-comment">// 服务器套接字</span><br>    <span class="hljs-type">char</span> buffer[BUFFER_SIZE]; <span class="hljs-comment">// 数据 I/O 临时缓冲区</span><br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">pollfd</span> <span class="hljs-title">fds</span>[<span class="hljs-title">MAX_CLIENTS</span> + 1];</span>  <span class="hljs-comment">// pollfd 数组</span><br>    <span class="hljs-type">int</span> nfds = <span class="hljs-number">1</span>;  <span class="hljs-comment">// 初始只有服务器套接字</span><br>    <span class="hljs-type">int</span> timeout = <span class="hljs-number">-1</span>;  <span class="hljs-comment">// 无限等待</span><br>    <br>    <span class="hljs-comment">// 初始化 pollfd 数组</span><br>    <span class="hljs-built_in">memset</span>(fds, <span class="hljs-number">0</span>, <span class="hljs-keyword">sizeof</span>(fds));<br>    <br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;启动基于 poll 的 I/O 复用服务器，端口: %d\n&quot;</span>, PORT);<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;最大客户端数: %d\n&quot;</span>, MAX_CLIENTS);<br><br>    server_fd = server_init(PORT);<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;服务器准备就绪，等待连接...\n&quot;</span>);<br><br>    <span class="hljs-comment">// 添加服务器套接字到监视列表</span><br>    fds[<span class="hljs-number">0</span>].fd = server_fd;<br>    fds[<span class="hljs-number">0</span>].events = POLLIN;<br>    <br>    <span class="hljs-keyword">while</span> (<span class="hljs-number">1</span>) &#123;<br>        <span class="hljs-type">int</span> ret = poll(fds, nfds, timeout);<br>        <br>        <span class="hljs-keyword">if</span> (ret &lt; <span class="hljs-number">0</span>) &#123;<br>            perror(<span class="hljs-string">&quot;poll 失败&quot;</span>);<br>            <span class="hljs-keyword">break</span>;<br>        &#125;<br>        <br>        <span class="hljs-keyword">if</span> (ret == <span class="hljs-number">0</span>) &#123;<br>            <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;poll 超时\n&quot;</span>);<br>            <span class="hljs-keyword">continue</span>;<br>        &#125;<br>        <br>        <span class="hljs-comment">// 检查所有文件描述符</span><br>        <span class="hljs-keyword">for</span> (<span class="hljs-type">int</span> i = <span class="hljs-number">0</span>; i &lt; nfds; i++) &#123;<br>            <span class="hljs-keyword">if</span> (fds[i].revents == <span class="hljs-number">0</span>)<br>                <span class="hljs-keyword">continue</span>;<br>                <br>            <span class="hljs-comment">// 服务器套接字就绪 - 新连接</span><br>            <span class="hljs-keyword">if</span> (fds[i].fd == server_fd) &#123;<br>                handle_new_connection(server_fd, fds, &amp;nfds, MAX_CLIENTS);<br>            &#125; <span class="hljs-keyword">else</span> &#123; <span class="hljs-comment">// 客户端套接字就绪</span><br>                handle_client_data(fds[i].fd, fds, &amp;nfds, i, buffer);<br>            &#125;<br>        &#125;<br>    &#125;<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<hr>
+<h2 id="3-BACK-LOG-和-MAX-CLIENTS-的关系">3 BACK_LOG 和 MAX_CLIENTS 的关系</h2>
+<h3 id="3-1-listen-server-fd-128-监听队列大小">3.1 <code>listen(server_fd, 128)</code>: 监听队列大小</h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 这个10控制的是已完成三次握手但尚未被accept的连接队列长度</span><br><span class="hljs-keyword">if</span> (listen(server_fd, <span class="hljs-number">128</span>) &lt; <span class="hljs-number">0</span>) &#123;<br>    perror(<span class="hljs-string">&quot;listen&quot;</span>);<br>    <span class="hljs-built_in">exit</span>(EXIT_FAILURE);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><strong>作用</strong>：控制内核中<strong>等待被 accept 的连接队列</strong>的最大长度</p>
+<p><strong>详细解释</strong>：</p>
+<ul>
+<li>当客户端发起连接时，完成 TCP 三次握手后，连接进入 <code>ESTABLISHED</code> 状态</li>
+<li>但此时应用程序还没有调用 <code>accept()</code> 获取这个连接</li>
+<li>这些&quot;已建立但未被接受&quot;的连接存放在内核的监听队列中</li>
+<li><code>backlog=128</code> 表示这个队列最多能存放 128 个这样的连接</li>
+</ul>
+<p><strong>队列满时的行为</strong>：</p>
+<ul>
+<li>当第11个连接完成三次握手时，内核可能：
+<ul>
+<li>直接拒绝连接（返回 RST）</li>
+<li>忽略 SYN 包，让客户端超时重传</li>
+</ul>
+</li>
+<li>具体行为取决于操作系统配置</li>
+</ul>
+<hr>
+<h3 id="3-2-MAX-CLIENTS-1024-应用程序管理的连接数">3.2 <code>MAX_CLIENTS 1024</code>: 应用程序管理的连接数</h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-meta">#<span class="hljs-keyword">define</span> MAX_CLIENTS 1024  <span class="hljs-comment">// 应用程序同时处理的活跃连接数上限</span></span><br></code></pre></td></tr></table></figure>
+<p><strong>作用</strong>：控制应用程序<strong>已经接受并正在处理</strong>的活跃连接数量</p>
+<p><strong>详细解释</strong>：</p>
+<ul>
+<li>这些是已经通过 <code>accept()</code> 获取并添加到 <code>pollfd</code> 数组中的连接</li>
+<li>应用程序需要为每个连接分配资源（内存、文件描述符等）</li>
+<li>这个限制防止应用程序资源耗尽</li>
+</ul>
+<h3 id="3-3-连接建立的生命周期">3.3 连接建立的生命周期</h3>
+<figure class="highlight scss"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs scss">客户端 SYN → 服务器 SYN-ACK → 客户端 ACK → 进入监听队列 → 被 <span class="hljs-built_in">accept</span>() → 成为活跃连接<br></code></pre></td></tr></table></figure>
+<p><strong>实际场景示例</strong>：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// 假设当前状态：</span><br><span class="hljs-comment">// - 监听队列大小：10</span><br><span class="hljs-comment">// - 最大客户端数：1024</span><br><span class="hljs-comment">// - 当前活跃连接：1000个</span><br><br><span class="hljs-comment">// 场景1：突然有20个新连接同时到达</span><br><span class="hljs-comment">// - 前10个进入监听队列（队列满）</span><br><span class="hljs-comment">// - 后10个可能被拒绝或延迟</span><br><span class="hljs-comment">// - 服务器从队列中accept前10个，现在活跃连接=1010个</span><br><br><span class="hljs-comment">// 场景2：活跃连接达到1024时</span><br><span class="hljs-keyword">if</span> (*nfds &gt;= MAX_CLIENTS + <span class="hljs-number">1</span>) &#123;  <span class="hljs-comment">// 包括服务器socket</span><br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;Too many connections, rejecting...\n&quot;</span>);<br>    close(new_client_fd);  <span class="hljs-comment">// 即使accept了也要立即关闭</span><br>    <span class="hljs-keyword">return</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>其实，backlog 大小设置既不能太小也不能太大：</p>
+<ul>
+<li><strong>太小</strong>（如 10）：在高并发场景下容易丢连接</li>
+<li><strong>太大</strong>：浪费内核内存，且可能掩盖性能问题</li>
+<li><strong>推荐</strong>：128-1024，根据预期并发连接数调整</li>
+</ul>
+<hr>
+<br/>
+<h2 id="4-I-O-复用服务器测试">4 I/O 复用服务器测试</h2>
+<h3 id="4-1-测试客户端代码">4.1 测试客户端代码</h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><code class="hljs c"><span class="hljs-comment">// client.c</span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdio.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;stdlib.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;string.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;unistd.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;sys/socket.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;netinet/in.h&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;arpa/inet.h&gt;</span></span><br><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> SERVER_IP <span class="hljs-string">&quot;127.0.0.1&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> PORT 8080</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> BUFFER_SIZE 1024</span><br><br><span class="hljs-type">int</span> <span class="hljs-title function_">main</span><span class="hljs-params">()</span> &#123;<br>    <span class="hljs-type">int</span> sock;<br>    <span class="hljs-class"><span class="hljs-keyword">struct</span> <span class="hljs-title">sockaddr_in</span> <span class="hljs-title">server_addr</span>;</span><br>    <span class="hljs-type">char</span> buffer[BUFFER_SIZE];<br>    <br>    <span class="hljs-comment">// 创建socket</span><br>    <span class="hljs-keyword">if</span> ((sock = socket(AF_INET, SOCK_STREAM, <span class="hljs-number">0</span>)) == <span class="hljs-number">-1</span>) &#123;<br>        perror(<span class="hljs-string">&quot;socket 创建失败&quot;</span>);<br>        <span class="hljs-built_in">exit</span>(<span class="hljs-number">1</span>);<br>    &#125;<br>    <br>    <span class="hljs-comment">// 配置服务器地址</span><br>    <span class="hljs-built_in">memset</span>(&amp;server_addr, <span class="hljs-number">0</span>, <span class="hljs-keyword">sizeof</span>(server_addr));<br>    server_addr.sin_family = AF_INET;<br>    server_addr.sin_port = htons(PORT);<br>    inet_pton(AF_INET, SERVER_IP, &amp;server_addr.sin_addr);<br>    <br>    <span class="hljs-comment">// 连接服务器</span><br>    <span class="hljs-keyword">if</span> (connect(sock, (<span class="hljs-keyword">struct</span> sockaddr*)&amp;server_addr, <br>                <span class="hljs-keyword">sizeof</span>(server_addr)) == <span class="hljs-number">-1</span>) &#123;<br>        perror(<span class="hljs-string">&quot;连接服务器失败&quot;</span>);<br>        close(sock);<br>        <span class="hljs-built_in">exit</span>(<span class="hljs-number">1</span>);<br>    &#125;<br>    <br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;已连接到服务器 %s:%d\n&quot;</span>, SERVER_IP, PORT);<br>    <br>    <span class="hljs-comment">// 接收欢迎消息</span><br>    <span class="hljs-built_in">memset</span>(buffer, <span class="hljs-number">0</span>, BUFFER_SIZE);<br>    recv(sock, buffer, BUFFER_SIZE - <span class="hljs-number">1</span>, <span class="hljs-number">0</span>);<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;%s&quot;</span>, buffer);<br>    <br>    <span class="hljs-comment">// 与服务器交互</span><br>    <span class="hljs-keyword">while</span> (<span class="hljs-number">1</span>) &#123;<br>        <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;请输入消息: &quot;</span>);<br>        fgets(buffer, BUFFER_SIZE, <span class="hljs-built_in">stdin</span>);<br>        <br>        <span class="hljs-comment">// 发送消息</span><br>        send(sock, buffer, <span class="hljs-built_in">strlen</span>(buffer), <span class="hljs-number">0</span>);<br>        <br>        <span class="hljs-comment">// 检查是否退出</span><br>        <span class="hljs-keyword">if</span> (<span class="hljs-built_in">strncmp</span>(buffer, <span class="hljs-string">&quot;quit&quot;</span>, <span class="hljs-number">4</span>) == <span class="hljs-number">0</span>) &#123;<br>            <span class="hljs-keyword">break</span>;<br>        &#125;<br>        <br>        <span class="hljs-comment">// 接收回复</span><br>        <span class="hljs-built_in">memset</span>(buffer, <span class="hljs-number">0</span>, BUFFER_SIZE);<br>        <span class="hljs-type">ssize_t</span> bytes_received = recv(sock, buffer, BUFFER_SIZE - <span class="hljs-number">1</span>, <span class="hljs-number">0</span>);<br>        <span class="hljs-keyword">if</span> (bytes_received &gt; <span class="hljs-number">0</span>) &#123;<br>            buffer[bytes_received] = <span class="hljs-string">&#x27;\0&#x27;</span>;<br>            <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;服务器回复: %s\n&quot;</span>, buffer);<br>        &#125;<br>    &#125;<br>    <br>    close(sock);<br>    <span class="hljs-built_in">printf</span>(<span class="hljs-string">&quot;连接已关闭\n&quot;</span>);<br><br>    <span class="hljs-keyword">return</span> <span class="hljs-number">0</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<hr>
+<h3 id="4-2-运行测试">4.2 运行测试</h3>
+<p><strong>编译和运行</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs bash">gcc poll_server.c -o poll_server<br>gcc client.c -o client<br><br><span class="hljs-comment"># 在终端运行服务器</span><br>./poll_server<br><br><span class="hljs-comment"># 在多个其他终端中运行客户端</span><br>./client<br></code></pre></td></tr></table></figure>
+<p><strong>测试结果</strong>：</p>
+<p><strong>服务端输出</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><code class="hljs bash">marisa@marisa-virtual-machine:~/poll_test$ ./poll_server <br>启动基于 poll 的 I/O 复用服务器，端口: 8080<br>最大客户端数: 1024<br>服务器准备就绪，等待连接...<br>新的客户端连接, socket fd: 4, IP: 127.0.0.1, port: 45660<br>当前客户端数量: 1<br>接收到客户端信息 4: hello 1<br>新的客户端连接, socket fd: 5, IP: 127.0.0.1, port: 40788<br>当前客户端数量: 2<br>接收到客户端信息 5: hello 2<br>接收到客户端信息 5: This is marisamagic<br>新的客户端连接, socket fd: 6, IP: 127.0.0.1, port: 57924<br>当前客户端数量: 3<br>接收到客户端信息 4: quit<br>客户端请求断开连接<br>移除客户端 fd: 4<br>当前客户端数量: 2<br>接收到客户端信息 6: hello 3<br>接收到客户端信息 6: This is alicedoll<br>接收到客户端信息 6: quit<br>客户端请求断开连接<br>移除客户端 fd: 6<br>当前客户端数量: 1<br>接收到客户端信息 5: quit<br>客户端请求断开连接<br>移除客户端 fd: 5<br>当前客户端数量: 0<br>^C<br></code></pre></td></tr></table></figure>
+<p><strong>客户端 1 输出</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs bash">marisa@marisa-virtual-machine:~/poll_test$ ./client<br>已连接到服务器 127.0.0.1:8080<br>欢迎连接到TCP服务器！输入 <span class="hljs-string">&#x27;quit&#x27;</span> 退出连接。<br>请输入消息: hello 1<br>服务器回复: hello 1<br>请输入消息: quit<br>连接已关闭<br></code></pre></td></tr></table></figure>
+<p><strong>客户端 2 输出</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs bash">marisa@marisa-virtual-machine:~/poll_test$ ./client<br>已连接到服务器 127.0.0.1:8080<br>欢迎连接到TCP服务器！输入 <span class="hljs-string">&#x27;quit&#x27;</span> 退出连接。<br>请输入消息: hello 2<br>服务器回复: hello 2<br>请输入消息: This is marisamagic<br>服务器回复: This is marisamagic<br>请输入消息: quit<br>连接已关闭<br></code></pre></td></tr></table></figure>
+<p><strong>客户端 3 输出</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs bash">marisa@marisa-virtual-machine:~/poll_test$ ./client<br>已连接到服务器 127.0.0.1:8080<br>欢迎连接到TCP服务器！输入 <span class="hljs-string">&#x27;quit&#x27;</span> 退出连接。<br>请输入消息: hello 3<br>服务器回复: hello 3<br>请输入消息: This is alicedoll<br>服务器回复: This is alicedoll<br>请输入消息: quit<br>连接已关闭<br></code></pre></td></tr></table></figure>
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Linux-%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/" class="category-chain-item">Linux 网络编程</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/Linux/" class="print-no-link">#Linux</a>
+      
+        <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C%E3%80%81%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/" class="print-no-link">#计算机网络、网络编程</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Linux 网络编程」基于 poll 的 I/O 复用服务器</div>
+      <div>https://marisamagic.github.io/2025/10/16/20251016/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2025年10月16日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2025/10/13/20251013/" title="「Linux 网络编程」基于 select 的 I/O 复用服务器">
+                        <span class="hidden-mobile">「Linux 网络编程」基于 select 的 I/O 复用服务器</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
