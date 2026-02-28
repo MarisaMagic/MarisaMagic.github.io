@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2026/02/27/1kz5t2.png">
 <meta property="article:published_time" content="2026-02-27T08:22:41.361Z">
-<meta property="article:modified_time" content="2026-02-27T14:41:33.914Z">
+<meta property="article:modified_time" content="2026-02-28T06:27:27.848Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="C++">
 <meta property="article:tag" content="Qt5">
@@ -254,7 +254,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.1k 字
+          3.9k 字
         
       </span>
     
@@ -265,7 +265,7 @@
         
         
         
-          10 分钟
+          33 分钟
         
       </span>
     
@@ -369,13 +369,207 @@
  <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-comment">// 初始化 UI 设置</span><br>ui-&gt;horizontalLayout-&gt;<span class="hljs-built_in">setAlignment</span>(Qt::AlignVCenter);<br>ui-&gt;horizontalLayout-&gt;<span class="hljs-built_in">setContentsMargins</span>(<span class="hljs-number">4</span>, <span class="hljs-number">0</span>, <span class="hljs-number">4</span>, <span class="hljs-number">0</span>);<br>ui-&gt;horizontalLayout-&gt;<span class="hljs-built_in">setSpacing</span>(<span class="hljs-number">6</span>);  <span class="hljs-comment">// 控件间距</span><br>ui-&gt;horizontalLayout-&gt;<span class="hljs-built_in">setAlignment</span>(ui-&gt;btnSelectFile, Qt::AlignVCenter); <span class="hljs-comment">// 核心区域分别设置控件垂直居中对齐</span><br>ui-&gt;horizontalLayout-&gt;<span class="hljs-built_in">setAlignment</span>(ui-&gt;musicSlider, Qt::AlignVCenter);<br>ui-&gt;horizontalLayout-&gt;<span class="hljs-built_in">setAlignment</span>(ui-&gt;btnPlayMusic, Qt::AlignVCenter);<br>ui-&gt;horizontalLayout_2-&gt;<span class="hljs-built_in">setContentsMargins</span>(<span class="hljs-number">4</span>, <span class="hljs-number">2</span>, <span class="hljs-number">4</span>, <span class="hljs-number">2</span>);  <span class="hljs-comment">// 左上右下边距</span><br>ui-&gt;horizontalLayout_2-&gt;<span class="hljs-built_in">setSpacing</span>(<span class="hljs-number">0</span>);                    <span class="hljs-comment">// 控件间距</span><br>ui-&gt;verticalLayout-&gt;<span class="hljs-built_in">setContentsMargins</span>(<span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>);      <span class="hljs-comment">// 主布局无边距</span><br>ui-&gt;verticalLayout-&gt;<span class="hljs-built_in">setSpacing</span>(<span class="hljs-number">0</span>);                        <span class="hljs-comment">// titleBar 和 widget 间距为 0</span><br><span class="hljs-built_in">setWindowFlags</span>(Qt::FramelessWindowHint | <span class="hljs-built_in">windowFlags</span>()); <span class="hljs-comment">// 无边框窗口</span><br><span class="hljs-built_in">setAttribute</span>(Qt::WA_TranslucentBackground); <span class="hljs-comment">// 透明背景</span><br>ui-&gt;currentTime-&gt;<span class="hljs-built_in">setText</span>(<span class="hljs-string">&quot;0:00/0:00&quot;</span>);<br>ui-&gt;btnSelectFile-&gt;<span class="hljs-built_in">setIcon</span>(<span class="hljs-built_in">QIcon</span>(<span class="hljs-string">&quot;:/icons/selectFile.svg&quot;</span>));<br>ui-&gt;btnSelectFile-&gt;<span class="hljs-built_in">setIconSize</span>(<span class="hljs-built_in">QSize</span>(<span class="hljs-number">24</span>, <span class="hljs-number">24</span>));<br>ui-&gt;btnSelectFile-&gt;<span class="hljs-built_in">setText</span>(<span class="hljs-string">&quot;&quot;</span>);<br>ui-&gt;btnPlayMusic-&gt;<span class="hljs-built_in">setIcon</span>(<span class="hljs-built_in">QIcon</span>(<span class="hljs-string">&quot;:/icons/pause.svg&quot;</span>));<br>ui-&gt;btnPlayMusic-&gt;<span class="hljs-built_in">setIconSize</span>(<span class="hljs-built_in">QSize</span>(<span class="hljs-number">24</span>, <span class="hljs-number">24</span>));<br>ui-&gt;btnPlayMusic-&gt;<span class="hljs-built_in">setText</span>(<span class="hljs-string">&quot;&quot;</span>);<br>ui-&gt;btnClose-&gt;<span class="hljs-built_in">setIcon</span>(<span class="hljs-built_in">QIcon</span>(<span class="hljs-string">&quot;:/icons/close.svg&quot;</span>));<br>ui-&gt;btnClose-&gt;<span class="hljs-built_in">setIconSize</span>(<span class="hljs-built_in">QSize</span>(<span class="hljs-number">12</span>, <span class="hljs-number">12</span>));<br>ui-&gt;btnClose-&gt;<span class="hljs-built_in">setText</span>(<span class="hljs-string">&quot;&quot;</span>);<br></code></pre></td></tr></table></figure>
 </li>
 </ol>
+<hr>
 <h2 id="2-基础按钮功能">2 基础按钮功能</h2>
+<p>音乐播放器最核心也是最基础的功能是 选择音频文件 和 音频文件的播放。</p>
+<p>需要在创建的窗口类头文件中添加必要的音频播放器成员变量：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;QMediaPlayer&gt;</span></span><br><br>QMediaPlayer* m_player;<br></code></pre></td></tr></table></figure>
+<p>播放器在构造函数中的初始化：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++">MusicPlayer::<span class="hljs-built_in">MusicPlayer</span>(QWidget *parent)<br>    : <span class="hljs-built_in">QMainWindow</span>(parent)<br>    , <span class="hljs-built_in">ui</span>(<span class="hljs-keyword">new</span> Ui::MusicPlayer)<br>    , <span class="hljs-built_in">m_player</span>(<span class="hljs-keyword">new</span> <span class="hljs-built_in">QMediaPlayer</span>(<span class="hljs-keyword">this</span>))<br>&#123;<br>    ui-&gt;<span class="hljs-built_in">setupUi</span>(<span class="hljs-keyword">this</span>);<br><br>    <span class="hljs-comment">// ... 其余代码</span><br>&#125;<br></code></pre></td></tr></table></figure>
+<p>将 <code>this</code> 作为父对象传入，利用 Qt 的父子对象机制，当 <code>MusicPlayer</code> 销毁时，<code>QMediaPlayer</code> 也会自动销毁，无需手动 <code>delete</code>。</p>
 <h3 id="2-1-选择音频文件功能的实现">2.1 选择音频文件功能的实现</h3>
+<p>在窗口的构造函数中，需要添加 选择文件按钮 的点击按钮信号 <code>QPushButton::clicked</code> 与对应槽函数 <code>onSelectFile</code> 的连接：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">connect</span>(ui-&gt;btnSelectFile, &amp;QPushButton::clicked, <span class="hljs-keyword">this</span>, &amp;MusicPlayer::onSelectFile);<br></code></pre></td></tr></table></figure>
+<p>当用户点击按钮 <code>btnSelectFile</code>，会发出 <code>QPushButton::clicked</code> 信号。信号接收的对象是 <code>this</code>（创建的窗口类 <code>MusicPlayer</code>），接收信号后调用 <code>MusicPlayer::onSelectFile</code> 选择文件函数。</p>
+<p><code>MusicPlayer::onSelectFile</code> 函数实现：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">MusicPlayer::onSelectFile</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>    QString filePath = QFileDialog::<span class="hljs-built_in">getOpenFileName</span>(<br>        <span class="hljs-keyword">this</span>, <span class="hljs-string">&quot;选择音频文件&quot;</span>, <span class="hljs-string">&quot;&quot;</span>,<br>        <span class="hljs-string">&quot;音频文件 (*.mp3 *.wav *.flac *.ogg *.m4a *.aac *.wma *.opus);;MP3 文件 (*.mp3);;WAV 文件 (*.wav);;FLAC 文件 (*.flac);;所有文件 (*)&quot;</span><br>    );<br>    <span class="hljs-keyword">if</span>(!filePath.<span class="hljs-built_in">isEmpty</span>())&#123;<br>        m_player-&gt;<span class="hljs-built_in">setMedia</span>(<span class="hljs-built_in">QMediaContent</span>(QUrl::<span class="hljs-built_in">fromLocalFile</span>(filePath)));<br>        <span class="hljs-comment">// 先初始化进度条范围 (0, 0)</span><br>        <span class="hljs-comment">// 等发出 durationChanged 信号再更新进度条范围</span><br>        ui-&gt;musicSlider-&gt;<span class="hljs-built_in">setRange</span>(<span class="hljs-number">0</span>, <span class="hljs-number">0</span>);<br>        ui-&gt;musicSlider-&gt;<span class="hljs-built_in">setValue</span>(<span class="hljs-number">0</span>);<br>        ui-&gt;currentTime-&gt;<span class="hljs-built_in">setText</span>(<span class="hljs-string">&quot;0:00/0:00&quot;</span>);<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<ol>
+<li>
+<p><strong>文件对话框的调用</strong><br>
+使用 <code>QFileDialog::getOpenFileName()</code> 弹出系统原生的文件选择对话框。函数接受几个参数:</p>
+<ul>
+<li>父窗口指针 (<code>this</code>)</li>
+<li>对话框标题 (“选择音频文件”)</li>
+<li>初始目录 (空字符串表示使用默认)</li>
+<li>文件过滤器 (支持多种音频格式)</li>
+</ul>
+</li>
+<li>
+<p><strong>多格式支持</strong><br>
+文件过滤器字符串使用双分号 <code>;;</code> 分隔不同的过滤选项。</p>
+</li>
+<li>
+<p><strong>媒体加载</strong><br>
+当用户成功选择文件后(<code>filePath</code> 不为空)，通过 <code>m_player-&gt;setMedia()</code> 将本地文件路径转换为 <code>QMediaContent</code> 对象并加载到播放器中。使用 <code>QUrl::fromLocalFile()</code> 是为了正确处理文件路径格式。</p>
+</li>
+<li>
+<p><strong>UI 状态初始化</strong><br>
+加载新文件后,需要重置播放器的 UI 状态:</p>
+<ul>
+<li>将进度条范围设为 <code>(0, 0)</code>，因为此时还不知道音频时长</li>
+<li>将进度条值设为 <code>0</code></li>
+<li>重置时间显示为 <code>&quot;0:00/0:00&quot;</code></li>
+</ul>
+</li>
+</ol>
+<p>当媒体文件加载完成后,播放器会自动触发 <code>durationChanged</code> 信号,届时会更新正确的时长范围。</p>
 <h3 id="2-2-播放音频文件功能的实现">2.2 播放音频文件功能的实现</h3>
+<p>在窗口的构造函数中，需要添加 播放/暂停按钮 的点击按钮信号 <code>QPushButton::clicked</code> 与对应槽函数 <code>onPlayMusic</code> 的连接：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">connect</span>(ui-&gt;btnPlayMusic, &amp;QPushButton::clicked, <span class="hljs-keyword">this</span>, &amp;MusicPlayer::onPlayMusic);<br></code></pre></td></tr></table></figure>
+<p><code>onPlayMusic()</code> 函数的实现：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">MusicPlayer::onPlayMusic</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>    <span class="hljs-keyword">if</span>(m_player-&gt;<span class="hljs-built_in">state</span>() == QMediaPlayer::PlayingState)&#123;<br>        m_player-&gt;<span class="hljs-built_in">pause</span>();<br>    &#125;<span class="hljs-keyword">else</span>&#123;<br>        m_player-&gt;<span class="hljs-built_in">play</span>();<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>还需要监听播放器的状态变化，以便动态更新按钮图标。此处用一个匿名函数实现播放/暂停按钮状态的切换:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">connect</span>(m_player, &amp;QMediaPlayer::stateChanged, <span class="hljs-keyword">this</span>, [=](QMediaPlayer::State state)&#123;<br>    <span class="hljs-keyword">if</span>(state == QMediaPlayer::PlayingState)&#123;<br>        ui-&gt;btnPlayMusic-&gt;<span class="hljs-built_in">setIcon</span>(<span class="hljs-built_in">QIcon</span>(<span class="hljs-string">&quot;:/icons/play.svg&quot;</span>));<br>    &#125;<span class="hljs-keyword">else</span>&#123;<br>        ui-&gt;btnPlayMusic-&gt;<span class="hljs-built_in">setIcon</span>(<span class="hljs-built_in">QIcon</span>(<span class="hljs-string">&quot;:/icons/pause.svg&quot;</span>));<br>    &#125;<br>&#125;);<br></code></pre></td></tr></table></figure>
+<ol>
+<li>
+<p><strong>状态判断</strong><br>
+通过 <code>m_player-&gt;state()</code> 获取当前播放器状态，判断是否正在播放。</p>
+</li>
+<li>
+<p><strong>播放/暂停切换</strong></p>
+<ul>
+<li>如果当前正在播放 <code>PlayingState</code>，则调用 <code>pause()</code> 暂停播放</li>
+<li>如果当前不在播放状态，则调用 <code>play()</code> 开始播放</li>
+</ul>
+</li>
+<li>
+<p><strong>图标自动更新</strong><br>
+在构造函数中已经连接了 <code>stateChanged</code> 信号，当播放器状态改变时，按钮图标会自动更新。</p>
+</li>
+</ol>
+<hr>
 <h2 id="3-进度条设计">3 进度条设计</h2>
-<h3 id="3-1-进度条和音频文件的同步">3.1 进度条和音频文件的同步</h3>
+<p>进度条需要实时显示播放进度，支持用户点击和拖拽来跳转播放位置。</p>
+<h3 id="3-1-进度条和播放器的同步">3.1 进度条和播放器的同步</h3>
+<p>进度条与播放器的同步是一个 <strong>双向绑定问题</strong>：播放器播放时需要更新进度条，用户操作进度条时又需要控制播放器。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 播放器相关</span><br><span class="hljs-built_in">connect</span>(m_player, &amp;QMediaPlayer::positionChanged, <span class="hljs-keyword">this</span>, &amp;MusicPlayer::onPositionChanged);<br><span class="hljs-built_in">connect</span>(m_player, &amp;QMediaPlayer::durationChanged, <span class="hljs-keyword">this</span>, &amp;MusicPlayer::onDurationChanged);<br><br><span class="hljs-comment">// 进度条相关</span><br><span class="hljs-built_in">connect</span>(ui-&gt;musicSlider, &amp;QSlider::sliderPressed, <span class="hljs-keyword">this</span>, &amp;MusicPlayer::onSliderPressed);<br><span class="hljs-built_in">connect</span>(ui-&gt;musicSlider, &amp;QSlider::sliderReleased, <span class="hljs-keyword">this</span>, &amp;MusicPlayer::onSliderReleased);<br><span class="hljs-built_in">connect</span>(ui-&gt;musicSlider, &amp;Slider::sliderClicked, <span class="hljs-keyword">this</span>, &amp;MusicPlayer::onSliderClicked);<br></code></pre></td></tr></table></figure>
+<ul>
+<li><strong>播放器 → UI</strong>: <code>positionChanged</code> 和 <code>durationChanged</code> 用于更新进度条</li>
+<li><strong>进度条 → 播放器</strong>: <code>sliderPressed</code>、<code>sliderReleased</code> 和 <code>sliderClicked</code> 用于处理用户操作</li>
+</ul>
+<hr>
+<p>当音频播放时，播放器会持续发出 <code>QMediaPlayer::positionChanged</code> 信号。每当发出 <code>QMediaPlayer::positionChanged</code> 信号，需要对进度条的位置以及播放时间进行更新：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">MusicPlayer::onPositionChanged</span><span class="hljs-params">(qint64 position)</span></span><br><span class="hljs-function"></span>&#123;<br>    <span class="hljs-comment">// 更新进度条,在拖拽过程中不更新</span><br>    <span class="hljs-keyword">if</span>(!m_sliderPressed)&#123;<br>        ui-&gt;musicSlider-&gt;<span class="hljs-built_in">blockSignals</span>(<span class="hljs-literal">true</span>);<br>        ui-&gt;musicSlider-&gt;<span class="hljs-built_in">setValue</span>(<span class="hljs-built_in">static_cast</span>&lt;<span class="hljs-type">int</span>&gt;(position));<br>        ui-&gt;musicSlider-&gt;<span class="hljs-built_in">blockSignals</span>(<span class="hljs-literal">false</span>);<br>    &#125;<br><br>    <span class="hljs-comment">// 更新时间</span><br>    ui-&gt;currentTime-&gt;<span class="hljs-built_in">setText</span>(<span class="hljs-built_in">getFormatTime</span>(position) + <span class="hljs-string">&quot;/&quot;</span> + <span class="hljs-built_in">getFormatTime</span>(m_player-&gt;<span class="hljs-built_in">duration</span>()));<br>&#125;<br></code></pre></td></tr></table></figure>
+<ol>
+<li>
+<p><strong>拖拽状态检查</strong><br>
+在播放时，如果处于拖拽进度条的过程中，暂时不更新进度条的状态，由用户掌控进度条的状态。只有松开进度条滑块后才继续由播放器更新进度条状态。</p>
+<p>进度条更新了位置，进度条发出 <code>MusicPlayer::onSliderReleased</code> 信号，进而再导致播放器位置的改变。如果不设置这个 <code>m_sliderPressed</code> 判断是否处于拖拽过程中的条件，在持续拖动进度条的过程中，音频跳转操作会出现明显的杂音。</p>
+</li>
+<li>
+<p><strong>信号阻塞机制</strong><br>
+此外，还设置了 <strong>信号阻塞机制</strong>。使用 <code>blockSignals(true/false)</code> 包裹 <code>setValue()</code> 调用：</p>
+<ul>
+<li>阻止 <code>setValue()</code> 触发 <code>valueChanged</code> 信号</li>
+<li>避免引发不必要的信号级联,提高性能</li>
+<li>防止进度条更新时触发其他副作用</li>
+</ul>
+</li>
+<li>
+<p><strong>时间显示更新</strong><br>
+无论是否在拖拽，时间显示始终更新。使用 <code>getFormatTime()</code> 工具函数将毫秒转换为易读的时间格式，显示为&quot;当前时间/总时长&quot;的形式：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-comment">// 获取格式化时间</span><br><span class="hljs-function"><span class="hljs-type">static</span> QString <span class="hljs-title">getFormatTime</span><span class="hljs-params">(qint64 totalMs)</span></span>&#123;<br>    <span class="hljs-keyword">if</span>(totalMs &lt; <span class="hljs-number">0</span>)&#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;0:00&quot;</span>;<br>    &#125;<br><br>    <span class="hljs-type">int</span> totalSeconds = <span class="hljs-built_in">static_cast</span>&lt;<span class="hljs-type">int</span>&gt;(totalMs / <span class="hljs-number">1000</span>);<br>    <span class="hljs-type">int</span> hours = totalSeconds / <span class="hljs-number">3600</span>;<br>    <span class="hljs-type">int</span> minutes = (totalSeconds % <span class="hljs-number">3600</span>) / <span class="hljs-number">60</span>;<br>    <span class="hljs-type">int</span> seconds = totalSeconds % <span class="hljs-number">60</span>;<br><br>    <span class="hljs-keyword">if</span>(hours &gt; <span class="hljs-number">0</span>)&#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">QString</span>(<span class="hljs-string">&quot;%1:%2:%3&quot;</span>)<br>                .<span class="hljs-built_in">arg</span>(hours)<br>                .<span class="hljs-built_in">arg</span>(minutes, <span class="hljs-number">2</span>, <span class="hljs-number">10</span>, <span class="hljs-built_in">QChar</span>(<span class="hljs-string">&#x27;0&#x27;</span>))<br>                .<span class="hljs-built_in">arg</span>(seconds, <span class="hljs-number">2</span>, <span class="hljs-number">10</span>, <span class="hljs-built_in">QChar</span>(<span class="hljs-string">&#x27;0&#x27;</span>));<br>    &#125;<span class="hljs-keyword">else</span>&#123;<br>        <span class="hljs-keyword">return</span> <span class="hljs-built_in">QString</span>(<span class="hljs-string">&quot;%1:%2&quot;</span>)<br>                .<span class="hljs-built_in">arg</span>(minutes)<br>                .<span class="hljs-built_in">arg</span>(seconds, <span class="hljs-number">2</span>, <span class="hljs-number">10</span>, <span class="hljs-built_in">QChar</span>(<span class="hljs-string">&#x27;0&#x27;</span>));<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+</li>
+</ol>
+<hr>
+<p>当音频文件加载完成后，播放器会发出 <code>durationChanged</code> 信号:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">MusicPlayer::onDurationChanged</span><span class="hljs-params">(qint64 duration)</span></span><br><span class="hljs-function"></span>&#123;<br>    ui-&gt;musicSlider-&gt;<span class="hljs-built_in">setRange</span>(<span class="hljs-number">0</span>, <span class="hljs-built_in">static_cast</span>&lt;<span class="hljs-type">int</span>&gt;(duration));<br>    ui-&gt;currentTime-&gt;<span class="hljs-built_in">setText</span>(<span class="hljs-string">&quot;0:00/&quot;</span> + <span class="hljs-built_in">getFormatTime</span>(duration));<br>&#125;<br></code></pre></td></tr></table></figure>
+<ol>
+<li><strong>设置进度条范围</strong>：将范围设为 <code>0</code> 到音频总时长(毫秒)，使进度条的值直接对应播放位置</li>
+<li><strong>显示总时长</strong>：更新时间标签，显示&quot;0:00/总时长&quot;</li>
+</ol>
 <h3 id="3-2-点击进度条功能的实现">3.2 点击进度条功能的实现</h3>
-<h2 id="4-其它功能">4 其它功能</h2>
+<p>拖拽交互涉及三个关键状态:按下、拖动中、释放。</p>
+<ol>
+<li>
+<p><strong>进度条滑块按下时</strong></p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">MusicPlayer::onSliderPressed</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>    m_sliderPressed = <span class="hljs-literal">true</span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>设置 <code>m_sliderPressed</code> 标志位为 <code>true</code>，通知 <code>onPositionChanged()</code> 函数暂停更新进度条，将进度条的控制权交给用户。</p>
+</li>
+<li>
+<p><strong>进度条滑块释放时</strong></p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">MusicPlayer::onSliderReleased</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>    m_sliderPressed = <span class="hljs-literal">false</span>;<br>    m_player-&gt;<span class="hljs-built_in">setPosition</span>(ui-&gt;musicSlider-&gt;<span class="hljs-built_in">value</span>());<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>当进度条滑块松开：</p>
+<ul>
+<li>重置 <code>m_sliderPressed</code> 标志位，继续由播放器自动更新进度条</li>
+<li>调用 <code>setPosition()</code> 将播放器跳转到用户拖拽后的位置</li>
+</ul>
+</li>
+</ol>
+<hr>
+<p>标准的 <code>QSlider</code> 类其实是 <strong>不支持</strong> 进度条点击跳转的，此时需要通过自定义一个 <code>Slider</code> 子类，重写鼠标点击事件，扩展进度条跳转的功能。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">ifndef</span> SLIDER_H</span><br><span class="hljs-meta">#<span class="hljs-keyword">define</span> SLIDER_H</span><br><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;QSlider&gt;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;QMouseEvent&gt;</span></span><br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">Slider</span> : <span class="hljs-keyword">public</span> QSlider<br>&#123;<br>    Q_OBJECT<br><span class="hljs-keyword">public</span>:<br>    <span class="hljs-function"><span class="hljs-keyword">explicit</span> <span class="hljs-title">Slider</span><span class="hljs-params">(QWidget *parent = <span class="hljs-literal">nullptr</span>)</span></span>;<br><br>signals:<br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">sliderClicked</span><span class="hljs-params">(qint64 value)</span></span>;  <span class="hljs-comment">// 点击轨道时发出目标位置</span><br><br><span class="hljs-keyword">protected</span>:<br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">mousePressEvent</span><span class="hljs-params">(QMouseEvent *ev)</span> <span class="hljs-keyword">override</span></span>;<br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">mouseReleaseEvent</span><span class="hljs-params">(QMouseEvent *ev)</span> <span class="hljs-keyword">override</span></span>;<br><br><span class="hljs-keyword">private</span>:<br>    <span class="hljs-type">bool</span> m_isPressed = <span class="hljs-literal">false</span>;<br>    QPoint m_pressPoint;  <span class="hljs-comment">// 点击位置坐标点</span><br>&#125;;<br><br><span class="hljs-meta">#<span class="hljs-keyword">endif</span> <span class="hljs-comment">// SLIDER_H</span></span><br></code></pre></td></tr></table></figure>
+<p>通过重写鼠标点击事件，当鼠标在点击的位置松开时发送 自定义 <code>sliderClicked</code> 信号，调用对应槽函数实现播放器位置的跳转：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&quot;slider.h&quot;</span></span><br><span class="hljs-meta">#<span class="hljs-keyword">include</span> <span class="hljs-string">&lt;QtMath&gt;</span></span><br><br>Slider::<span class="hljs-built_in">Slider</span>(QWidget *parent) : <span class="hljs-built_in">QSlider</span>(parent)<br>&#123;<br><br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">Slider::mousePressEvent</span><span class="hljs-params">(QMouseEvent *ev)</span></span><br><span class="hljs-function"></span>&#123;<br>    m_isPressed = <span class="hljs-literal">true</span>;  <span class="hljs-comment">// 设置点击中状态</span><br>    m_pressPoint = ev-&gt;<span class="hljs-built_in">pos</span>();  <span class="hljs-comment">// 记录点击的位置</span><br>    QSlider::<span class="hljs-built_in">mousePressEvent</span>(ev);<br>&#125;<br><br><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">Slider::mouseReleaseEvent</span><span class="hljs-params">(QMouseEvent *ev)</span></span><br><span class="hljs-function"></span>&#123;<br>    <span class="hljs-keyword">if</span>(m_isPressed)&#123;<br>        <span class="hljs-keyword">if</span>(<span class="hljs-built_in">orientation</span>() == Qt::Horizontal)&#123;<br>            <span class="hljs-type">int</span> current_x = ev-&gt;<span class="hljs-built_in">pos</span>().<span class="hljs-built_in">x</span>();<br>            <span class="hljs-type">int</span> end_x = m_pressPoint.<span class="hljs-built_in">x</span>();<br>            <span class="hljs-keyword">if</span>(<span class="hljs-built_in">qAbs</span>(current_x - end_x) &lt; <span class="hljs-number">3</span>)&#123;  <span class="hljs-comment">// 点击进度条和松开的位置相差不到 3 个像素，视为点击进度条位置，跳转播放位置</span><br>                qint64 mx = <span class="hljs-built_in">maximum</span>();<br>                <span class="hljs-keyword">if</span>(mx &gt; <span class="hljs-number">0</span> &amp;&amp; <span class="hljs-built_in">width</span>() &gt; <span class="hljs-number">0</span>)&#123;<br>                    <span class="hljs-comment">// 视为点击跳转，发出自定义信号，跳转到转换后的位置</span><br>                    <span class="hljs-built_in">emit</span>(<span class="hljs-built_in">sliderClicked</span>(<span class="hljs-built_in">static_cast</span>&lt;qint64&gt;(mx * (<span class="hljs-built_in">static_cast</span>&lt;<span class="hljs-type">double</span>&gt;(end_x) / <span class="hljs-built_in">width</span>()))));<br>                &#125;<br>            &#125;<br>        &#125;<span class="hljs-keyword">else</span>&#123;<br>            <span class="hljs-type">int</span> current_y = ev-&gt;<span class="hljs-built_in">pos</span>().<span class="hljs-built_in">y</span>();<br>            <span class="hljs-type">int</span> end_y = m_pressPoint.<span class="hljs-built_in">y</span>();<br>            <span class="hljs-keyword">if</span>(<span class="hljs-built_in">qAbs</span>(current_y - end_y) &lt; <span class="hljs-number">3</span>)&#123;<br>                qint64 mx = <span class="hljs-built_in">maximum</span>();<br>                <span class="hljs-keyword">if</span>(mx &gt; <span class="hljs-number">0</span> &amp;&amp; <span class="hljs-built_in">height</span>() &gt; <span class="hljs-number">0</span>)&#123;<br>                    <span class="hljs-built_in">emit</span>(<span class="hljs-built_in">sliderClicked</span>(<span class="hljs-built_in">static_cast</span>&lt;qint64&gt;(mx * (<span class="hljs-built_in">static_cast</span>&lt;<span class="hljs-type">double</span>&gt;(<span class="hljs-built_in">height</span>() - end_y) / <span class="hljs-built_in">height</span>()))));<br>                &#125;<br>            &#125;<br>        &#125;<br>    &#125;<br>    m_isPressed = <span class="hljs-literal">false</span>;  <span class="hljs-comment">// 重置点击状态</span><br>    QSlider::<span class="hljs-built_in">mouseReleaseEvent</span>(ev);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>在 <code>Slider::mouseReleaseEvent</code> 中：</p>
+<ol>
+<li>
+<p><strong>状态检查</strong></p>
+<p>首先检查 <code>m_isPressed</code> 标志位，确保这是一个完整的&quot;按下→释放&quot;操作。在 <code>mousePressEvent</code> 中 <code>m_isPressed</code> 标志位被设置为 <code>true</code>，并记录了点击的坐标位置。</p>
+</li>
+<li>
+<p><strong>水平与垂直的不同处理</strong></p>
+<ul>
+<li><strong>水平进度条</strong>：比较 X 坐标,使用 <code>width()</code> 计算比例</li>
+<li><strong>垂直进度条</strong>：比较 Y 坐标,使用 <code>height()</code> 计算比例</li>
+</ul>
+</li>
+<li>
+<p><strong>位置差异计算</strong></p>
+ <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-type">int</span> current_x = ev-&gt;<span class="hljs-built_in">pos</span>().<span class="hljs-built_in">x</span>();<br><span class="hljs-type">int</span> end_x = m_pressPoint.<span class="hljs-built_in">x</span>();<br><span class="hljs-keyword">if</span>(<span class="hljs-built_in">qAbs</span>(current_x - end_x) &lt; <span class="hljs-number">3</span>)&#123;<br></code></pre></td></tr></table></figure>
+<ul>
+<li><code>ev-&gt;pos().x()</code>: 获取鼠标释放时的 X 坐标</li>
+<li><code>m_pressPoint.x()</code>: 获取鼠标按下时的 X 坐标</li>
+<li><code>qAbs()</code>: 使用 Qt 提供的绝对值函数计算距离</li>
+</ul>
+<p>当位置相差小于 3 个像素，视为点击进度条。3 个像素是一个在容错性和准确性之间取得平衡的中间值。</p>
+</li>
+<li>
+<p><strong>坐标转换:从像素到播放位置</strong></p>
+ <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs cpp">qint64 mx = <span class="hljs-built_in">maximum</span>();<br><span class="hljs-keyword">if</span>(mx &gt; <span class="hljs-number">0</span> &amp;&amp; <span class="hljs-built_in">width</span>() &gt; <span class="hljs-number">0</span>)&#123;<br>    <span class="hljs-built_in">emit</span>(<span class="hljs-built_in">sliderClicked</span>(<span class="hljs-built_in">static_cast</span>&lt;qint64&gt;(mx * (<span class="hljs-built_in">static_cast</span>&lt;<span class="hljs-type">double</span>&gt;(end_x) / <span class="hljs-built_in">width</span>()))));<br>&#125;<br></code></pre></td></tr></table></figure>
+<p><strong>步骤 1: 获取进度条最大值</strong></p>
+ <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs cpp">qint64 mx = <span class="hljs-built_in">maximum</span>();<br></code></pre></td></tr></table></figure>
+<p>在音乐播放器中，这个值就是音频的总时长(毫秒)。例如，一首 3 分钟的歌曲<code>maximum()</code> 返回 180000。</p>
+<p><strong>步骤 2: 边界检查</strong></p>
+ <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-keyword">if</span>(mx &gt; <span class="hljs-number">0</span> &amp;&amp; <span class="hljs-built_in">width</span>() &gt; <span class="hljs-number">0</span>)&#123;<br></code></pre></td></tr></table></figure>
+<p>确保不会发生除零错误，也避免在进度条未初始化时进行无意义的计算。</p>
+<p><strong>步骤 3: 比例计算</strong></p>
+ <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-built_in">static_cast</span>&lt;<span class="hljs-type">double</span>&gt;(end_x) / <span class="hljs-built_in">width</span>()<br></code></pre></td></tr></table></figure>
+<ul>
+<li><code>end_x</code>: 点击位置的 X 坐标(像素)</li>
+<li><code>width()</code>: 进度条的总宽度(像素)</li>
+<li>比值: 得到点击位置在进度条上的百分比</li>
+</ul>
+<p><strong>举例说明:</strong></p>
+<ul>
+<li>进度条宽度 400 像素</li>
+<li>点击位置 X = 100</li>
+<li>比例 = 100 / 400 = 0.25 (即 25% 的位置)</li>
+</ul>
+<p><strong>步骤 4: 转换为实际值</strong></p>
+ <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs cpp">mx * (<span class="hljs-built_in">static_cast</span>&lt;<span class="hljs-type">double</span>&gt;(end_x) / <span class="hljs-built_in">width</span>())<br></code></pre></td></tr></table></figure>
+<p>将百分比乘以最大值，得到实际的播放位置:</p>
+<p><strong>步骤 5: 发出信号</strong></p>
+ <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-built_in">emit</span>(<span class="hljs-built_in">sliderClicked</span>(<span class="hljs-built_in">static_cast</span>&lt;qint64&gt;(...)));<br></code></pre></td></tr></table></figure>
+<p>通过自定义信号 <code>sliderClicked</code> 将计算出的位置传递给外部:</p>
+ <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs c++">signals:<br>    <span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">sliderClicked</span><span class="hljs-params">(qint64 value)</span></span>;  <span class="hljs-comment">// 点击轨道时发出目标位置</span><br></code></pre></td></tr></table></figure>
+</li>
+<li>
+<p><strong>垂直进度条的特殊处理</strong></p>
+ <figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs cpp"><span class="hljs-built_in">emit</span>(<span class="hljs-built_in">sliderClicked</span>(<span class="hljs-built_in">static_cast</span>&lt;qint64&gt;(mx * (<span class="hljs-built_in">static_cast</span>&lt;<span class="hljs-type">double</span>&gt;(<span class="hljs-built_in">height</span>() - end_y) / <span class="hljs-built_in">height</span>()))));<br></code></pre></td></tr></table></figure>
+<p>用 <code>height() - end_y</code> 而不是直接用 <code>end_y</code> 是因为屏幕坐标系的原点在<strong>左上角</strong>:</p>
+<ul>
+<li>Y 坐标向下递增</li>
+<li>但进度条的值应该是从下到上递增</li>
+</ul>
+<p>通过 <code>height() - end_y</code> 进行坐标系转换,确保点击进度条底部时值为 0,点击顶部时值为最大值。</p>
+</li>
+</ol>
+<hr>
+<p>自定义 <code>Slider</code> 类发出一个自定义 <code>sliderClicked</code> 信号，调用槽函数 <code>onSliderClicked</code>:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">MusicPlayer::onSliderClicked</span><span class="hljs-params">(qint64 value)</span></span><br><span class="hljs-function"></span>&#123;<br>    m_player-&gt;<span class="hljs-built_in">setPosition</span>(value);<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>自定义 <code>sliderClicked</code> 信号传递的是鼠标点击的位置。对应槽函数接收点击位置的值，直接将播放器跳转到对应位置。</p>
+<hr>
 
                 
               </div>
