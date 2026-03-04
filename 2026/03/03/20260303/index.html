@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2026/02/27/1kz5t2.png">
 <meta property="article:published_time" content="2026-03-03T08:57:22.200Z">
-<meta property="article:modified_time" content="2026-03-04T14:42:59.882Z">
+<meta property="article:modified_time" content="2026-03-04T15:53:58.589Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="C++">
 <meta property="article:tag" content="Qt5">
@@ -254,7 +254,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          845 字
+          1.4k 字
         
       </span>
     
@@ -265,7 +265,7 @@
         
         
         
-          8 分钟
+          12 分钟
         
       </span>
     
@@ -353,6 +353,28 @@
 <p>重写一下 <code>mouseDoubleClickEvent</code> 事件，使其在鼠标左键双击当前组件（标题栏）时，可以发出自定义 <code>doubleClicked()</code> 信号，进而实现双击标题栏来回切换窗口最大化和非最大化状态：</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">TitleBar::mouseDoubleClickEvent</span><span class="hljs-params">(QMouseEvent *event)</span></span><br><span class="hljs-function"></span>&#123;<br>    <span class="hljs-keyword">if</span> (event-&gt;<span class="hljs-built_in">button</span>() == Qt::LeftButton) &#123;<br>        <span class="hljs-function">emit <span class="hljs-title">doubleClicked</span><span class="hljs-params">()</span></span>;<br>    &#125;<br>    QWidget::<span class="hljs-built_in">mouseDoubleClickEvent</span>(event);<br>&#125;<br></code></pre></td></tr></table></figure>
 <hr>
+<h2 id="2-播放控制栏信号与槽">2 播放控制栏信号与槽</h2>
+<h3 id="2-1-音乐的播放和暂停">2.1 音乐的播放和暂停</h3>
+<p><img src="https://sukicdn.com/wyx/i/2026/03/04/1p27nk.gif" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt=""></p>
+<p>这部分功能在窗口类 MusicPlayer 中包含如下信号与槽链接：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">connect</span>(ui-&gt;playControlBar, &amp;PlayControlBar::playPauseClicked, <span class="hljs-keyword">this</span>, [<span class="hljs-keyword">this</span>]()&#123;<br>    <span class="hljs-keyword">if</span>(m_player-&gt;<span class="hljs-built_in">state</span>() == QMediaPlayer::PlayingState)&#123;<br>        m_player-&gt;<span class="hljs-built_in">pause</span>();<br>    &#125;<span class="hljs-keyword">else</span>&#123;<br>        m_player-&gt;<span class="hljs-built_in">play</span>();<br>    &#125;<br>&#125;);<br></code></pre></td></tr></table></figure>
+<p><code>m_player</code> 是创建的窗口类中一个 <code>QMediaPlayer</code> 类型的播放器成员变量，用于加载音频，进行音频的播放。</p>
+<p><code>playControlBar</code> 是一个自定义 PlayControlBar 类。<code>PlayControlBar::playPauseClicked</code> 信号在点击 <code>playControlBar</code> 中的 <code>btnPlayPause</code> 按钮时发出。</p>
+<p>在 PlayControlBar 中相关的信号与槽连接如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">connect</span>(ui-&gt;btnPlayPause, &amp;QPushButton::clicked, <span class="hljs-keyword">this</span>, &amp;PlayControlBar::onPlayPauseClicked);<br></code></pre></td></tr></table></figure>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">PlayControlBar::onPlayPauseClicked</span><span class="hljs-params">()</span></span><br><span class="hljs-function"></span>&#123;<br>    <span class="hljs-function">emit <span class="hljs-title">playPauseClicked</span><span class="hljs-params">()</span></span>;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>当点击这个播放控制栏中的 <code>btnPlayPause</code> 按钮时，会发出 <code>QPushButton::clicked</code> 信号，然后当前播放控制栏会调用 <code>PlayControlBar::onPlayPauseClicked()</code> 函数。这个函数的行为就是发出自定义 <code>PlayControlBar::playPauseClicked</code> 信号。</p>
+<p>上述这些信号与槽连接实现了点击 播放控制栏中的 <code>btnPlayPause</code> 按钮 来控制播放器 播放状态 和 暂停状态的切换。</p>
+<hr>
+<p>在 PlayControlBar 类中，还有一个用于切换 <code>btnPlayPause</code> 按钮图标的函数。当播放器 <code>m_player</code> 处于播放状态时，点击按钮后需要播放器暂停，此时需要切换成暂停的图标；反之亦然。</p>
+<p>用于切换 <code>btnPlayPause</code> 按钮图标的成员函数 <code>PlayControlBar::updatePlayState</code> 如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-function"><span class="hljs-type">void</span> <span class="hljs-title">PlayControlBar::updatePlayState</span><span class="hljs-params">(<span class="hljs-type">bool</span> isPlaying)</span></span><br><span class="hljs-function"></span>&#123;<br>    <span class="hljs-comment">// 更新播放/暂停按钮图标</span><br>    <span class="hljs-keyword">if</span> (isPlaying) &#123;<br>        ui-&gt;btnPlayPause-&gt;<span class="hljs-built_in">setIcon</span>(<span class="hljs-built_in">QIcon</span>(<span class="hljs-string">&quot;:/icons/play.svg&quot;</span>));<br>    &#125; <span class="hljs-keyword">else</span> &#123;<br>        ui-&gt;btnPlayPause-&gt;<span class="hljs-built_in">setIcon</span>(<span class="hljs-built_in">QIcon</span>(<span class="hljs-string">&quot;:/icons/pause.svg&quot;</span>));<br>    &#125;<br>&#125;<br></code></pre></td></tr></table></figure>
+<p>在窗口的 <code>m_player</code> 成员发生状态变化时，需要调用函数以切换 <code>playControlBar</code> 中的 <code>btnPlayPause</code> 按钮的图标。涉及的信号与槽连接如下：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs c++"><span class="hljs-built_in">connect</span>(m_player, &amp;QMediaPlayer::stateChanged, <span class="hljs-keyword">this</span>, [<span class="hljs-keyword">this</span>](QMediaPlayer::State state)&#123;<br>    ui-&gt;playControlBar-&gt;<span class="hljs-built_in">updatePlayState</span>(state == QMediaPlayer::PlayingState);<br>    ui-&gt;musicListView-&gt;<span class="hljs-built_in">setCurrentPlaying</span>(m_currentIndex, state == QMediaPlayer::PlayingState);<br>&#125;);<br></code></pre></td></tr></table></figure>
+<blockquote>
+<p><code>ui-&gt;musicListView-&gt;setCurrentPlaying(m_currentIndex, state == QMediaPlayer::PlayingState);</code> 是和音乐列表相关的内容，后续会有解析。</p>
+</blockquote>
+<p>窗口的 <code>m_player</code> 成员发生状态变化发出 <code>QMediaPlayer::stateChanged</code> 信号，携带一个 <code>QMediaPlayer::State</code> 类型的状态参数，然后调用 <code>playControlBar</code> 的 <code>updatePlayState</code> 成员函数，以切换播放控制栏中的播放按钮图标。</p>
 
                 
               </div>
