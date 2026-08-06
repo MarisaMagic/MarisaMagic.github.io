@@ -1,0 +1,835 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Agent 的四大核心组件（LLM、工具系统、记忆系统、规划模块）；System Prompt 与模型选型；工具调用「决策与执行分离」；MCP 协议；短期&#x2F;长期记忆与记忆衰减；CoT&#x2F;ToT 与 Plan-and-Execute&#x2F;ReAct；Agent 运行主循环。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「AI Agent」Agent 的基本架构由哪些核心组件构成？">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/06/20260806_Agent%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%9E%B6%E6%9E%84/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="Agent 的四大核心组件（LLM、工具系统、记忆系统、规划模块）；System Prompt 与模型选型；工具调用「决策与执行分离」；MCP 协议；短期&#x2F;长期记忆与记忆衰减；CoT&#x2F;ToT 与 Plan-and-Execute&#x2F;ReAct；Agent 运行主循环。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/94c4b632983b1be03ea96ad762cca615.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/b6bc3a9b47c5014bf7601485a0300524.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/7cf48eef352ea705ad05b3ec974c756a.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/8669b51e12285ab3f9eb49a2ab2b6464.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/be1f702d1ab79bcd71e6910fe5d83425.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/812d5b1692914e94b30088261cf31f14.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/8ff26036df8db359f4896aebf31cf62a.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/b44e7a65f49be5adb3fa132ee81117f4.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/97dbb02b0164e6f14227891cdfb09b2d.png">
+<meta property="article:published_time" content="2026-08-06T06:55:45.364Z">
+<meta property="article:modified_time" content="2026-08-06T07:15:17.921Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.xiaolincoding.com/picgo/94c4b632983b1be03ea96ad762cca615.png">
+  
+  
+  
+  <title>「AI Agent」Agent 的基本架构由哪些核心组件构成？ - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2025/01/10/3lgax.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「AI Agent」Agent 的基本架构由哪些核心组件构成？"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-06 14:55" pubdate>
+          2026年8月6日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.9k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          33 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「AI Agent」Agent 的基本架构由哪些核心组件构成？</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<blockquote>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/agent/2_components.html">2. Agent 的基本架构由哪些核心组件构成？</a>，用于记录与总结 AI Agent 相关的核心面试知识点。</p>
+</blockquote>
+<hr>
+<h2 id="1-Agent-的四大核心组件（总览）">1 Agent 的四大核心组件（总览）</h2>
+<p>Agent 的四大核心组件可以概括为：<strong>LLM、工具系统、记忆系统、规划模块</strong>。</p>
+<p>缺了任何一个，Agent 都跑不起来：</p>
+<ul>
+<li><strong>LLM 是整个系统的大脑</strong>，负责理解任务、做出决策——下一步是继续思考、调用工具，还是直接给出最终答案；</li>
+<li><strong>工具系统让 Agent 能跟外部世界交互</strong>，搜索、执行代码、调 API；</li>
+<li><strong>记忆系统让 Agent 在任务执行中保持状态</strong>，不会做到一半「失忆」；</li>
+<li><strong>规划模块负责把复杂目标拆解成可执行的步骤</strong>，让 Agent 能应对复杂任务。</li>
+</ul>
+<p>如果把这套系统类比成一家公司，角色分工会非常清晰：<strong>LLM 是老板</strong>，所有决策都要经过它拍板；<strong>工具系统是外包执行团队</strong>，老板说「去搜这个」「去发这封邮件」，它们负责真正干活；<strong>记忆系统是公司档案室</strong>，负责各种信息的存档和调档；<strong>规划模块是项目经理</strong>，拿到一个大目标后把它拆成一张可执行的任务单。</p>
+<hr>
+<h2 id="2-LLM-核心：Agent-的大脑">2 LLM 核心：Agent 的大脑</h2>
+<h3 id="2-1-LLM-负责什么">2.1 LLM 负责什么</h3>
+<p>LLM 是整个 Agent 的大脑。所有输入——用户的指令、工具返回的结果、记忆里调出来的内容——最终都要经过它来理解和决策。它负责判断：<strong>下一步该做什么？</strong> 是继续推理、调用某个工具？还是已经可以给出最终答案？</p>
+<p>没有 LLM，其他三个组件就是一堆零件，没有人来统一指挥。</p>
+<h3 id="2-2-容易被忽略的-System-Prompt">2.2 容易被忽略的 System Prompt</h3>
+<p>很多人把注意力都放在「模型」上，却忽略了一个同样重要的东西：<strong>System Prompt（系统提示词）</strong>。</p>
+<p>Agent 开始工作之前，System Prompt 就已经定义好了它的 <strong>角色、行为边界、输出格式要求</strong> 等等。</p>
+<p>比如做一个客服 Agent，System Prompt 里会写「你是一个专业的客服助手，只回答产品相关问题，遇到不确定的信息要如实说明，不要编造答案」。这段话看似简单，却直接决定了 Agent 的「人格」和行为准则，写得好不好会直接影响 Agent 的表现。实际工程中，System Prompt 的调优往往占开发时间的相当大一部分，因为它是我们能最直接控制 Agent 行为的抓手。</p>
+<h3 id="2-3-模型选型：不是越贵越好">2.3 模型选型：不是越贵越好</h3>
+<p>Agent 选哪个模型做大脑，也是一门学问。不同模型之间的差异远比想象中大：</p>
+<ol>
+<li>
+<p><strong>推理能力</strong>：Agent 需要做多步决策，模型的推理能力直接决定了它能不能正确拆解任务、选对工具。像 GPT-4o、Claude Sonnet 这类模型在复杂推理上表现更好，但调用成本也更高。</p>
+</li>
+<li>
+<p><strong>推理模型（Reasoning Model）的趋势</strong>：专门为推理优化的模型越来越多，比如 OpenAI 的 o1/o3 系列、DeepSeek-R1，它们在做复杂任务拆解和多步决策时表现更佳，特别适合做 Agent 的大脑。但代价是延迟更高、token 消耗更大，不是所有场景都适合用。一个常见的工程做法是：<strong>用推理能力强的大模型做核心决策（任务规划、关键判断），用更快更便宜的小模型做简单任务（意图分类、格式提取）</strong>，按环节搭配。</p>
+</li>
+<li>
+<p><strong>工具调用稳定性</strong>：有些模型生成的 JSON 格式经常出错、参数乱填，导致工具调用失败，在生产环境里会带来大量重试和 token 浪费。</p>
+</li>
+<li>
+<p><strong>上下文窗口大小</strong>：Agent 每一步的工具返回结果都要塞进上下文，一个复杂任务跑十几步下来，上下文很容易撑满。窗口太小的话，后面的步骤就「看不到」前面发生了什么。</p>
+</li>
+</ol>
+<p>所以模型选择不是「越贵越好」，而是要根据<strong>任务复杂度、延迟要求、成本预算</strong>做权衡。</p>
+<p><img src="https://cdn.xiaolincoding.com/picgo/94c4b632983b1be03ea96ad762cca615.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="LLM 是 Agent 的核心"></p>
+<p><img src="https://cdn.xiaolincoding.com/picgo/b6bc3a9b47c5014bf7601485a0300524.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Agent 的模型选型"></p>
+<hr>
+<h2 id="3-工具系统：与外部世界交互的唯一入口">3 工具系统：与外部世界交互的唯一入口</h2>
+<h3 id="3-1-工具打破-LLM-的三大局限">3.1 工具打破 LLM 的三大局限</h3>
+<p>LLM 本质上是一个「语言处理器」：不能上网、不能读文件、不能执行代码。而工具系统正是 Agent 与外部世界交互的 <strong>唯一入口</strong>。搜索引擎、数据库查询、代码执行器、发邮件的 API……任何能用函数封装的能力，都可以变成 Agent 的工具。</p>
+<h3 id="3-2-工具是怎么定义的">3.2 工具是怎么定义的</h3>
+<p>以 OpenAI function calling 格式为例，定义工具其实很简单，只需要告诉模型三件事：<strong>工具叫什么名、能做什么事、需要哪些参数</strong>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs python">tools = [<br>    &#123;<br>        <span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;function&quot;</span>,<br>        <span class="hljs-string">&quot;function&quot;</span>: &#123;<br>            <span class="hljs-string">&quot;name&quot;</span>: <span class="hljs-string">&quot;search_web&quot;</span>,<br>            <span class="hljs-string">&quot;description&quot;</span>: <span class="hljs-string">&quot;搜索互联网上的信息&quot;</span>,<br>            <span class="hljs-string">&quot;parameters&quot;</span>: &#123;<br>                <span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;object&quot;</span>,<br>                <span class="hljs-string">&quot;properties&quot;</span>: &#123;<br>                    <span class="hljs-string">&quot;query&quot;</span>: &#123;<br>                        <span class="hljs-string">&quot;type&quot;</span>: <span class="hljs-string">&quot;string&quot;</span>,<br>                        <span class="hljs-string">&quot;description&quot;</span>: <span class="hljs-string">&quot;搜索关键词&quot;</span><br>                    &#125;<br>                &#125;,<br>                <span class="hljs-string">&quot;required&quot;</span>: [<span class="hljs-string">&quot;query&quot;</span>]<br>            &#125;<br>        &#125;<br>    &#125;<br>]<br><br><span class="hljs-comment"># LLM 决定调用工具时，会返回类似这样的结构：</span><br><span class="hljs-comment"># &#123;&quot;tool_call&quot;: &#123;&quot;name&quot;: &quot;search_web&quot;, &quot;arguments&quot;: &#123;&quot;query&quot;: &quot;2024年大模型最新进展&quot;&#125;&#125;&#125;</span><br><span class="hljs-comment"># 真正执行搜索的是我们自己的代码，结果再反馈给 LLM</span><br></code></pre></td></tr></table></figure>
+<p>可以看到，工具定义里<strong>没有一行执行逻辑</strong>，只有「名字、描述、参数说明」，本质上就是一份说明书。模型读了这份说明书，自己决定该调哪个工具、参数填什么，然后把决策以 JSON 格式返回，由我们的代码真正执行。这个「<strong>决策与执行分离</strong>」的设计，是理解工具调用最核心的一点——<strong>模型负责决定做什么，程序负责真正执行</strong>。</p>
+<h3 id="3-3-工具描述的质量直接影响表现">3.3 工具描述的质量直接影响表现</h3>
+<p>还有一个容易被忽略的点：模型是根据 <code>description</code> 来判断「什么时候该用这个工具」的。如果描述写得含糊、有歧义，模型就可能在不该用的时候调用它，或者该用的时候没用它。</p>
+<p>举个例子：如果某个查数据库的工具 description 只写了「查询数据」，模型可能在用户问天气时也去查数据库，因为「查询数据」太宽泛了。但如果你写成「查询公司内部销售数据库，支持按日期、产品类别筛选」，模型就能精确判断什么场景该用它。所以在实际开发中，<strong>工具描述需要反复调优，其重要性不亚于 prompt 工程</strong>。</p>
+<h3 id="3-4-MCP：工具世界的「USB-C-接口」">3.4 MCP：工具世界的「USB-C 接口」</h3>
+<p>当工具越来越多时，管理和标准化就成了大问题。Anthropic 在 2024 年底提出 <strong>MCP（Model Context Protocol，模型上下文协议）</strong>，底层是一套基于 JSON-RPC 的通信协议，它不只是把「工具」标准化，还定义了三类能力：</p>
+<ul>
+<li><strong>Tools</strong>：会改变外部世界的操作，比如发邮件；</li>
+<li><strong>Resources</strong>：只读的数据源，比如文件内容；</li>
+<li><strong>Prompts</strong>：预定义的提示词模板，比如代码审查模板。</li>
+</ul>
+<p>MCP 的架构分三层：最外层是 <strong>Host</strong>，即用户交互的 AI 应用（如 Claude Desktop、Cursor）；中间是 <strong>Client</strong>，负责管理与 MCP Server 之间的连接；最里层是 <strong>Server</strong>，即真正暴露能力的服务端。</p>
+<p>工具提供方只要按 MCP 标准实现一个 Server，任何支持 MCP 的 Agent 都能自动发现和调用这些能力，无需额外写适配代码。可以把 MCP 理解成工具世界的「USB-C 接口」——接口标准一致，什么设备都能连上。</p>
+<p><img src="https://cdn.xiaolincoding.com/picgo/7cf48eef352ea705ad05b3ec974c756a.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Agent 的工具系统"></p>
+<p><img src="https://cdn.xiaolincoding.com/picgo/8669b51e12285ab3f9eb49a2ab2b6464.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="工具描述的质量影响 Agent 表现"></p>
+<hr>
+<h2 id="4-记忆系统：让-Agent-不失忆">4 记忆系统：让 Agent 不失忆</h2>
+<p>有了工具能「做事」，Agent 还得「记事」。传统 LLM 每次调用都是「失忆」的，而 Agent 系统通常设计 <strong>两层记忆</strong>。</p>
+<h3 id="4-1-短期记忆与长期记忆">4.1 短期记忆与长期记忆</h3>
+<ul>
+<li><strong>短期记忆</strong>：当前任务执行过程中的中间状态，存在 <strong>context window（上下文窗口）</strong> 里，比如第一步搜索到了什么、第二步执行结果是多少。它就像人的「工作记忆」，容量有限，任务一结束就清空了。</li>
+<li><strong>长期记忆</strong>：跨任务保存的信息，比如用户偏好、历史操作记录，通常用 <strong>向量数据库</strong> 实现——把重要信息 embedding 之后存起来，需要时做语义检索拿回来。它就像人的「长期记忆」，容量大、可跨天保留，但需要主动「回忆」才能调出来。</li>
+</ul>
+<h3 id="4-2-借用认知科学看长期记忆的组织方式">4.2 借用认知科学看长期记忆的组织方式</h3>
+<p>可以借用认知科学对人类长期记忆的分类，来理解 Agent 长期记忆的组织方式（注意这只是便于理解的类比，实际实现通常都是向量检索 + metadata 过滤，不一定分得这么细）：</p>
+<ul>
+<li><strong>语义记忆（Semantic Memory）</strong>：事实性知识，比如「用户是做金融行业的」「某个 API 的调用频率限制是每分钟 60 次」；</li>
+<li><strong>情景记忆（Episodic Memory）</strong>：具体的经历，比如「上次用户问退款问题时我们查了订单系统，发现他的订单已过退款期」；</li>
+<li><strong>程序性记忆（Procedural Memory）</strong>：「怎么做事」的方法论，比如「处理退款问题的标准流程是先查订单状态再核实支付方式」。它不是存某个具体事实，而是把 Agent 做事的方法沉淀下来，下次碰到类似任务时直接套用高效流程，而不是每次都从头摸索。</li>
+</ul>
+<h3 id="4-3-记忆工程的三个挑战">4.3 记忆工程的三个挑战</h3>
+<ol>
+<li>
+<p><strong>短期记忆的容量问题</strong>：复杂任务执行十几步，每步工具返回大量文本，上下文很快撑满。要么做<strong>摘要压缩</strong>（把前面的步骤浓缩成关键信息），要么做<strong>滑动窗口</strong>（只保留最近几步的详细内容），但两种方式都会丢失信息。如何在「记住够多」和「不撑爆上下文」之间取舍，是记忆工程最核心的设计问题。</p>
+</li>
+<li>
+<p><strong>长期记忆的存储策略</strong>：如果什么都往向量数据库塞，检索出来的噪音会很多，反而干扰模型决策；存得太少又失去意义。目前较好的做法是在存入前做一轮<strong>重要性评估</strong>，只把真正有价值的信息持久化。</p>
+</li>
+<li>
+<p><strong>记忆衰减（Memory Decay）</strong>：一个客服 Agent 三个月前处理的问题，到今天大概率已不重要。记忆衰减的做法是给每条记忆加一个时间权重，越久远的权重越低，检索时自然排在后面。具体实现上通常用指数衰减公式：<strong>记忆相关性分数 = 语义相似度 × 时间衰减因子</strong>。衰减速度可按业务场景调整：客服场景衰减可以快一些（对话大多是一次性的），法律合规场景衰减要慢得多（历史记录可能在很久之后仍被引用）。这样 Agent 就不会被过时信息淹没，总是优先关注最近的、最相关的记忆。</p>
+</li>
+</ol>
+<p><img src="https://cdn.xiaolincoding.com/picgo/be1f702d1ab79bcd71e6910fe5d83425.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Agent 的记忆机制"></p>
+<p><img src="https://cdn.xiaolincoding.com/picgo/812d5b1692914e94b30088261cf31f14.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="长期记忆的分类"></p>
+<p><img src="https://cdn.xiaolincoding.com/picgo/8ff26036df8db359f4896aebf31cf62a.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="记忆衰减"></p>
+<hr>
+<h2 id="5-规划模块：把大目标拆成小步骤">5 规划模块：把大目标拆成小步骤</h2>
+<h3 id="5-1-规划的本质">5.1 规划的本质</h3>
+<p>简单任务一步就能搞定，但如果你让 Agent「帮我写一份竞品分析报告」，它需要先把目标拆解成：搜索竞品资料 → 整理关键数据 → 对比分析 → 撰写报告。<strong>规划模块就是负责做这件事的</strong>，它决定了 Agent 能不能应对复杂任务。</p>
+<p>规划模块的底层依赖 LLM 的推理能力，而提升推理能力主要有两种技术手段：</p>
+<ul>
+<li><strong>CoT（Chain of Thought，思维链）</strong>：让模型「把思考过程写出来」，而不是直接输出最终答案。你可以在 prompt 里加一句「Let’s think step by step」，模型就会一步步展开推理。为什么一句话就能提升效果？因为 LLM 的 token 生成是逐步进行的，每一步的输出都会成为下一步的输入，把中间步骤写出来，等于给了模型更多「思考空间」。</li>
+<li><strong>ToT（Tree of Thoughts，思维树）</strong>：不是走一条线性的推理链，而是在每个推理节点展开多个可能的分支，评估每个分支的质量，选出最优路径继续往下走。可以这样理解：<strong>CoT 是一条路走到底，ToT 是走到岔路口先看看几条路，选最好的那条再往前</strong>。ToT 在需要创造性思考或复杂决策的场景下效果更好，但计算成本也更高，因为它要同时评估多条路径。</li>
+</ul>
+<h3 id="5-2-两种主流的规划执行模式">5.2 两种主流的规划执行模式</h3>
+<p>有了推理技术打底，规划模块在实际运作中有两种主流模式：</p>
+<ul>
+<li><strong>Plan-and-Execute（先规划后执行）</strong>：先让 LLM 输出一个完整的步骤列表，再按顺序逐步执行。好处是整体结构清晰，能在执行前就看到完整计划，方便人工审核；缺点是如果中间某一步的结果与预期不符，原计划可能就不合适了，需要重新调整。</li>
+<li><strong>ReAct（边执行边规划）</strong>：每走一步就根据当前结果重新思考下一步做什么，不提前制定完整计划。好处是灵活性极高，能根据实际情况随时调整；缺点是容易「走偏」，因为每一步都是局部最优决策，有时会忽略整体目标。</li>
+</ul>
+<p>实际工程里，很多团队会把两种模式结合起来：<strong>先做一个粗略的计划确定大方向，执行过程中再根据反馈动态微调</strong>。</p>
+<p><img src="https://cdn.xiaolincoding.com/picgo/b44e7a65f49be5adb3fa132ee81117f4.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Plan-and-Execute 与 ReAct 模式对比"></p>
+<hr>
+<h2 id="6-四者如何协作：Agent-运行主循环">6 四者如何协作：Agent 运行主循环</h2>
+<p>了解了四个组件各自的作用，最后看它们是如何串起来运行的。用一段伪代码还原整个流程：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># Agent 运行的核心 loop（伪代码）</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">agent_run</span>(<span class="hljs-params">user_goal: <span class="hljs-built_in">str</span></span>):<br>    <span class="hljs-comment"># 第一步：规划模块上场，把目标拆成步骤列表</span><br>    plan = llm.plan(user_goal)<br><br>    memory = []  <span class="hljs-comment"># 短期记忆，存放每一步的中间结果</span><br><br>    <span class="hljs-keyword">for</span> step <span class="hljs-keyword">in</span> plan:<br>        <span class="hljs-comment"># 第二步：LLM 核心做决策，这一步该怎么做？</span><br>        action = llm.decide(<br>            step=step,<br>            history=memory,                    <span class="hljs-comment"># 传入短期记忆，让它知道之前做了什么</span><br>            long_term=vector_db.search(step)   <span class="hljs-comment"># 从长期记忆里捞出相关历史</span><br>        )<br><br>        <span class="hljs-keyword">if</span> action.<span class="hljs-built_in">type</span> == <span class="hljs-string">&quot;tool_call&quot;</span>:<br>            <span class="hljs-comment"># 第三步：工具系统负责真正执行</span><br>            result = tools.execute(action.tool_name, action.args)<br>            memory.append(&#123;<span class="hljs-string">&quot;step&quot;</span>: step, <span class="hljs-string">&quot;result&quot;</span>: result&#125;)  <span class="hljs-comment"># 执行结果存入短期记忆</span><br><br>        <span class="hljs-keyword">elif</span> action.<span class="hljs-built_in">type</span> == <span class="hljs-string">&quot;final_answer&quot;</span>:<br>            <span class="hljs-keyword">return</span> action.content  <span class="hljs-comment"># LLM 判断任务完成，返回最终答案</span><br></code></pre></td></tr></table></figure>
+<p>看完这段伪代码，Agent 的核心节奏其实很简单：<strong>规划 → 决策 → 执行 → 结果存入记忆 → 再决策</strong>，循环往复，直到任务完成。在这个闭环里，<strong>LLM 始终是那个做决策的角色，工具系统是执行者，记忆系统让它不会「失忆」，规划模块帮它把大目标拆成小步骤</strong>。</p>
+<p>这也是为什么 LangChain、LlamaIndex、AutoGen 这些主流框架，本质上都是围绕这四个组件来设计的——只是封装方式和侧重点各有不同。</p>
+<p><img src="https://cdn.xiaolincoding.com/picgo/97dbb02b0164e6f14227891cdfb09b2d.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Agent 的运行主循环"></p>
+<hr>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/agent/2_components.html">2. Agent 的基本架构由哪些核心组件构成？ | 小林面试笔记</a></li>
+</ul>
+<blockquote>
+<p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/AI-Agent/" class="category-chain-item">AI Agent</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Agent/" class="print-no-link">#Agent</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「AI Agent」Agent 的基本架构由哪些核心组件构成？</div>
+      <div>https://marisamagic.github.io/2026/08/06/20260806_Agent的基本架构/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月6日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/06/20260806_%E4%BB%80%E4%B9%88%E6%98%AFAgent/" title="「AI Agent」什么是 AI Agent？">
+                        <span class="hidden-mobile">「AI Agent」什么是 AI Agent？</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
