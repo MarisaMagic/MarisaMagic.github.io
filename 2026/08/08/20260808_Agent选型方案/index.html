@@ -1,0 +1,895 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="选型的判断标准——任务清晰&#x2F;不长&#x2F;无需分工就用 Single-Agent，context 撑爆、需要专业分工、有可并行子任务才上 Multi-Agent；Single-Agent 的本质与「链路可控」优势；中心化 Orchestrator 的职责与三种变体（静态路由 &#x2F; 动态规划 &#x2F; 自适应编排）；去中心化在工程上不可用的四大问题；「两个问题」做选型决策 + 渐进式演进策略；A2A 跨框架协议趋势">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「AI Agent」Single-Agent 与 Multi-Agent 怎么选：选型标准与中心化编排">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/08/20260808_Agent%E9%80%89%E5%9E%8B%E6%96%B9%E6%A1%88/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="选型的判断标准——任务清晰&#x2F;不长&#x2F;无需分工就用 Single-Agent，context 撑爆、需要专业分工、有可并行子任务才上 Multi-Agent；Single-Agent 的本质与「链路可控」优势；中心化 Orchestrator 的职责与三种变体（静态路由 &#x2F; 动态规划 &#x2F; 自适应编排）；去中心化在工程上不可用的四大问题；「两个问题」做选型决策 + 渐进式演进策略；A2A 跨框架协议趋势">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/01_single_agent_thresholds.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/02_orchestrator_variants.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/03_competitor_analysis_orchestrator.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/04_decentralized_problems.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/05_progressive_evolution.png">
+<meta property="article:published_time" content="2026-08-08T04:26:30.168Z">
+<meta property="article:modified_time" content="2026-08-08T04:26:30.168Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.xiaolincoding.com/picgo/01_single_agent_thresholds.png">
+  
+  
+  
+  <title>「AI Agent」Single-Agent 与 Multi-Agent 怎么选：选型标准与中心化编排 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2025/01/10/3lgax.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「AI Agent」Single-Agent 与 Multi-Agent 怎么选：选型标准与中心化编排"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-08 12:26" pubdate>
+          2026年8月8日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          29 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「AI Agent」Single-Agent 与 Multi-Agent 怎么选：选型标准与中心化编排</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<blockquote>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/agent/11_single_multi.html">11. 说说 Single-Agent 和 Multi-Agent 的设计方案？</a>，用于记录与总结 AI Agent 相关的核心面试知识点。</p>
+</blockquote>
+<p>「<strong>什么时候用 Single-Agent，什么时候上 Multi-Agent？Multi-Agent 又该怎么组织？</strong>」，可以这样作答：</p>
+<blockquote>
+<p>选型不能凭「复杂」这种模糊感觉，要看三个具体信号：<strong>context 撑爆了、需要不同专业分工、有独立子任务可以并行</strong>——出现这三类情况，Single-Agent 才真正力不从心，Multi-Agent 才有价值；否则 Single-Agent 就够了，盲目引入 Multi-Agent 只会增加复杂度、带来不了对应收益。</p>
+<p>Multi-Agent 架构上主要有两种拓扑：<strong>中心化的 Orchestrator 模式</strong>，由一个主 Agent（总调度员）读懂大目标、拆成子任务、分派给各 Worker、最后汇总拼装；<strong>去中心化的 Peer-to-Peer 模式</strong>，Agent 之间通过共享消息队列直接通信、自行协商。工程实践里几乎都用中心化，因为它可控、可追踪、出了问题能顺着调度链路精准定位；去中心化虽然听起来灵活，但任务分配没协调、执行顺序没保证、失败没感知，生产环境几乎不可用。</p>
+<p>实际选型可以套用两个问题：<strong>你的任务 Single-Agent 能搞定吗？</strong> 流程明确、不太长、不需要专业分工，就选 Single-Agent；<strong>你能接受系统行为不可控的风险吗？</strong> 生产环境几乎不能，所以就用 Orchestrator 模式。更稳妥的工程策略是<strong>渐进式演进</strong>：先用 Single-Agent 跑通，发现某个环节成了瓶颈（context 频繁撑满、某类子任务质量差），再把那个环节拆出来交给专门的 Worker Agent，而不是一上来就设计五六个 Agent 的系统。</p>
+</blockquote>
+<p><strong>生产级例子</strong>：Cursor 和 Claude Code 已经把「中心化编排」做成了日常。Cursor 的 Background Agents / Cloud Agents 由主对话统一派发、在各自独立的工作区（Cloud Agents 甚至在自己独立的 git 分支）里并行执行，最后由主对话整合结果，这正是「Orchestrator 分派 Worker、并行扇出」的生产级落地。Claude Code 的 subagents 体系同样如此——主代理根据任务类型委派 <code>Explore</code>（代码定位）、<code>generalPurpose</code>（复杂多步任务）、<code>shell</code>（命令执行）等专用子代理，需要质量把关时再把改动丢给 <code>Bugbot</code>、<code>Security Review</code> 这类「评审角色」，子代理在隔离的 context 里干完活交回结果，主代理始终掌握全局调度。</p>
+<hr>
+<h2 id="1-Single-Agent：单人作战，链路完全可控">1 Single-Agent：单人作战，链路完全可控</h2>
+<p>Single-Agent 的本质是一个 LLM 加上一套工具，跑一个决策循环：LLM 判断下一步该做什么 → 调用工具执行 → 拿到结果再判断 → 直到任务完成。</p>
+<p>它最大的优势不只是「架构简单」，更核心的是<strong>整条任务链路完全在你掌控之内</strong>：任务怎么走、用什么工具、什么时候结束，所有逻辑都在一个地方写清楚，出了问题链路短、好排查。类比一下，一个人完全可以独立完成「写一篇博客」——查资料、列大纲、写下来，不需要团队协作，单人反而更高效，沟通成本为零。</p>
+<p><img src="https://cdn.xiaolincoding.com/picgo/01_single_agent_thresholds.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Single-Agent 的适用边界"></p>
+<hr>
+<h2 id="2-什么时候-Single-Agent-不够用：三类真实信号">2 什么时候 Single-Agent 不够用：三类真实信号</h2>
+<p>Single-Agent 开始力不从心，是在遇到下面这三类任务的时候：</p>
+<p><strong>1. 任务太长、信息量太大，context 撑爆。</strong> 任务越长，早期内容越容易被挤出 context window，Agent 开始「遗忘」，输出质量崩塌。</p>
+<p><strong>2. 不同步骤需要完全不同的专业能力。</strong> 什么都塞进一个 Agent，它每件事都做得不够专注——泛才不如专才，且一个环节出错会拖垮整条链路，信息全混在一个 context 里，连问题出在哪一步都难定位。</p>
+<p><strong>3. 任务中有多个相互独立的子任务。</strong> 理论上可以并行，但单 Agent 只能一个个来，耗时是全部步骤之和。</p>
+<p>遇到这三类情况，Multi-Agent 就有了真实价值。但要强调：<strong>如果你的任务不属于这三类，Single-Agent 就够了</strong>，不要为了「用新技术」而强行引入 Multi-Agent——系统变复杂、难维护，却没有带来对应的收益。</p>
+<hr>
+<h2 id="3-中心化方案：Orchestrator-总调度">3 中心化方案：Orchestrator 总调度</h2>
+<p>Multi-Agent 的中心化方案，核心是一个叫 Orchestrator 的特殊角色。直译是「交响乐指挥」，在 Multi-Agent 系统里可以理解成「总调度员」或「项目经理」。</p>
+<p>它是整个系统里最特殊的 Agent——<strong>不做任何具体工作</strong>，只负责三件事：</p>
+<ol>
+<li><strong>读懂用户的大目标</strong>，把它拆成一个个子任务；</li>
+<li><strong>判断每个子任务该交给哪个 Worker Agent</strong>；</li>
+<li><strong>收集每个 Worker 的产出，拼装成最终答案</strong>。</li>
+</ol>
+<h3 id="3-1-Orchestrator-的三种变体">3.1 Orchestrator 的三种变体</h3>
+<p>Orchestrator 不是铁板一块，按复杂度和能力可以分成三档，适合不同场景。</p>
+<table>
+<thead>
+<tr>
+<th>变体</th>
+<th>机制</th>
+<th>适用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>静态路由</strong>（Static Router）</td>
+<td>任务拆分和分配规则预先写死，比如「代码任务交给 Coder，搜索任务交给 Researcher」</td>
+<td>流程固定、逻辑简单可预测的场景</td>
+</tr>
+<tr>
+<td><strong>动态规划</strong>（Dynamic Planner）</td>
+<td>Orchestrator 本身是 LLM，根据用户输入动态生成任务计划，决定几步、每步交给谁，计划可执行中调整</td>
+<td>大多数项目场景，够用且好调</td>
+</tr>
+<tr>
+<td><strong>自适应编排</strong>（Adaptive Orchestration）</td>
+<td>在动态规划基础上，还根据 Worker 的执行结果实时调整后续计划，比如搜索信息不够就追加一轮搜索</td>
+<td>任务变化大、对结果要求高的场景；调试复杂度也高很多</td>
+</tr>
+</tbody>
+</table>
+<p><img src="https://cdn.xiaolincoding.com/picgo/02_orchestrator_variants.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Orchestrator 的三种变体"></p>
+<p>实际项目里，大多数场景用动态规划就够了；自适应编排虽然更强大，但调试复杂度也高很多，除非必要不必上。</p>
+<h3 id="3-2-Worker-Agent：职责单一的「执行者」">3.2 Worker Agent：职责单一的「执行者」</h3>
+<p>与 Orchestrator 相对，Worker Agent 就是「执行者」。每个 Worker 只关注自己那块：<strong>不需要知道整体任务是什么，不需要知道其他 Worker 在做什么</strong>，只需要拿到属于自己的指令，做完返回结果，然后退出。</p>
+<p>它的 context 是干净的，只装和自己职责相关的信息——这正是 Multi-Agent 相对 Single-Agent 的核心收益之一：工作台不堆杂物，专注度和质量都更高。</p>
+<h3 id="3-3-案例：AI-行业竞品分析">3.3 案例：AI 行业竞品分析</h3>
+<p>用「帮我写一份 AI 行业竞品分析」走一遍完整流程：Orchestrator 把任务拆成「搜索竞品信息 → 对比分析 → 撰写报告」，分别派给 Researcher、Analyst、Writer 三个 Worker，各自完成后回收产出、拼成最终报告。</p>
+<p><img src="https://cdn.xiaolincoding.com/picgo/03_competitor_analysis_orchestrator.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="竞品分析的 Orchestrator 编排流程"></p>
+<p>这个流程最大的好处是<strong>每个环节出了问题都能精准定位</strong>：报告内容不准确？可能是 Researcher 搜的信息不够好；分析逻辑有问题？可能是 Analyst 的对比维度不对；格式不符合要求？是 Writer 的输出问题。职责清晰，排查不需要猜，顺着 Orchestrator 的调度记录一步步追下去就能找到根源。</p>
+<hr>
+<h2 id="4-去中心化方案：为什么工程上几乎不用">4 去中心化方案：为什么工程上几乎不用</h2>
+<p>去中心化的思路是<strong>没有总调度</strong>：多个 Agent 通过共享的消息队列或状态空间自行协商、直接通信。听起来像一个能自我组织的团队——不需要领导，大家自动配合，还更灵活。但实际工程里，灵活只是表面。</p>
+<p>用一个具体场景说明。假设三个 Agent 处理同一个任务：Agent A 在搜索信息，Agent B 也在搜索类似信息，Agent C 负责汇总，但没有人统筹调度。问题会同时冒出来：</p>
+<ul>
+<li><strong>没有协调</strong>：没人告诉 A 和 B「你们各搜什么范围」，很可能大量内容搜重了，做重复工作；</li>
+<li><strong>没有顺序保证</strong>：C 需要等 A 和 B 都搜完才能汇总，但没人告诉 C「A 和 B 什么时候算搜完了」，C 不知道等多久，也不知道有没有漏掉结果；</li>
+<li><strong>失败无感知</strong>：如果 A 中途出错，没有中央调度者收到错误通知，B 和 C 还在正常运行，最后汇总出一份不完整的结果，而系统甚至不知道这里出了问题；</li>
+<li><strong>无人确认完成</strong>：没有人来确认「任务整体完成了没有」。</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com/picgo/04_decentralized_problems.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="去中心化模式的工程问题"></p>
+<p>总结下来，去中心化系统里四类问题会频繁出现：<strong>任务分配没有协调、执行顺序没有保证、失败没有感知、无人确认整体完成</strong>。类比一个没有项目经理的团队：每个人都很能干，但没人协调时间节点和接口，最后交出来的是互不兼容的结果，还没人知道整体进度。</p>
+<p>这就是为什么去中心化更多停留在学术研究里——研究的是「AI 系统能不能实现自主协调」这个更宏观的问题；而生产环境里，几乎所有正经项目都选 Orchestrator 模式，因为可控、可追踪、出了问题能排查，这才是工程上真正需要的。</p>
+<hr>
+<h2 id="5-选型决策：两个问题-渐进式演进">5 选型决策：两个问题 + 渐进式演进</h2>
+<p>选型的逻辑其实可以用两个问题搞定。</p>
+<p><strong>先问第一个问题：你的任务，Single-Agent 能搞定吗？</strong> 如果任务流程明确、不太长、不需要多种专业分工，Single-Agent 就够了——架构简单、维护成本低、链路透明，不要为了「显得高级」而引入 Multi-Agent。</p>
+<p><strong>如果确实超出了 Single-Agent 的边界，再问第二个问题：你能接受系统行为不可控的风险吗？</strong> 生产环境里这个问题的答案几乎一定是「不能」，所以就用 Orchestrator 模式。</p>
+<p><img src="https://cdn.xiaolincoding.com/picgo/05_progressive_evolution.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="渐进式演进策略"></p>
+<p>实际工程里还有一个很实用的策略叫<strong>渐进式演进</strong>：先用 Single-Agent 把系统跑起来，当你发现某个环节确实成为瓶颈了——比如 context 经常撑满、某类子任务质量不行——再把那个环节拆出来，交给一个专门的 Worker Agent。不要一上来就设计五六个 Agent 的复杂系统，你可能连真正的瓶颈在哪都还没搞清楚。从 Single-Agent 演进到 Multi-Agent 是一个自然的过程，而不是一开始就做的架构决策。</p>
+<hr>
+<h2 id="6-行业趋势：A2A-跨框架协作协议">6 行业趋势：A2A 跨框架协作协议</h2>
+<p>值得关注的另一个方向是 <strong>A2A（Agent-to-Agent）协议</strong>，Google 在 2025 年 4 月提出的开放标准。它要解决的问题是：不同团队、不同框架开发的 Agent 之间怎么互相通信和协作。此前每个 Multi-Agent 框架都有自己的通信方式，Agent 只能在同一个框架内协作；A2A 定义了一套标准化通信协议，让不同来源的 Agent 在协议层面可以互相发现和调用，思路上很像微服务。2025 年 6 月，A2A 被捐赠给了 Linux 基金会维护，IBM 的 Agent Communication Protocol（ACP）也已并入 A2A。</p>
+<p>不过这个协议目前还在较早期阶段：生态里「真正即插即用地跨框架调用」还没完全成熟，更多是社区实现和示范项目，生产级的跨框架互操作仍在演进。但长远看，这个方向会深刻改变 Multi-Agent 系统的构建方式。</p>
+<hr>
+<h2 id="7-三种方案对比">7 三种方案对比</h2>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>Single-Agent</th>
+<th>Multi-Agent（中心化）</th>
+<th>Multi-Agent（去中心化）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>架构复杂度</td>
+<td>低</td>
+<td>中</td>
+<td>高</td>
+</tr>
+<tr>
+<td>Context 压力</td>
+<td>全部压在一个 Agent</td>
+<td>各 Agent 独立管理，Orchestrator 只维护高层状态</td>
+<td>各 Agent 独立管理，但需额外共享协调状态</td>
+</tr>
+<tr>
+<td>专业能力</td>
+<td>泛才，什么都做</td>
+<td>专才分工，各有专责</td>
+<td>专才分工，各有专责</td>
+</tr>
+<tr>
+<td>并行能力</td>
+<td>不支持</td>
+<td>支持子任务并行</td>
+<td>支持并行</td>
+</tr>
+<tr>
+<td>可控性</td>
+<td>高</td>
+<td>高，Orchestrator 统管</td>
+<td>低，难以统一调度</td>
+</tr>
+<tr>
+<td>调试难度</td>
+<td>容易</td>
+<td>中，按调度链路追踪</td>
+<td>难，行为不可预测</td>
+</tr>
+<tr>
+<td>工程实用性</td>
+<td>高</td>
+<td>高</td>
+<td>低，主要用于学术研究</td>
+</tr>
+<tr>
+<td>适用场景</td>
+<td>任务清晰、复杂度适中</td>
+<td>需要分工或并行的复杂任务</td>
+<td>学术探索场景</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="8-要点回顾">8 要点回顾</h2>
+<p>回答这道选型题，要答出三个层次才完整：</p>
+<table>
+<thead>
+<tr>
+<th>层次</th>
+<th>要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>何时用 Single-Agent</strong></td>
+<td>任务流程明确、不太长、无需专业分工；判断标准看三类信号：context 撑爆、需要分工、有可并行子任务，出现才考虑 Multi-Agent</td>
+</tr>
+<tr>
+<td><strong>Multi-Agent 怎么组织</strong></td>
+<td>中心化 Orchestrator（读目标 / 拆任务 / 分派 Worker / 汇总）vs 去中心化 Peer-to-Peer；工程上几乎都用中心化</td>
+</tr>
+<tr>
+<td><strong>去中心化为何不可用</strong></td>
+<td>任务分配没协调、执行顺序没保证、失败没有感知、无人确认整体完成，行为不可控、难排查</td>
+</tr>
+</tbody>
+</table>
+<p>再补充两个进阶加分项：<strong>Orchestrator 的三种变体</strong>（静态路由 / 动态规划 / 自适应编排，大多数场景动态规划就够）；<strong>渐进式演进策略</strong>（先 Single-Agent 跑通，遇到瓶颈再拆出专用 Worker，别一上来就设计复杂系统）。把三个层次加上进阶点答全，再补上 Cursor 的 Background Agents / Cloud Agents 和 Claude Code 的 subagents 这些生产级例子，这道题就回答得很漂亮了。</p>
+<hr>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/agent/11_single_multi.html">11. 说说 Single-Agent 和 Multi-Agent 的设计方案？ | 小林面试笔记</a></li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/agent/10_multiagent.html">10. 什么是 Multi-Agent？ | 小林面试笔记</a>（前一篇：Multi-Agent 的两大驱动因素与三种协作模式）</li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/agent/7_tasksplit.html">7. 复杂任务怎么做的任务拆分？ | 小林面试笔记</a>（相关：任务拆分与并行优化）</li>
+</ul>
+<blockquote>
+<p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/AI-Agent/" class="category-chain-item">AI Agent</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Agent/" class="print-no-link">#Agent</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「AI Agent」Single-Agent 与 Multi-Agent 怎么选：选型标准与中心化编排</div>
+      <div>https://marisamagic.github.io/2026/08/08/20260808_Agent选型方案/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/08/20260808_MultiAgent/" title="「AI Agent」什么是 Multi-Agent：两大驱动因素与三种协作模式">
+                        <span class="hidden-mobile">「AI Agent」什么是 Multi-Agent：两大驱动因素与三种协作模式</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
