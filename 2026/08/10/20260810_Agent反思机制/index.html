@@ -1,0 +1,848 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="反思机制的本质是「生成 → 评估 → 改进」的有结构闭环，而非随机重试；为什么需要反思（LLM 一次性生成带来的四类毛病）；评估 prompt 两个关键设计（明确检查维度、PASS 出口）；改进 prompt 三要素输入；步骤级 vs 任务级两个粒度；多 Agent 互评比自我检查更好（自洽偏见）；进阶方案 Reflexion（经验记忆）与 LATS（MCTS+反思）；工程权衡与防死循环（2-3">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「AI Agent」Agent 的反思机制：评估闭环、两个粒度与防死循环">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/10/20260810_Agent%E5%8F%8D%E6%80%9D%E6%9C%BA%E5%88%B6/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="反思机制的本质是「生成 → 评估 → 改进」的有结构闭环，而非随机重试；为什么需要反思（LLM 一次性生成带来的四类毛病）；评估 prompt 两个关键设计（明确检查维度、PASS 出口）；改进 prompt 三要素输入；步骤级 vs 任务级两个粒度；多 Agent 互评比自我检查更好（自洽偏见）；进阶方案 Reflexion（经验记忆）与 LATS（MCTS+反思）；工程权衡与防死循环（2-3">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.xiaolincoding.com//picgo/501991ea98f75337d9d59ca382597a12.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com//picgo/image-20260305214059234.png?image_process=watermark,text_eGlhb2xpbm5vdGUuY29tQOWwj-ael-mdouivleeslOiusA,g_center,size_35,type_aHloZWk,color_304ffe">
+<meta property="og:image" content="https://cdn.xiaolincoding.com//picgo/01_reflection_loop.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com//picgo/02_improvement_prompt_inputs.png">
+<meta property="og:image" content="https://cdn.xolincoding.com//picgo/03_step_vs_task_reflection.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com//picgo/04_critic_agent_review.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com//picgo/05_reflection_guardrails.png">
+<meta property="article:published_time" content="2026-08-10T04:34:12.697Z">
+<meta property="article:modified_time" content="2026-08-10T04:34:12.697Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.xiaolincoding.com//picgo/501991ea98f75337d9d59ca382597a12.png">
+  
+  
+  
+  <title>「AI Agent」Agent 的反思机制：评估闭环、两个粒度与防死循环 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2025/01/10/3lgax.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「AI Agent」Agent 的反思机制：评估闭环、两个粒度与防死循环"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-10 12:34" pubdate>
+          2026年8月10日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.9k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          33 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「AI Agent」Agent 的反思机制：评估闭环、两个粒度与防死循环</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<blockquote>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/agent/15_reflection.html">15. 讲讲 Agent 的反思机制？为什么要用反思？具体怎么实现？</a>，用于记录与总结 AI Agent 相关的核心面试知识点。</p>
+</blockquote>
+<p>「<strong>Agent 的反思机制是什么？为什么要用反思？怎么实现？</strong>」，可以这样作答：</p>
+<blockquote>
+<p>反思机制，是让 Agent 在完成一个步骤或整个任务后，<strong>自我评估输出质量、判断有没有问题，不达标就重试或调整策略</strong>。通俗讲，就是给「一次性生成」的 LLM 加一个「回头检查再修改」的环节，相当于人写完文章后自己再读一遍、改一遍。</p>
+<p>为什么要用反思？因为 LLM 的第一次输出往往不是最优的——它是在「一口气」里生成的，很容易出现逻辑跳跃、遗漏细节、事实错误、表达含糊等问题。做一轮自我检查就能显著提升输出质量，这是反思机制的核心价值。</p>
+<p>具体怎么实现？核心是「<strong>生成 → 评估 → 改进</strong>」的循环（来自 Self-Refine 论文），由两个 prompt 驱动：<strong>评估 prompt</strong> 专门扮演「检查者」找问题（关键设计是给出明确检查维度 + 设置「PASS」出口，否则 LLM 要么流于表面、要么无限挑毛病）；<strong>改进 prompt</strong> 则结合原始任务、原始输出、评估意见三样东西做定向修改。循环直到 LLM 回复 PASS 或超过最大轮次强制退出。</p>
+<p>反思的代价是每次循环多至少一次 LLM 调用，token 和延迟都会上升。所以工程上我通常只在质量要求高的关键节点启用反思，不每步都做，并设 2-3 轮硬性上限防止死循环。</p>
+</blockquote>
+<p><strong>生产级例子</strong>：Cursor 和 Claude Code 已经把反思机制做进了日常开发流程。Cursor 的 <strong>Agent 在改代码时会自动跑构建、测试并读取报错反馈，根据失败结果自我修正</strong>，直到通过；Claude Code 遇到构建失败或测试报错时，会<strong>读取错误日志、定位问题代码、再次修改重试</strong>，直到验证通过——这正是「生成 → 评估 → 改进」闭环在生产工具里的落地形态。更进阶的是 <strong>Claude Code 的 Bugbot / Security Review 这类专门「评审角色」子代理</strong>，用独立视角审查主代理的改动，正是「多 Agent 互评」的生产级实现。</p>
+<hr>
+<h2 id="1-为什么需要反思：LLM-的一次性生成问题">1 为什么需要反思：LLM 的一次性生成问题</h2>
+<p>先从一个日常经验说起：你写完一篇文章，扔到一边，过半小时再拿回来读，往往能发现一堆之前没注意到的问题——某个句子逻辑跳跃了、某个论点没有支撑、某段话写得不够清楚。改完之后，文章质量明显提升。</p>
+<p>其实 LLM 也面临同样的问题。它每次生成输出，本质上都是在「一口气」里完成的，没有机会停下来检查自己。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/501991ea98f75337d9d59ca382597a12.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="写完后再回顾，能发现当初没注意到的问题"></p>
+<p>第一次输出常见的毛病主要有这么几类：</p>
+<ul>
+<li><strong>逻辑跳跃</strong>：推理步骤不完整，中间少了关键推断；</li>
+<li><strong>遗漏细节</strong>：任务里要求的某些点，没有被全部覆盖到；</li>
+<li><strong>事实错误</strong>：模型幻觉导致的错误信息；</li>
+<li><strong>表达含糊</strong>：意思到了，但说得不够清晰准确。</li>
+</ul>
+<p>这些问题，如果给 LLM 一个「回头检查」的机会，它自己是有能力发现并修正的。反思机制就是给它补上这个环节。</p>
+<hr>
+<h2 id="2-核心闭环：生成-→-评估-→-改进">2 核心闭环：生成 → 评估 → 改进</h2>
+<p>反思机制的核心思路来自 Self-Refine 论文（Madaan 等人 2023 年提出），整个流程就是「生成 → 评估 → 改进」的循环。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/image-20260305214059234.png?image_process=watermark,text_eGlhb2xpbm5vdGUuY29tQOWwj-ael-mdouivleeslOiusA,g_center,size_35,type_aHloZWk,color_304ffe" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Self-Refine：生成 → 评估 → 改进的循环"></p>
+<p>你可以用「草稿 → 批阅 → 修改」来类比：学生交出草稿（生成），老师批阅指出问题（评估），学生拿着批注修改（改进），改完的稿子再经过老师审阅，直到通过为止。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/01_reflection_loop.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="草稿 → 批阅 → 修改的类比"></p>
+<h3 id="2-1-评估-prompt：检查者的两个关键设计">2.1 评估 prompt：检查者的两个关键设计</h3>
+<p>评估由第一个 prompt 负责，让 LLM 扮演「检查者」的角色，专门去找问题：</p>
+<figure class="highlight dust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs dust"><span class="language-xml">任务：</span><span class="hljs-template-variable">&#123;task&#125;</span><span class="language-xml"></span><br><span class="language-xml"></span><br><span class="language-xml">当前输出：</span><br><span class="language-xml"></span><span class="hljs-template-variable">&#123;current_output&#125;</span><span class="language-xml"></span><br><span class="language-xml"></span><br><span class="language-xml">请评估以上输出：</span><br><span class="language-xml">1. 有没有事实错误或逻辑问题？</span><br><span class="language-xml">2. 有没有遗漏重要内容？</span><br><span class="language-xml">3. 表达是否清晰准确？</span><br><span class="language-xml"></span><br><span class="language-xml">如果输出已经足够好，回复「PASS」；</span><br><span class="language-xml">否则指出具体问题并给出改进建议。</span><br></code></pre></td></tr></table></figure>
+<p>这个评估 prompt 的设计，有两个特别值得注意的地方。</p>
+<p><strong>第一，给出明确的检查维度</strong>（事实、逻辑、完整性、表达），而不是让 LLM 自由发挥。这很重要——没有方向的评估往往流于表面，LLM 可能只是说「输出看起来不错」，实际上没找到任何问题。给出具体维度，它才会有针对性地逐项审查。</p>
+<p><strong>第二，「PASS」机制必须要有</strong>。这是给 LLM 一个「足够好就停」的出口。如果没有它，LLM 为了反思而反思，可能对一个已经很好的输出挑不必要的小毛病，反而把原本对的东西改错。</p>
+<h3 id="2-2-改进-prompt：三要素缺一不可">2.2 改进 prompt：三要素缺一不可</h3>
+<p>如果评估结果不是 PASS，就把评估意见喂进第二个改进 prompt：</p>
+<figure class="highlight dust"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs dust"><span class="language-xml">原始任务：</span><span class="hljs-template-variable">&#123;task&#125;</span><span class="language-xml"></span><br><span class="language-xml">当前输出：</span><span class="hljs-template-variable">&#123;current_output&#125;</span><span class="language-xml"></span><br><span class="language-xml">评估意见：</span><span class="hljs-template-variable">&#123;reflection&#125;</span><span class="language-xml"></span><br><span class="language-xml"></span><br><span class="language-xml">请根据评估意见改进输出：</span><br></code></pre></td></tr></table></figure>
+<p>改进 prompt 有一个关键点：它同时传入了<strong>原始任务、原始输出、评估意见</strong>这三样东西，缺任何一个都会让改进变得盲目——</p>
+<ul>
+<li>只有任务、没有原始输出：LLM 不知道在什么基础上改；</li>
+<li>只有原始输出、没有评估意见：LLM 不知道改哪里；</li>
+<li>只有评估意见、没有任务：LLM 可能改着改着偏离了原始目标。</li>
+</ul>
+<p>三者都在，它才能有针对性地修改，而不是把内容全部推倒重写。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/02_improvement_prompt_inputs.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="改进 prompt 需要同时传三样输入"></p>
+<p>两个 prompt 循环调用，直到 LLM 自己回复 PASS，或者超过最大轮次强制退出。整个外层逻辑，其实不过是一个普通的 for 循环。</p>
+<hr>
+<h2 id="3-两个粒度：步骤级-vs-任务级">3 两个粒度：步骤级 vs 任务级</h2>
+<p>反思可以在两个粒度上触发，它们适用场景不同、代价也不一样，选哪种要根据任务特点来判断。</p>
+<h3 id="3-1-步骤级反思：早发现早纠正">3.1 步骤级反思：早发现早纠正</h3>
+<p>步骤级反思是在每个工具调用或推理步骤完成后立即检查。好处是错误早发现早纠正，不会让一个小错误在后续步骤里层层放大。</p>
+<p>想象一个 Agent 在做多步信息检索：第一步选了一个不精准的搜索关键词，后续所有步骤都在错误信息上继续，到最后才发现，前面的工作全废了。步骤级反思能在第一步就发现问题、马上纠正，后续步骤都建立在正确基础上。</p>
+<p>适合这种粒度的场景，是步骤之间强依赖、前一步错了后面会全错的任务。代价是每一步都多一次 LLM 调用，整体延迟和 token 消耗会大幅增加——一个 10 步的任务，实际可能要调用 20 次 LLM。</p>
+<h3 id="3-2-任务级反思：整体视角、开销更小">3.2 任务级反思：整体视角、开销更小</h3>
+<p>任务级反思是整个任务执行完之后做一次整体评估。好处是开销更小，整个任务只多一次 LLM 调用；而且从整体视角审视，能发现步骤级看不到的问题——比如各个步骤单独看都是对的，但整体结论前后矛盾，或各部分之间衔接不自然，这种问题只有从整体视角才能看出来。</p>
+<p>代价是如果任务中途某步出了大问题，到最后才发现，前面的执行都已经浪费了。适合步骤之间相对独立、最终输出的整体质量更重要的场景，比如生成一份报告。</p>
+<p><img src="https://cdn.xolincoding.com//picgo/03_step_vs_task_reflection.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="步骤级 vs 任务级反思"></p>
+<hr>
+<h2 id="4-多-Agent-互评：为什么「他人审视」比「自我检查」更好">4 多 Agent 互评：为什么「他人审视」比「自我检查」更好</h2>
+<p>除了单 Agent 的自我反思，还有一种效果通常更好的方式：<strong>多 Agent 互评</strong>——专门设置一个独立的 Critic Agent，让它来审查执行 Agent 的输出。</p>
+<p>为什么独立的审查比自我反思效果更好？可以类比代码 review 的场景：一个人写完代码自己检查，和让同事来 review，发现的问题质量往往不一样。自己写的东西自己看，容易「视觉疲劳」，会不自觉地补脑跳过问题，潜意识里倾向于认为自己的逻辑是正确的。</p>
+<p>在 LLM 里同样如此：单 Agent 自我反思时，评估者和生成者是同一个模型，它在生成输出时形成的一套「内部逻辑」，做评估时也会沿用这套逻辑，对自己输出的错误不够敏感，容易陷入「自洽」。而独立的 Critic Agent 没有这种包袱，它的唯一职责就是「找问题」，视角更客观，更容易发现执行 Agent 自己看不出来的漏洞。</p>
+<p>互评的具体流程是：执行 Agent 生成输出，Critic Agent 审查并给出具体批注，执行 Agent 根据批注修改，Critic Agent 再次确认。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/04_critic_agent_review.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="多 Agent 互评流程"></p>
+<p>什么时候值得用这种方式？质量要求非常高的场景，比如生成代码后让独立的测试 Agent 来验证、生成分析报告后让事实核查 Agent 交叉验证。代价是又多一个 Agent 的调用成本、系统复杂度也更高，所以并不是所有场景都需要互评，普通场景用自我反思就够了。</p>
+<hr>
+<h2 id="5-进阶：Reflexion-与-LATS，把反思做得更深">5 进阶：Reflexion 与 LATS，把反思做得更深</h2>
+<p>前面讲的 Self-Refine 是最基础的反思模式。学术界在此基础上还有更进一步的探索，了解这些能帮你在面试里展现更深的理解。</p>
+<h3 id="5-1-Reflexion：把失败经验存下来">5.1 Reflexion：把失败经验存下来</h3>
+<p>Reflexion（Shinn 等人 2023 年提出，和 Self-Refine 同年）的核心思路是：不仅让 Agent 反思当前输出的质量，还要把「失败经验」存下来，下次遇到类似任务时直接参考、避免重蹈覆辙。</p>
+<p>可以这样理解两者的区别：Self-Refine 是「写完作文当场改」，Reflexion 是「把这次犯的错记在笔记本上，下次写作文之前先翻一遍笔记」。</p>
+<p>Reflexion 引入了一个「经验记忆」的概念：每次反思产生的教训会被存储起来，作为后续任务的参考上下文。这个思路在需要重复执行类似任务的场景里特别有价值——比如一个代码生成 Agent，第一次写出了有 bug 的代码，反思后不仅修好了这次的 bug，还把「这类 bug 的成因和避免方法」记下来，下次生成类似代码时就不太容易犯同样的错。</p>
+<h3 id="5-2-LATS：把反思和树搜索结合">5.2 LATS：把反思和树搜索结合</h3>
+<p>LATS（Language Agent Tree Search，Zhou 等人 2024 年提出）把反思和树搜索结合了起来。核心思路是把蒙特卡洛树搜索（MCTS）和反思结合起来：通过 MCTS 同时探索多条路径，每条路径执行之后都做评估和反思，反思结果作为经验反馈给后续的路径探索。</p>
+<p>这样一来，Agent 不仅能同时探索多条路径，还能从已经走过的路径里学到教训，让后续探索更有针对性。代价当然也更大——既有多路径的成本又有反思的成本。目前主要还是学术研究场景，还没看到成熟的生产级实现。</p>
+<p>此外还有一种<strong>辩论式反思</strong>：不是让一个 Agent 自己审查自己，而是设置「正方 Agent」和「反方 Agent」互相辩论，反方专门挑毛病、提反对意见，正方再针对反对意见优化。这种对抗式反思比单方面审查更能暴露深层问题，工程上偶尔用于高质量要求的场景，比如重要的商业决策分析、法律文本审查。</p>
+<hr>
+<h2 id="6-工程权衡：怎么用才合理">6 工程权衡：怎么用才合理</h2>
+<p>理解了原理和进阶方案之后，还要知道工程上怎么合理地用它，不然反而会让系统变慢、变贵、甚至陷入死循环。</p>
+<p><strong>什么场景值得开反思？</strong> 输出质量要求高、错误代价大的关键节点，比如最终报告生成、重要决策的推理过程，以及任务比较复杂、LLM 容易遗漏细节的场景。</p>
+<p><strong>什么场景不值得开？</strong> 简单直接的任务（如格式转换、简单问答）加反思纯粹是浪费；实时性要求高的场景也一样——一次反思至少多一次完整的 LLM 调用，延迟可能从 1 秒涨到 3 秒，有些应用场景根本接受不了。</p>
+<p><strong>最重要的是防死循环</strong>：必须设最大轮次，通常设 2-3 轮，绝对不能依赖 LLM 自己判断停止。原因是 LLM 有时会陷入「为了改而改」的循环——每次评估都觉得还有地方能优化，改完又有新的「问题」，每轮改动都很小但实质没有进步，系统就一直在转圈。硬性的轮次上限，是唯一可靠的退出机制。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/05_reflection_guardrails.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="反思需要用护栏防止死循环"></p>
+<p>最后要对整体代价有清醒认知：每轮反思包含一次评估和一次改进，3 轮反思意味着在原始生成之外额外增加 6 次 LLM 调用，延迟和成本都会大幅增加。这是工程上做取舍的核心数字。反思是提升质量的有效手段，但不是免费的，用在刀刃上才有价值，不是每步都做。</p>
+<hr>
+<h2 id="7-要点回顾">7 要点回顾</h2>
+<p>回答「Agent 的反思机制」这道题，把握好以下几个层次：</p>
+<table>
+<thead>
+<tr>
+<th>层次</th>
+<th>要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>本质</strong></td>
+<td>反思是「生成 → 评估 → 改进」的有结构闭环（Self-Refine），不是「不满意就随机重试」</td>
+</tr>
+<tr>
+<td><strong>评估 prompt 两个关键设计</strong></td>
+<td>给出明确检查维度（逻辑/事实/完整性/表达）+ 设置「PASS」出口，否则要么流于表面、要么无限挑毛病</td>
+</tr>
+<tr>
+<td><strong>改进 prompt 三要素</strong></td>
+<td>原始任务、原始输出、评估意见三者缺一不可，否则改进会变得盲目</td>
+</tr>
+<tr>
+<td><strong>两个粒度</strong></td>
+<td>步骤级（错误发现得早但开销大）vs 任务级（能看到整体问题但前期无效工作难以挽回）</td>
+</tr>
+<tr>
+<td><strong>多 Agent 互评</strong></td>
+<td>独立 Critic Agent 比自我检查更好，因为同一模型对自己的输出有「自洽」偏见</td>
+</tr>
+<tr>
+<td><strong>防死循环</strong></td>
+<td>必须硬性设置最大轮次（2-3 轮），不能依赖 LLM 自己停止</td>
+</tr>
+</tbody>
+</table>
+<p>再补充两个进阶加分项：<strong>Reflexion</strong>（把失败经验存进记忆，下次参考避免重蹈覆辙）和 <strong>LATS</strong>（MCTS + 反思，多路径并行并从走过的路里学教训）；以及<strong>成本意识</strong>——每轮反思含评估 + 改进共 2 次调用，3 轮就是额外 6 次，只在质量关键节点启用才划算。</p>
+<p>把闭环结构、评估 prompt 的两个设计、两个粒度、防死循环这几个要点答全，再补上 Cursor 自动跑测修正、Claude Code 的 Bugbot / Security Review 评审子代理这些生产级例子，这道题就回答得很漂亮了。</p>
+<hr>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/agent/15_reflection.html">15. 讲讲 Agent 的反思机制？为什么要用反思？具体怎么实现？ | 小林面试笔记</a></li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/agent/6_three_patterns.html">6. ReAct、Plan-and-Execute、Reflection 三种范式有什么核心区别？ | 小林面试笔记</a>（相关：三种推理范式）</li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/agent/10_multiagent.html">10. 什么是 Multi-Agent？ | 小林面试笔记</a>（相关：多 Agent 协作）</li>
+</ul>
+<blockquote>
+<p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/AI-Agent/" class="category-chain-item">AI Agent</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Agent/" class="print-no-link">#Agent</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「AI Agent」Agent 的反思机制：评估闭环、两个粒度与防死循环</div>
+      <div>https://marisamagic.github.io/2026/08/10/20260810_Agent反思机制/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月10日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/08/10/20260810_Agent%E8%A7%84%E5%88%92%E8%83%BD%E5%8A%9B/" title="「AI Agent」如何赋予 LLM 规划能力：CoT、ToT、GoT 与 Plan-and-Execute">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「AI Agent」如何赋予 LLM 规划能力：CoT、ToT、GoT 与 Plan-and-Execute</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/08/20260808_Agent%E8%AE%B0%E5%BF%86%E5%8E%8B%E7%BC%A9/" title="「AI Agent」Agent 记忆压缩：四种方法与 Prompt Caching 互补">
+                        <span class="hidden-mobile">「AI Agent」Agent 记忆压缩：四种方法与 Prompt Caching 互补</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

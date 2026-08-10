@@ -1,0 +1,889 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="记忆压缩要解决「空间有限、成本有压力」两件事；四种方法——滑动窗口（硬截断、金鱼记忆）、摘要压缩（丢前先提炼、层级式摘要）、重要性过滤（按价值打分、观察遮蔽）、结构化抽取（换载体、信息密度最高）；三种维度（截 &#x2F; 挑 &#x2F; 换载体）可组合使用；Prompt Caching 是「计算层」优化，与「信息层」压缩互补而非替代；工程决策参考；Claude Code Auto-Compact 与 Cursor">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「AI Agent」Agent 记忆压缩：四种方法与 Prompt Caching 互补">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/08/20260808_Agent%E8%AE%B0%E5%BF%86%E5%8E%8B%E7%BC%A9/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="记忆压缩要解决「空间有限、成本有压力」两件事；四种方法——滑动窗口（硬截断、金鱼记忆）、摘要压缩（丢前先提炼、层级式摘要）、重要性过滤（按价值打分、观察遮蔽）、结构化抽取（换载体、信息密度最高）；三种维度（截 &#x2F; 挑 &#x2F; 换载体）可组合使用；Prompt Caching 是「计算层」优化，与「信息层」压缩互补而非替代；工程决策参考；Claude Code Auto-Compact 与 Cursor">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/fe1a5be1152a95bb41d736709951a375.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/01_sliding_window_truncation.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/02_hierarchical_summary.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/03_importance_filtering.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/04_structured_extraction.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/05_compression_matrix.png">
+<meta property="og:image" content="https://cdn.xiaolincoding.com/picgo/06_prompt_caching_layers.png">
+<meta property="article:published_time" content="2026-08-08T07:18:04.850Z">
+<meta property="article:modified_time" content="2026-08-08T07:18:04.850Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://cdn.xiaolincoding.com/picgo/fe1a5be1152a95bb41d736709951a375.png">
+  
+  
+  
+  <title>「AI Agent」Agent 记忆压缩：四种方法与 Prompt Caching 互补 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2025/01/10/3lgax.png') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「AI Agent」Agent 记忆压缩：四种方法与 Prompt Caching 互补"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-08 15:18" pubdate>
+          2026年8月8日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          39 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「AI Agent」Agent 记忆压缩：四种方法与 Prompt Caching 互补</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<blockquote>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/agent/12_memcompress.html">12. Agent 记忆压缩通常有哪些方法？</a>，用于记录与总结 AI Agent 相关的核心面试知识点。</p>
+</blockquote>
+<p>「<strong>对话历史越来越长，context 快撑满了怎么办？有没有做记忆压缩？</strong>」，可以这样作答：</p>
+<blockquote>
+<p>记忆压缩要解决两件事：<strong>空间有限</strong>（context window 有硬上限，超过就得截断）和<strong>成本有压力</strong>（对话越长，每次调用喂进去的 token 越多，费用越高）。目标是「在保留关键信息的前提下，减少历史占用的 token 数量」。</p>
+<p>压缩方法主要有四种，它们解决的是不同维度的问题。<strong>滑动窗口</strong>是只保留最近 N 轮对话，超出就从最老的开始丢，实现最简单，但本质是「硬截断」——三周前的关键决策和昨天的闲聊会被同等对待地丢掉，我把它的特性概括为「金鱼记忆」；<strong>摘要压缩</strong>是对硬截断的改进，在丢弃之前先让 LLM 把旧历史总结成一段精华摘要替换原文，代价是摘要会丢失细节，进阶做法是层级式摘要，越久远的越精炼；<strong>重要性过滤</strong>换了个角度，按内容的实际价值打分筛选，而不是按时间先后，有规则打分和 LLM 打分两种方式；<strong>结构化抽取</strong>最激进，它不保留对话文本，而是把「用户偏好 Python」「预算上限 5 万」这类事实主动抽成结构化字段，信息密度最高、损失最小，但开发成本也最高。</p>
+<p>我在实际项目里最常用的是<strong>滑动窗口 + 摘要压缩</strong>的组合：滑动窗口负责控制总长度上限，摘要压缩负责在历史被丢弃之前做一次提炼，这样既有长度控制，又不是直接硬截断。另外要注意把 <strong>Prompt Caching</strong> 和记忆压缩区分开——它是「计算层」的优化，对已经决定带进上下文的内容减少重复计算开销，和「信息层」的压缩是互补关系，不是替代关系。</p>
+</blockquote>
+<p><strong>生产级例子</strong>：Cursor 和 Claude Code 已经把记忆压缩做成了日常机制。Claude Code 的 <strong>Auto-Compact</strong> 会在 token 使用量接近上下文上限时自动触发：把压缩边界前的整批历史交给模型生成一份结构化摘要替换原文，同时保留最近若干条消息完整，连续失败 3 次会熔断停止，避免空耗 API 调用；它还有 Microcompact（把过长的工具结果截断成占位符）、Snip Compact（直接删除可重建的低价值中间消息）、Context Collapse（后台异步折叠中段消息）等多层手段，用户也可以随时用 <code>/compact</code> 手动触发。Cursor 的机制类似：上下文接近上限时自动对对话做 Summarize（有损压缩），但会把完整的历史记录保存成文件，Agent 发现摘要丢了关键细节时可以搜索历史文件找回——这就是「有损压缩 + 可追溯」的工程补救。</p>
+<hr>
+<h2 id="1-为什么需要记忆压缩：空间有限、成本有压力">1 为什么需要记忆压缩：空间有限、成本有压力</h2>
+<p>记忆压缩不是锦上添花，而是 context window 硬限制下的刚需。</p>
+<p>LLM 没有像人脑一样的持续记忆，它依赖的是「每次调用时传入的完整对话历史」——你聊的每一句话都被打包成 messages 列表传进去，模型读完这些内容才能生成下一条回复。这个列表是有硬上限的：GPT-4o 是 128K token，Claude 家族默认是 200K token，付费计划里部分模型可以扩展到 1M token。超过上限就得截断，而默认的截断策略是「从最老的对话开始丢」。</p>
+<p>于是你看到了那尴尬的一幕：三十分钟前刚确认的技术方案，等聊到一个多小时的时候，就这么被悄悄扔掉了——Agent 重新提出你已经否决的思路，还在困惑它怎么突然「忘事」。</p>
+<p><img src="https://cdn.xiaolincoding.com/picgo/fe1a5be1152a95bb41d736709951a375.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="context window 的硬上限"></p>
+<p>除了空间，还有更现实的压力——<strong>成本</strong>。就算没有超过 token 上限，对话越长，每次调 LLM 的费用就越高，因为你把越来越多的历史塞进了输入。高频使用场景下，这是货真价实的成本压力。</p>
+<p>所以记忆压缩的本质就是两件事：<strong>空间有限</strong>，所以要在保留关键信息的前提下减少 token 占用；<strong>成本有压力</strong>，所以能少带一点历史就少带一点。理解了这两个动因，再看各种压缩方法就有了判断基准。</p>
+<hr>
+<h2 id="2-方法一：滑动窗口——最简单，也最粗糙">2 方法一：滑动窗口——最简单，也最粗糙</h2>
+<p>滑动窗口是最符合直觉的做法，就像手机聊天记录默认只显示最近 200 条：超出就从最老的开始删，只保留最近 N 轮对话。</p>
+<p><img src="https://cdn.xiaolincoding.com/picgo/01_sliding_window_truncation.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="滑动窗口的硬截断"></p>
+<p>好处是实现极其简单：不需要任何额外的 LLM 调用，没有额外开销。坏处是「硬截断」——对话内容按时间一刀切，三周前确认的关键决策和昨天随口说的一句话被同等对待，超出窗口就都消失了。</p>
+<p>用一个词概括它的特性就是**「金鱼记忆」**：只记得最近发生的事，越往前越模糊，再久一点就什么都没了。对于短对话、或者历史信息不重要的场景，这个方案足够用，成本也最低。但一旦任务拉长、历史里有需要长期记住的决策，滑动窗口就会成为失忆的源头。</p>
+<hr>
+<h2 id="3-方法二：摘要压缩——丢之前先提炼一遍">3 方法二：摘要压缩——丢之前先提炼一遍</h2>
+<p>摘要压缩是对滑动窗口「硬截断」的改进。核心思路是：不直接丢弃即将超出窗口的历史，而是先让 LLM 把这段历史总结成一段精华摘要，用摘要替换原始对话，再继续往前。</p>
+<p>类比一下：笔记本快写满了，你不会把前面的页直接撕掉，而是先把前半本的要点重新整理成一页纸的精华总结，再带着这页总结继续记录。后来翻回去看，这页总结虽然不如原版详细，但关键脉络都在。</p>
+<h3 id="3-1-代价：摘要会丢失细节">3.1 代价：摘要会丢失细节</h3>
+<p>LLM 在总结时会按照自己判断的「重要性」来决定保留什么、省略什么。有些细节当时看起来不重要、被摘要略过了，后来却刚好需要，这时候就找不回来了。所以摘要压缩单独用时，通常的做法是**「旧的压缩成摘要，近的保持完整」**：最近几轮对话往往和当前任务关系最密切，保持原文；更早的历史相关性低，压缩成摘要。</p>
+<h3 id="3-2-进阶：层级式摘要">3.2 进阶：层级式摘要</h3>
+<p>不是对所有旧历史做一次性摘要，而是分层处理：最近 10 轮保持原文，10 到 50 轮的历史压缩成一份「中期摘要」，50 轮之前的历史进一步压缩成更精炼的「长期摘要」。每一层的信息密度不同，越久远的越精炼，但核心决策和关键结论始终被保留——这有点像公司的会议纪要体系：今天的会议有详细的逐条记录，上个月的会议只留要点摘要，去年的只留关键决策备忘。</p>
+<p>层级式摘要的好处是，Agent 既能精确回忆近期细节，也能粗略回忆远期要点，比一刀切的摘要颗粒度更合理。</p>
+<p><img src="https://cdn.xiaolincoding.com/picgo/02_hierarchical_summary.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="层级式摘要"></p>
+<h3 id="3-3-生产级的触发机制：批量式压缩，而非逐条追加">3.3 生产级的触发机制：批量式压缩，而非逐条追加</h3>
+<p>这里补充一个工程细节：很多人以为摘要压缩是「每滑出窗口一条旧对话，就把它并入摘要」，这种<strong>增量滚动式</strong>实现朴素但有个问题——每次都要把「旧摘要 + 新滑出的一条对话」重新喂给模型，摘要被反复改写，总开销并不低，还容易在反复压缩中累积丢失信息。</p>
+<p>生产级产品实际用的是<strong>批量式</strong>：阈值按 <strong>token 用量</strong>触发（而不是对话轮数），达到阈值后把「压缩边界前的整批内容——包括之前生成的历史摘要本身——一次归纳成一份新摘要」，同时保留最近约 10 条消息原文。这样摘要始终只有一份，长度可控，边界也清晰。</p>
+<h3 id="3-4-最常见的工程组合：滑动窗口-摘要">3.4 最常见的工程组合：滑动窗口 + 摘要</h3>
+<p>在实际工程里，这两种方法几乎总是配合使用：<strong>滑动窗口负责控制对话历史的总长度上限，摘要压缩负责在历史被丢弃之前做一次提炼</strong>，把关键信息留下来。这样既有长度控制，又不是直接硬截断，是目前最常见的工程方案。</p>
+<hr>
+<h2 id="4-方法三：重要性过滤——按价值筛选，不按时间">4 方法三：重要性过滤——按价值筛选，不按时间</h2>
+<p>滑动窗口和摘要压缩有一个共同的思路：都在「时间维度」处理历史，按照发生的先后顺序决定保留什么。但时间不等于重要性——三周前的一句关键决策，可能远比昨天的几句闲聊更有价值，可它在滑动窗口里会先被丢掉。</p>
+<p>重要性过滤换了一个角度：<strong>按内容的实际价值决定去留</strong>。给每条对话记录打一个重要性分数，低于阈值的淘汰，高分的保留。类比整理房间：你不会按照购买时间决定扔什么，而是按照「这个东西现在还有没有用」来决定。</p>
+<p><img src="https://cdn.xiaolincoding.com/picgo/03_importance_filtering.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="重要性过滤"></p>
+<p>打分的方式有两种，在准确率和开销之间权衡：</p>
+<ul>
+<li><strong>规则打分</strong>：包含「决定」「确认」「需求」等关键词的记录加分，被后续对话引用次数多的加分，纯闲聊降分。快、没有额外开销，但比较粗糙，边界情况容易判断失误；</li>
+<li><strong>LLM 打分</strong>：逐条判断每条记录的重要程度。准确率更高，但每条记录都需要一次 LLM 调用，开销大，通常在批量清理历史时做，而不是实时处理每条消息。</li>
+</ul>
+<h3 id="4-1-观察遮蔽：不删，只是藏起来">4.1 观察遮蔽：不删，只是藏起来</h3>
+<p>更激进的一个思路是<strong>观察遮蔽（Observation Masking）</strong>：不是删除低分内容，而是在构造 prompt 时选择性地「隐藏」某些历史条目。比如当前任务是写代码，就把之前关于需求讨论的对话标记为「与当前步骤无关」，构造 prompt 时直接跳过；等任务进入测试阶段，再把测试相关的历史「显示」出来，代码实现的细节对话则被遮蔽。</p>
+<p>好处是信息没有被真正删除，只是在不同阶段动态选择「当前最需要看到什么」，既节省了 token，又避免了不可逆的信息丢失。</p>
+<h3 id="4-2-主动压缩：不等撑满，随时动手">4.2 主动压缩：不等撑满，随时动手</h3>
+<p>前面说的方法基本都是<strong>被动触发</strong>的——等 context 快满了才开始压缩。<strong>主动压缩（Proactive Compression）</strong> 的思路是反过来：Agent 在每一步执行完之后，主动判断哪些中间过程可以压缩。</p>
+<p>比如 Agent 调用搜索工具返回了 2000 token 的原始结果，读完立刻把它压缩成 200 token 的要点摘要，替换掉原始内容。这样 context 的增长速度从一开始就被控制住了，而不是等到快满了才临时抱佛脚。主动压缩特别适合<strong>工具调用频繁</strong>的 Agent——工具返回的原始数据往往很长，但真正有用的信息只占一小部分。</p>
+<hr>
+<h2 id="5-方法四：结构化抽取——换一种载体存信息">5 方法四：结构化抽取——换一种载体存信息</h2>
+<p>前三种方法有一个共同的前提假设：历史信息最好以「对话文本」的形式保留。结构化抽取完全不同，它先问一个更本质的问题：<strong>我们真的需要保留对话文本本身吗？</strong></p>
+<p>很多场景里，真正有价值的不是对话文字，而是对话中传递的事实和状态——「用户偏好用 Python」「预算上限是 5 万」「已确认方案 B」「需要兼容移动端」。把这些信息主动提取出来存成结构化字段，后续注入 prompt 时直接用这些字段，比传一大段对话文本要高效得多，信息密度也高得多。</p>
+<p>类比医生记录病历：医生不会把和病人的所有对话逐字记录下来，而是整理成结构化档案——「主诉：头痛三天；现病史：无发热；过敏史：青霉素；初步诊断：紧张性头痛」。下次就诊时医生直接读病历，不需要把上次的全程录音重听一遍。</p>
+<p><img src="https://cdn.xiaolincoding.com/picgo/04_structured_extraction.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="结构化抽取"></p>
+<p>这种方案的信息损失最小：只要字段定义合理，重要信息被精确保留，没有摘要带来的模糊化。代价是<strong>开发成本最高</strong>——你需要预先定义「什么是重要字段」，这需要对业务场景有深入理解；而且不同类型的任务所需字段可能完全不同，通用性较低。</p>
+<hr>
+<h2 id="6-四种方法的关系：三个维度，组合使用">6 四种方法的关系：三个维度，组合使用</h2>
+<p>这四种方法不是互斥的，也不是按优劣排列的，而是从<strong>三个不同维度</strong>解决问题的：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>解决什么问题</th>
+<th>包含的方法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>怎么截</strong></td>
+<td>历史太长</td>
+<td>滑动窗口（直接硬截）、摘要压缩（截之前先提炼）</td>
+</tr>
+<tr>
+<td><strong>怎么挑</strong></td>
+<td>内容不等价</td>
+<td>重要性过滤（打破时间顺序，按价值筛选）</td>
+</tr>
+<tr>
+<td><strong>换载体</strong></td>
+<td>对话文本是不是最佳载体</td>
+<td>结构化抽取（换成信息密度更高的形式存储）</td>
+</tr>
+</tbody>
+</table>
+<p><img src="https://cdn.xiaolincoding.com/picgo/05_compression_matrix.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="四种压缩方法的矩阵"></p>
+<p>这三个维度可以自由组合：比如先用重要性过滤筛掉低价值内容，再用摘要压缩处理剩余历史，同时对特定类型的关键信息做结构化抽取。实际系统里，往往是多种方法配合使用的。</p>
+<hr>
+<h2 id="7-Prompt-Caching：在「计算层」的互补手段">7 Prompt Caching：在「计算层」的互补手段</h2>
+<p>除了「信息层」的压缩策略，还有一个工程上值得了解的技术叫 <strong>Prompt Caching</strong>，Anthropic 的 Claude 和 OpenAI 都已支持。</p>
+<p>理解它之前先知道一个背景：LLM 每次处理请求，都要把输入的所有 token「过一遍模型」来做计算，这个过程叫 <strong>prefill</strong>，是延迟和成本的主要来源之一。常见的场景是：你有一段固定的 system prompt 加上越来越长的对话历史，每次调用时这段历史都会被重新计算一遍，哪怕它和上一次调用时完全一样。</p>
+<p><img src="https://cdn.xiaolincoding.com/picgo/06_prompt_caching_layers.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Prompt Caching 的计算层优化"></p>
+<p>Prompt Caching 的思路是：如果 prompt 的前缀部分在多次请求之间是一样的，就把这部分的计算结果缓存起来；下次请求前缀匹配时直接复用缓存，不重新计算。费用和延迟都大幅降低，某些场景下能降到原来的十分之一。以 Anthropic Claude 为例，命中缓存的前缀 token 费用约为正常输入 token 的十分之一；写入缓存有一次性的额外费用（5 分钟有效期的缓存约为正常费用的 1.25 倍，1 小时有效期约为 2 倍），但只要这段 prompt 在后续被复用两次以上，总体成本就已经回本了。Agent 场景里 system prompt 加上长期记忆注入的部分在多轮对话中基本不变，天然适合被缓存。</p>
+<p>到这里就能看清两者的区别了：</p>
+<ul>
+<li><strong>记忆压缩在「信息层」工作</strong>——决定哪些内容值得被保留在对话历史里；</li>
+<li><strong>Prompt Caching 在「计算层」工作</strong>——对已经决定要带进去的内容减少重复计算的开销。</li>
+</ul>
+<p>两者解决的不是同一个问题，可以同时使用，是<strong>互补关系，不是替代关系</strong>。</p>
+<hr>
+<h2 id="8-工程实践决策参考">8 工程实践决策参考</h2>
+<p>选方案时，可以按这个思路来判断：</p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>推荐方案</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>对话不长、业务简单</td>
+<td>滑动窗口</td>
+<td>实现成本最低，足够用</td>
+</tr>
+<tr>
+<td>对话会很长、不想硬截断</td>
+<td>摘要 + 滑动窗口</td>
+<td>最稳健的工程组合</td>
+</tr>
+<tr>
+<td>业务里有明确定义的「关键信息」</td>
+<td>结构化抽取</td>
+<td>信息密度最高、效果最好</td>
+</tr>
+<tr>
+<td>高频调用、长 prompt、成本敏感</td>
+<td>Prompt Caching</td>
+<td>收益非常可观，值得优先考虑</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="9-要点回顾">9 要点回顾</h2>
+<p>回答「记忆压缩有哪些方法」这道题，要答出三个层次才完整：</p>
+<table>
+<thead>
+<tr>
+<th>层次</th>
+<th>要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>为什么压缩</strong></td>
+<td>context window 有硬上限（空间有限），对话越长调用越贵（成本有压力）</td>
+</tr>
+<tr>
+<td><strong>四种方法</strong></td>
+<td>滑动窗口（硬截断、金鱼记忆）、摘要压缩（丢前先提炼、层级式摘要）、重要性过滤（规则/LLM 打分、观察遮蔽）、结构化抽取（字段化存储、信息密度最高）</td>
+</tr>
+<tr>
+<td><strong>三个维度</strong></td>
+<td>怎么截（滑动窗口 / 摘要）、怎么挑（重要性过滤）、换载体（结构化抽取），可组合使用</td>
+</tr>
+</tbody>
+</table>
+<p>再补充三个进阶加分项：<strong>主动压缩</strong>（每步执行后主动压缩中间结果，适合工具调用频繁的 Agent，不等撑满再动手）；<strong>批量式摘要</strong>（生产级按 token 阈值触发，把边界前的整批历史连同旧摘要一起归纳成一份新摘要，保留最近 N 条原文）；<strong>Prompt Caching 分层</strong>（信息层压缩 vs 计算层缓存，互补而非替代，这个区别主动点出来会给面试官留下好印象）。</p>
+<p>最后补上生产级例子：Claude Code 的 Auto-Compact（token 接近上限自动触发、模型自摘要、保留最近消息、失败熔断、<code>/compact</code> 手动触发）和 Cursor 的自动 Summarize（有损压缩 + 历史文件可追溯）、Dynamic Context Discovery（长工具输出写文件按需拉取）。把这三个层次加上进阶点答全，这道题就回答得很漂亮了。</p>
+<hr>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/agent/12_memcompress.html">12. Agent 记忆压缩通常有哪些方法？ | 小林面试笔记</a></li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/agent/11_single_multi.html">11. 说说 Single-Agent 和 Multi-Agent 的设计方案？ | 小林面试笔记</a>（前一篇：选型方案）</li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/agent/8_memory.html">8. 请你介绍一下 AI Agent 的记忆机制，并说明在实际开发中应该如何设计记忆模块？ | 小林面试笔记</a>（相关：记忆机制）</li>
+</ul>
+<blockquote>
+<p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/AI-Agent/" class="category-chain-item">AI Agent</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Agent/" class="print-no-link">#Agent</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「AI Agent」Agent 记忆压缩：四种方法与 Prompt Caching 互补</div>
+      <div>https://marisamagic.github.io/2026/08/08/20260808_Agent记忆压缩/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月8日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/08/10/20260810_Agent%E5%8F%8D%E6%80%9D%E6%9C%BA%E5%88%B6/" title="「AI Agent」Agent 的反思机制：评估闭环、两个粒度与防死循环">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「AI Agent」Agent 的反思机制：评估闭环、两个粒度与防死循环</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/08/20260808_Agent%E9%80%89%E5%9E%8B%E6%96%B9%E6%A1%88/" title="「AI Agent」Single-Agent 与 Multi-Agent 怎么选：选型标准与中心化编排">
+                        <span class="hidden-mobile">「AI Agent」Single-Agent 与 Multi-Agent 怎么选：选型标准与中心化编排</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
