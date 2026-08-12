@@ -4,6 +4,39 @@
   
   
   <entry>
+    <title>「RAG」相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？</title>
+    <link href="/2026/08/12/20260812_RAG%E4%B8%8E%E5%BE%AE%E8%B0%83/"/>
+    <url>/2026/08/12/20260812_RAG%E4%B8%8E%E5%BE%AE%E8%B0%83/</url>
+    
+    <content type="html"><![CDATA[<h2 id="0-前言">0 前言</h2><blockquote><p>本文内容整理自公众号「小林面试笔记」的文章 <a href="https://xiaolinnote.com/ai/rag/3_rag_vs_finetune.html">3. 相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？</a>，用于记录与总结 RAG 相关的核心面试知识点。</p></blockquote><p>「<strong>相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？</strong>」，可以这样作答：</p><blockquote><p>微调和 RAG 解决的<strong>不是同一层面的问题，不是谁替代谁的关系</strong>。微调是<strong>改模型参数</strong>——拿自己的数据让模型继续训练，把知识直接&quot;烧&quot;进参数里，适合定制输出格式、行业语气、培养深度专业能力；RAG 是<strong>不改参数</strong>——把知识放在外部知识库，推理时实时检索相关片段注入 prompt，让模型照着资料回答，适合知识频繁更新、需要答案可溯源的场景。</p><p>判断标准很清晰：<strong>知识库类问答首选 RAG</strong>，成本低、加完文档就生效、回答可溯源；<strong>要模型学会特定的输出格式或行业语气，微调更合适</strong>。两者并不冲突，还能组合使用：先微调让模型学会&quot;怎么说&quot;，再用 RAG 提供&quot;说什么&quot;的具体内容。</p></blockquote><hr><h2 id="1-同一问题的两种解法：改参数-vs-不改参数">1 同一问题的两种解法：改参数 vs 不改参数</h2><p>聊微调与 RAG 之前，先回到一个根本前提：LLM 的「知识」到底是什么。</p><p>大模型的知识是训练时从海量文本里学来的，最终以<strong>权重参数</strong>的形式固化在模型里。你可以把它理解成<strong>把知识烧进了 ROM</strong>——训练完成的那一刻，这些知识就被&quot;刻死&quot;了，不会自己更新。想知道训练截止日期之后的事？抱歉，参数里没有。</p><p>理解了这一点，微调和 RAG 的本质就浮出水面了：<strong>这两个方案其实在解决同一个问题——怎么把模型训练时没学到的知识给它补上</strong>。只不过思路截然相反：一个直接改参数，让模型把新知识&quot;记&quot;进去；一个不动参数，留到推理时现查现用。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776781677589-27e6b631-1bbc-49ad-91c1-8786310de74e.png" alt="微调与 RAG：改参数 vs 不改参数"></p><p>这也是这道面试题最核心的答法：<strong>先别急着对比优劣，先讲清两者根本不在同一层面</strong>。</p><hr><h2 id="2-微调（Fine-tuning）：把知识直接烧进模型">2 微调（Fine-tuning）：把知识直接烧进模型</h2><p>微调是<strong>直接改模型参数</strong>的方案：拿着自己的业务数据，让模型继续训练一段时间，把新知识&quot;记住&quot;。思路很直白——既然参数里没有，那就把参数改一改，改到有为止。</p><h3 id="2-1-微调的优势">2.1 微调的优势</h3><ul><li><strong>效果彻底</strong>：知识从模型内部改变，不是外部拼接，整个模型的行为都会被重塑；</li><li><strong>深度定制</strong>：专业词汇、输出格式、回答风格都能按需塑造，让模型&quot;像你这个行业里的人&quot;；</li><li><strong>延迟低</strong>：推理时不需要额外的检索步骤，问完直接答，响应速度最快。</li></ul><h3 id="2-2-微调的代价">2.2 微调的代价</h3><p>优点很诱人，但代价同样实在：</p><ol><li><strong>成本高</strong>：要准备标注数据、租 GPU、跑训练，人力财力都是实打实的投入；</li><li><strong>知识更新难</strong>：业务数据每周都在变，可每次微调都要几小时甚至几天的训练，总不能每周都来一遍；</li><li><strong>答案不可溯源</strong>：回答来自参数，你永远不知道它是基于哪条知识算出来的，出了问题也没法定位。</li></ol><p>这里还有个常见的认知误区：<strong>很多人以为微调之后模型就&quot;懂&quot;了你的业务知识，其实它只是记住了训练数据里的模式</strong>——它到底记住了什么、记错了什么，你根本无从得知。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776781810697-0ebca069-371c-4ee2-856b-6b82ae27fcd8.png" alt="微调：把知识直接烧进模型参数"></p><hr><h2 id="3-RAG：不改参数，推理时现查知识">3 RAG：不改参数，推理时现查知识</h2><p>RAG 走的是完全相反的路：<strong>模型参数一动不动，把知识放在外部，用到的时候再查</strong>。前两篇我们详细拆解过它的流程——文档入库 → 提问时检索相关片段 → 拼进 prompt → 模型照着资料回答。</p><h3 id="3-1-RAG-的优势">3.1 RAG 的优势</h3><ul><li><strong>更新即时生效</strong>：知识库更新只需往向量库里加文档，加完就能用，不需要重新训练；</li><li><strong>答案可溯源</strong>：回答可以附上来源 chunk，出错能立刻定位是哪条知识有问题；</li><li><strong>成本低</strong>：小团队用 OpenAI Embedding + Chroma 就能把整套系统跑起来。</li></ul><h3 id="3-2-RAG-的不足">3.2 RAG 的不足</h3><ol><li><strong>检索延迟</strong>：整体响应比纯 LLM 多出几百毫秒到一秒，对实时性要求极高的场景要注意；</li><li><strong>检索质量卡住上限</strong>：生成层只是在复述和整理检索到的内容，<strong>检索不到的知识，LLM 再强也&quot;变&quot;不出来</strong>。所以 RAG 系统调优的主战场永远是<strong>检索这一层</strong>，而不是换更贵的模型——很多人一上来就想着升级模型，往往是南辕北辙；</li><li><strong>复杂推理提升有限</strong>：RAG 提供的是&quot;参考资料&quot;，如果希望模型对某个领域有更深的推理能力，还是得靠微调。</li></ol><p><img src="https://cdn.xiaolincoding.com//picgo/1776781912137-c9127239-897a-4f75-8723-f1131ab52665.png" alt="RAG：检索层决定系统上限"></p><hr><h2 id="4-组合使用：微调解决「怎么说」，RAG-解决「说什么」">4 组合使用：微调解决「怎么说」，RAG 解决「说什么」</h2><p>两个方案各有短板，而短板恰好互补——所以实践中真正的主流用法是<strong>组合出拳</strong>：</p><blockquote><p><strong>先对基础模型做一轮微调</strong>，让它学会输出格式、语气风格、行业术语；<strong>再用 RAG 来提供具体的知识内容</strong>——微调解决「怎么说」，RAG 解决「说什么」，各司其职。</p></blockquote><p>把两者放在同一张表里看，各自的定位就非常清楚了：</p><table><thead><tr><th>维度</th><th>微调（Fine-tuning）</th><th>RAG</th></tr></thead><tbody><tr><td>知识更新</td><td>要重新训练，成本高、周期长</td><td>更新知识库即可，实时生效</td></tr><tr><td>推理延迟</td><td>低，没有额外检索步骤</td><td>较高，多一次检索耗时</td></tr><tr><td>实现成本</td><td>高，需要 GPU 和标注数据</td><td>低，向量库 + Embedding 即可</td></tr><tr><td>答案可溯源</td><td>不支持，答案来自模型参数</td><td>支持，可追溯到具体 chunk</td></tr><tr><td>适合场景</td><td>定制输出风格、培养深度专业能力</td><td>私有知识问答、数据动态更新</td></tr><tr><td>知识上限</td><td>受限于训练数据的质量与规模</td><td>受限于检索质量与 context 长度</td></tr></tbody></table><p><img src="https://cdn.xiaolincoding.com//picgo/1776781981828-cf529b55-35f5-423c-987b-a565ca7ffdbd.png" alt="微调 + RAG 组合使用"></p><hr><h2 id="5-面试总结">5 面试总结</h2><p>这道题最忌讳的就是**「二选一」思维**——微调和 RAG 不是竞争关系，而是两条不同层面的路径。答题按三步走：</p><ol><li><strong>先说本质</strong>：微调是改模型参数，RAG 是不改参数、推理时注入知识，两者不在同一层面，不是替代关系；</li><li><strong>再各说优劣</strong>：微调擅长定制输出风格、培养深度专业能力，但成本高、更新慢、不可溯源；RAG 擅长知识频繁更新、答案可溯源的场景，但多了检索延迟，且检索质量卡住效果上限；</li><li><strong>最后提组合</strong>：微调解决「怎么说」，RAG 解决「说什么」，两者可以配合使用。</li></ol><p>如果被追问&quot;知识库问答为什么首选 RAG&quot;，标准回答是：<strong>成本低、更新即生效、答案可溯源，企业私有知识问答的三个硬需求它全占了</strong>；如果被追问&quot;RAG 有什么缺点&quot;，别忘了检索延迟、检索质量上限、复杂推理提升有限这三点。</p><hr><h2 id="参考">参考</h2><ul><li><a href="https://xiaolinnote.com/ai/rag/3_rag_vs_finetune.html">3. 相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？ | 小林面试笔记</a></li></ul><blockquote><p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p></blockquote>]]></content>
+    
+    
+    <categories>
+      
+      <category>追逐繁星</category>
+      
+      <category>RAG</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>AI</tag>
+      
+      <tag>大模型</tag>
+      
+      <tag>LLM</tag>
+      
+      <tag>RAG</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>「RAG」大模型的 RAG 主要用来解决什么问题？</title>
     <link href="/2026/08/12/20260812_RAG%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98/"/>
     <url>/2026/08/12/20260812_RAG%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98/</url>
@@ -766,9 +799,9 @@
     
     <tags>
       
-      <tag>多线程</tag>
-      
       <tag>Linux</tag>
+      
+      <tag>多线程</tag>
       
     </tags>
     
@@ -795,9 +828,9 @@
     
     <tags>
       
-      <tag>多线程</tag>
-      
       <tag>Linux</tag>
+      
+      <tag>多线程</tag>
       
     </tags>
     
@@ -824,9 +857,9 @@
     
     <tags>
       
-      <tag>多线程</tag>
-      
       <tag>Linux</tag>
+      
+      <tag>多线程</tag>
       
     </tags>
     
@@ -853,9 +886,9 @@
     
     <tags>
       
-      <tag>多线程</tag>
-      
       <tag>Linux</tag>
+      
+      <tag>多线程</tag>
       
     </tags>
     
@@ -2234,9 +2267,9 @@
       
       <tag>std::mutex</tag>
       
-      <tag>std::condition_variable</tag>
-      
       <tag>std::future</tag>
+      
+      <tag>std::condition_variable</tag>
       
     </tags>
     
@@ -3156,13 +3189,13 @@
       
       <tag>C++</tag>
       
-      <tag>多线程</tag>
-      
       <tag>Ubuntu</tag>
       
       <tag>Linux</tag>
       
       <tag>VS Code</tag>
+      
+      <tag>多线程</tag>
       
     </tags>
     

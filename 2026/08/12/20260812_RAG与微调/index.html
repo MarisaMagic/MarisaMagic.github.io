@@ -19,16 +19,16 @@
   <meta name="author" content="MarisaMagic">
   <meta name="keywords" content="">
   
-    <meta name="description" content="RAG 解决的三大问题（知识时效性、私有知识覆盖、幻觉）；三者的共同根源是「知识被固化在模型参数里」；RAG 如何同时解决这三个问题（知识外置、实时检索注入、答案可溯源）；知识管理与模型能力解耦的设计核心。">
+    <meta name="description" content="微调与 RAG 的本质区别（改参数 vs 不改参数）；微调的优势（效果彻底、深度定制、低延迟）与代价（成本高、更新难、不可溯源）；RAG 的优势（更新即时生效、答案可溯源、成本低）与不足（检索延迟、检索质量卡住上限、复杂推理提升有限）；组合使用：微调解决「怎么说」，RAG 解决「说什么」；面试答题要点（先说本质、再各说优劣、最后提组合）。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="「RAG」大模型的 RAG 主要用来解决什么问题？">
-<meta property="og:url" content="https://marisamagic.github.io/2026/08/12/20260812_RAG%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98/index.html">
+<meta property="og:title" content="「RAG」相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/12/20260812_RAG%E4%B8%8E%E5%BE%AE%E8%B0%83/index.html">
 <meta property="og:site_name" content="MarisaMagic&#39;s Blog">
-<meta property="og:description" content="RAG 解决的三大问题（知识时效性、私有知识覆盖、幻觉）；三者的共同根源是「知识被固化在模型参数里」；RAG 如何同时解决这三个问题（知识外置、实时检索注入、答案可溯源）；知识管理与模型能力解耦的设计核心。">
+<meta property="og:description" content="微调与 RAG 的本质区别（改参数 vs 不改参数）；微调的优势（效果彻底、深度定制、低延迟）与代价（成本高、更新难、不可溯源）；RAG 的优势（更新即时生效、答案可溯源、成本低）与不足（检索延迟、检索质量卡住上限、复杂推理提升有限）；组合使用：微调解决「怎么说」，RAG 解决「说什么」；面试答题要点（先说本质、再各说优劣、最后提组合）。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg">
-<meta property="article:published_time" content="2026-08-12T08:08:07.443Z">
-<meta property="article:modified_time" content="2026-08-12T08:10:59.198Z">
+<meta property="article:published_time" content="2026-08-12T09:52:51.374Z">
+<meta property="article:modified_time" content="2026-08-12T09:52:51.374Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="大模型">
@@ -39,7 +39,7 @@
   
   
   
-  <title>「RAG」大模型的 RAG 主要用来解决什么问题？ - MarisaMagic&#39;s Blog</title>
+  <title>「RAG」相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？ - MarisaMagic&#39;s Blog</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -228,7 +228,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="「RAG」大模型的 RAG 主要用来解决什么问题？"></span>
+            <span id="subtitle" data-typed-text="「RAG」相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？"></span>
           
         </div>
 
@@ -244,7 +244,7 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2026-08-12 16:08" pubdate>
+        <time datetime="2026-08-12 17:52" pubdate>
           2026年8月12日 下午
         </time>
       </span>
@@ -256,7 +256,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.8k 字
+          1.9k 字
         
       </span>
     
@@ -267,7 +267,7 @@
         
         
         
-          16 分钟
+          17 分钟
         
       </span>
     
@@ -308,68 +308,123 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">「RAG」大模型的 RAG 主要用来解决什么问题？</h1>
+            <h1 id="seo-header">「RAG」相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？</h1>
             
             
               <div class="markdown-body">
                 
                 <h2 id="0-前言">0 前言</h2>
 <blockquote>
-<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/2_rag_problems.html">2. 大模型的 RAG 主要用来解决什么问题？</a>，用于记录与总结 RAG 相关的核心面试知识点。</p>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/3_rag_vs_finetune.html">3. 相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？</a>，用于记录与总结 RAG 相关的核心面试知识点。</p>
 </blockquote>
-<p>「<strong>大模型的 RAG 主要用来解决什么问题？</strong>」，可以这样作答：</p>
+<p>「<strong>相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？</strong>」，可以这样作答：</p>
 <blockquote>
-<p>主要解决三个问题，而且这三者的根源是同一件事——<strong>知识被固化在了模型参数里</strong>。</p>
-<p>一是<strong>知识时效性</strong>：LLM 训练完成的那一刻知识就「冻住」了，训练截止日期之后的信息一无所知；二是<strong>私有知识覆盖</strong>：公司内部文档、行业专有数据根本没机会进训练集，模型「压根没有」这些知识；三是<strong>幻觉问题</strong>：没有知识依据时，模型会编出听起来合理但实际错误的答案。</p>
-<p>RAG 的解法是把知识从参数里搬到外部知识库，用户提问时实时检索相关片段、注入 prompt，让 LLM 基于参考资料作答——<strong>一个思路同时解决三个问题</strong>：知识可随时更新、私有知识即时可用、答案有依据可溯源。</p>
+<p>微调和 RAG 解决的<strong>不是同一层面的问题，不是谁替代谁的关系</strong>。微调是<strong>改模型参数</strong>——拿自己的数据让模型继续训练，把知识直接&quot;烧&quot;进参数里，适合定制输出格式、行业语气、培养深度专业能力；RAG 是<strong>不改参数</strong>——把知识放在外部知识库，推理时实时检索相关片段注入 prompt，让模型照着资料回答，适合知识频繁更新、需要答案可溯源的场景。</p>
+<p>判断标准很清晰：<strong>知识库类问答首选 RAG</strong>，成本低、加完文档就生效、回答可溯源；<strong>要模型学会特定的输出格式或行业语气，微调更合适</strong>。两者并不冲突，还能组合使用：先微调让模型学会&quot;怎么说&quot;，再用 RAG 提供&quot;说什么&quot;的具体内容。</p>
 </blockquote>
 <hr>
-<h2 id="1-大模型的-RAG-主要用来解决什么问题？">1 大模型的 RAG 主要用来解决什么问题？</h2>
-<h3 id="1-1-LLM-的「知识冻结」问题">1.1 LLM 的「知识冻结」问题</h3>
-<p>先理解根本原因。LLM 在预训练阶段通过阅读海量文本，把知识&quot;编码&quot;进了模型的参数权重里。你可以把它想象成<strong>一本印死的百科全书</strong>：书里知识丰富，但印刷完成之后，内容就再也改不了了。</p>
-<p><img src="https://cdn.xiaolincoding.com//picgo/1776780944864-109e1d2b-72d7-4f03-bb6d-6c120ec46a21.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="LLM 的知识被编码进参数"></p>
-<p>训练数据收集到哪一天，模型就只知道那一天之前的事；训练完成后，无论外部世界发生什么，它都不会自动更新。这就是「知识冻结」。</p>
-<p>有人可能会说：那重新训练不就行了？问题是成本。训练一次 GPT 级别的大模型，成本是<strong>千万美元级</strong>的，不可能为了每周冒出的新知识反复重来。微调（Fine-tuning）倒是能注入一些新知识，但同样成本不低，而且还有一个致命弱点：<strong>无法溯源</strong>——你根本不知道模型是从哪条知识推出这个答案的，出了问题也找不到原因。</p>
-<p>所以「知识冻结」不是靠重新训练就能轻易解决的，它是 <strong>LLM 架构的固有特性</strong>。正是这个特性，直接引发了下文三个环环相扣的问题。</p>
-<h3 id="1-2-知识过期：训练数据有截止日期">1.2 知识过期：训练数据有截止日期</h3>
-<p>第一个问题，是<strong>知识会过期</strong>。</p>
-<p>模型的全部知识以训练数据的截止日期为界。你问它截止日期之后的问题，它只能根据历史规律去&quot;推测&quot;一个听起来合理的答案。比如金融场景下，模型不知道某家公司最近一个季度的财报数据，它的分析就是基于过期信息做出的。</p>
-<p><img src="https://cdn.xiaolincoding.com//picgo/1776781219139-406c354f-227d-4bba-99ee-493e142bb1c7.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="知识过期：训练数据有截止日期"></p>
-<h3 id="1-3-知识空白：私有数据根本没进过训练集">1.3 知识空白：私有数据根本没进过训练集</h3>
-<p>第二个问题，是<strong>知识存在空白</strong>。</p>
-<p>公开互联网上的知识，模型多少见过一些；但企业内部的数据——产品手册、客服知识库、合同模板、行业规范——这些根本不在公开训练集里。注意区分：知识过期说的是&quot;旧了&quot;，知识空白说的是&quot;压根没有&quot;。</p>
-<p><img src="https://cdn.xiaolincoding.com//picgo/1776781317619-b18247ff-89ce-4abb-81bf-05109504418e.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="知识空白：私有数据未进入训练集"></p>
-<p>比如让 LLM 扮演客服，回答&quot;我们产品的退款政策是什么&quot;，它不可能知道——因为这条信息根本不在它的训练集里。如果它回答了，那一定是编的。<strong>这是企业落地 AI 最普遍的痛点</strong>：数据天天在更新，总不能每次更新都重新训练一次模型。</p>
-<h3 id="1-4-知识缺失的副产品：幻觉">1.4 知识缺失的副产品：幻觉</h3>
-<p>第三个问题，也是大家最熟悉的——<strong>幻觉</strong>。</p>
-<p>要理解幻觉，得先理解 LLM 的机制：它的训练目标本质上是<strong>预测下一个 token</strong>——给定前面这些文字，预测下一个最可能出现的 token。注意，它的机制里<strong>没有&quot;我不确定就停下来&quot;这个选项</strong>，它只会顺着往下生成，直到碰到停止符。</p>
-<p><img src="https://cdn.xiaolincoding.com//picgo/1776781397538-2f152db8-4a8c-4092-bc3b-c038478fdbf4.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="LLM 的 next-token 预测机制"></p>
-<p>所以当参数里没有对应知识时，它不会说&quot;我不知道&quot;，而是硬着头皮往下生成，把相关不相关的知识拼凑成一个&quot;听起来合理&quot;的答案。这就是幻觉。在医疗、法律、金融这些低容错的场景里，这样的编造可能造成实际损失。</p>
-<p>这里有个容易踩的误区：<strong>幻觉不是独立的 bug，不需要单独治理</strong>。它是知识缺失的副产品，是模型在缺乏可靠依据时的&quot;应急策略&quot;。知识过期、知识空白都会导致幻觉，根源是同一个——参数里没有对应知识。</p>
-<h3 id="1-5-RAG-是怎么同时解决这三个问题的">1.5 RAG 是怎么同时解决这三个问题的</h3>
-<p>RAG 的做法我们在上一篇讲过：把知识整理成文档存入向量数据库 → 用户提问时检索出相关片段 → 和问题一起塞进 prompt → 让 LLM 基于参考资料回答。</p>
-<p><img src="https://cdn.xiaolincoding.com//picgo/1776781539986-8871073b-be46-4ac0-b728-5acaa50faa8f.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="RAG 同时解决三个问题"></p>
-<p>对着三个问题逐一验证：</p>
-<ul>
-<li><strong>知识时效性</strong>：新内容随时可以入库，知识库一更新立刻生效，不需要重新训练；</li>
-<li><strong>知识空白</strong>：公司文档入库后，LLM 就能&quot;看到&quot;这些私有知识，企业内部问题也能给出准确回答；</li>
-<li><strong>幻觉问题</strong>：LLM 有了真实的参考依据，是在&quot;复述&quot;检索到的内容，而不是凭记忆发挥，幻觉率显著下降。而且每条答案都能<strong>溯源到原文</strong>，用户可以自己核实，可信度大幅提升。</li>
-</ul>
-<p>本质就是给 LLM <strong>开了一个&quot;开卷考试&quot;的口子</strong>：知识存在外面，用到的时候翻出来看，不用全靠死记硬背。</p>
-<p>这里藏着 RAG 最核心的设计思想：<strong>知识管理与模型能力彻底解耦</strong>。更新知识不用碰模型，扩展领域知识只需扩展知识库。这也是 RAG 能成为企业 AI 落地首选方案的根本原因。</p>
+<h2 id="1-同一问题的两种解法：改参数-vs-不改参数">1 同一问题的两种解法：改参数 vs 不改参数</h2>
+<p>聊微调与 RAG 之前，先回到一个根本前提：LLM 的「知识」到底是什么。</p>
+<p>大模型的知识是训练时从海量文本里学来的，最终以<strong>权重参数</strong>的形式固化在模型里。你可以把它理解成<strong>把知识烧进了 ROM</strong>——训练完成的那一刻，这些知识就被&quot;刻死&quot;了，不会自己更新。想知道训练截止日期之后的事？抱歉，参数里没有。</p>
+<p>理解了这一点，微调和 RAG 的本质就浮出水面了：<strong>这两个方案其实在解决同一个问题——怎么把模型训练时没学到的知识给它补上</strong>。只不过思路截然相反：一个直接改参数，让模型把新知识&quot;记&quot;进去；一个不动参数，留到推理时现查现用。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776781677589-27e6b631-1bbc-49ad-91c1-8786310de74e.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="微调与 RAG：改参数 vs 不改参数"></p>
+<p>这也是这道面试题最核心的答法：<strong>先别急着对比优劣，先讲清两者根本不在同一层面</strong>。</p>
 <hr>
-<h2 id="2-面试总结">2 面试总结</h2>
-<p>面试官问&quot;RAG 主要解决什么问题&quot;，要让他看到你对 LLM 局限性的<strong>系统性理解</strong>：</p>
+<h2 id="2-微调（Fine-tuning）：把知识直接烧进模型">2 微调（Fine-tuning）：把知识直接烧进模型</h2>
+<p>微调是<strong>直接改模型参数</strong>的方案：拿着自己的业务数据，让模型继续训练一段时间，把新知识&quot;记住&quot;。思路很直白——既然参数里没有，那就把参数改一改，改到有为止。</p>
+<h3 id="2-1-微调的优势">2.1 微调的优势</h3>
+<ul>
+<li><strong>效果彻底</strong>：知识从模型内部改变，不是外部拼接，整个模型的行为都会被重塑；</li>
+<li><strong>深度定制</strong>：专业词汇、输出格式、回答风格都能按需塑造，让模型&quot;像你这个行业里的人&quot;；</li>
+<li><strong>延迟低</strong>：推理时不需要额外的检索步骤，问完直接答，响应速度最快。</li>
+</ul>
+<h3 id="2-2-微调的代价">2.2 微调的代价</h3>
+<p>优点很诱人，但代价同样实在：</p>
 <ol>
-<li>讲清三个问题：<strong>知识时效性</strong>（训练数据有截止日期）、<strong>私有知识缺失</strong>（企业内部数据没进过训练集）、<strong>幻觉</strong>（没有依据时模型编答案）。</li>
-<li>指出三者根源是同一件事：<strong>知识被冻在了模型参数里</strong>。</li>
-<li>再说清 RAG 的解法：<strong>把知识从参数搬到外部知识库，用时实时检索注入，不动模型本身</strong>。一个思路同时解决三个问题，而且知识可随时更新、答案可溯源。</li>
+<li><strong>成本高</strong>：要准备标注数据、租 GPU、跑训练，人力财力都是实打实的投入；</li>
+<li><strong>知识更新难</strong>：业务数据每周都在变，可每次微调都要几小时甚至几天的训练，总不能每周都来一遍；</li>
+<li><strong>答案不可溯源</strong>：回答来自参数，你永远不知道它是基于哪条知识算出来的，出了问题也没法定位。</li>
 </ol>
-<p>如果被追问&quot;幻觉是不是 RAG 专门解决的&quot;，标准回答是：<strong>幻觉只是知识缺失的副产品，RAG 解决的是根源，而不是单独在治幻觉</strong>。</p>
+<p>这里还有个常见的认知误区：<strong>很多人以为微调之后模型就&quot;懂&quot;了你的业务知识，其实它只是记住了训练数据里的模式</strong>——它到底记住了什么、记错了什么，你根本无从得知。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776781810697-0ebca069-371c-4ee2-856b-6b82ae27fcd8.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="微调：把知识直接烧进模型参数"></p>
+<hr>
+<h2 id="3-RAG：不改参数，推理时现查知识">3 RAG：不改参数，推理时现查知识</h2>
+<p>RAG 走的是完全相反的路：<strong>模型参数一动不动，把知识放在外部，用到的时候再查</strong>。前两篇我们详细拆解过它的流程——文档入库 → 提问时检索相关片段 → 拼进 prompt → 模型照着资料回答。</p>
+<h3 id="3-1-RAG-的优势">3.1 RAG 的优势</h3>
+<ul>
+<li><strong>更新即时生效</strong>：知识库更新只需往向量库里加文档，加完就能用，不需要重新训练；</li>
+<li><strong>答案可溯源</strong>：回答可以附上来源 chunk，出错能立刻定位是哪条知识有问题；</li>
+<li><strong>成本低</strong>：小团队用 OpenAI Embedding + Chroma 就能把整套系统跑起来。</li>
+</ul>
+<h3 id="3-2-RAG-的不足">3.2 RAG 的不足</h3>
+<ol>
+<li><strong>检索延迟</strong>：整体响应比纯 LLM 多出几百毫秒到一秒，对实时性要求极高的场景要注意；</li>
+<li><strong>检索质量卡住上限</strong>：生成层只是在复述和整理检索到的内容，<strong>检索不到的知识，LLM 再强也&quot;变&quot;不出来</strong>。所以 RAG 系统调优的主战场永远是<strong>检索这一层</strong>，而不是换更贵的模型——很多人一上来就想着升级模型，往往是南辕北辙；</li>
+<li><strong>复杂推理提升有限</strong>：RAG 提供的是&quot;参考资料&quot;，如果希望模型对某个领域有更深的推理能力，还是得靠微调。</li>
+</ol>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776781912137-c9127239-897a-4f75-8723-f1131ab52665.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="RAG：检索层决定系统上限"></p>
+<hr>
+<h2 id="4-组合使用：微调解决「怎么说」，RAG-解决「说什么」">4 组合使用：微调解决「怎么说」，RAG 解决「说什么」</h2>
+<p>两个方案各有短板，而短板恰好互补——所以实践中真正的主流用法是<strong>组合出拳</strong>：</p>
+<blockquote>
+<p><strong>先对基础模型做一轮微调</strong>，让它学会输出格式、语气风格、行业术语；<strong>再用 RAG 来提供具体的知识内容</strong>——微调解决「怎么说」，RAG 解决「说什么」，各司其职。</p>
+</blockquote>
+<p>把两者放在同一张表里看，各自的定位就非常清楚了：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>微调（Fine-tuning）</th>
+<th>RAG</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>知识更新</td>
+<td>要重新训练，成本高、周期长</td>
+<td>更新知识库即可，实时生效</td>
+</tr>
+<tr>
+<td>推理延迟</td>
+<td>低，没有额外检索步骤</td>
+<td>较高，多一次检索耗时</td>
+</tr>
+<tr>
+<td>实现成本</td>
+<td>高，需要 GPU 和标注数据</td>
+<td>低，向量库 + Embedding 即可</td>
+</tr>
+<tr>
+<td>答案可溯源</td>
+<td>不支持，答案来自模型参数</td>
+<td>支持，可追溯到具体 chunk</td>
+</tr>
+<tr>
+<td>适合场景</td>
+<td>定制输出风格、培养深度专业能力</td>
+<td>私有知识问答、数据动态更新</td>
+</tr>
+<tr>
+<td>知识上限</td>
+<td>受限于训练数据的质量与规模</td>
+<td>受限于检索质量与 context 长度</td>
+</tr>
+</tbody>
+</table>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776781981828-cf529b55-35f5-423c-987b-a565ca7ffdbd.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="微调 + RAG 组合使用"></p>
+<hr>
+<h2 id="5-面试总结">5 面试总结</h2>
+<p>这道题最忌讳的就是**「二选一」思维**——微调和 RAG 不是竞争关系，而是两条不同层面的路径。答题按三步走：</p>
+<ol>
+<li><strong>先说本质</strong>：微调是改模型参数，RAG 是不改参数、推理时注入知识，两者不在同一层面，不是替代关系；</li>
+<li><strong>再各说优劣</strong>：微调擅长定制输出风格、培养深度专业能力，但成本高、更新慢、不可溯源；RAG 擅长知识频繁更新、答案可溯源的场景，但多了检索延迟，且检索质量卡住效果上限；</li>
+<li><strong>最后提组合</strong>：微调解决「怎么说」，RAG 解决「说什么」，两者可以配合使用。</li>
+</ol>
+<p>如果被追问&quot;知识库问答为什么首选 RAG&quot;，标准回答是：<strong>成本低、更新即生效、答案可溯源，企业私有知识问答的三个硬需求它全占了</strong>；如果被追问&quot;RAG 有什么缺点&quot;，别忘了检索延迟、检索质量上限、复杂推理提升有限这三点。</p>
 <hr>
 <h2 id="参考">参考</h2>
 <ul>
-<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/2_rag_problems.html">2. 大模型的 RAG 主要用来解决什么问题？ | 小林面试笔记</a></li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/3_rag_vs_finetune.html">3. 相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？ | 小林面试笔记</a></li>
 </ul>
 <blockquote>
 <p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
@@ -432,8 +487,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>「RAG」大模型的 RAG 主要用来解决什么问题？</div>
-      <div>https://marisamagic.github.io/2026/08/12/20260812_RAG解决什么问题/</div>
+      <div>「RAG」相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？</div>
+      <div>https://marisamagic.github.io/2026/08/12/20260812_RAG与微调/</div>
     </div>
     <div class="license-meta">
       
@@ -477,18 +532,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2026/08/12/20260812_RAG%E4%B8%8E%E5%BE%AE%E8%B0%83/" title="「RAG」相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">「RAG」相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2026/08/12/20260812_%E4%BB%80%E4%B9%88%E6%98%AFRAG/" title="「RAG」什么是 RAG？详细描述一个完整 RAG 系统的详细工作流程？">
-                        <span class="hidden-mobile">「RAG」什么是 RAG？详细描述一个完整 RAG 系统的详细工作流程？</span>
+                      <a href="/2026/08/12/20260812_RAG%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98/" title="「RAG」大模型的 RAG 主要用来解决什么问题？">
+                        <span class="hidden-mobile">「RAG」大模型的 RAG 主要用来解决什么问题？</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
