@@ -4,6 +4,72 @@
   
   
   <entry>
+    <title>「RAG」大模型的 RAG 主要用来解决什么问题？</title>
+    <link href="/2026/08/12/20260812_RAG%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98/"/>
+    <url>/2026/08/12/20260812_RAG%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98/</url>
+    
+    <content type="html"><![CDATA[<h2 id="0-前言">0 前言</h2><blockquote><p>本文内容整理自公众号「小林面试笔记」的文章 <a href="https://xiaolinnote.com/ai/rag/2_rag_problems.html">2. 大模型的 RAG 主要用来解决什么问题？</a>，用于记录与总结 RAG 相关的核心面试知识点。</p></blockquote><p>「<strong>大模型的 RAG 主要用来解决什么问题？</strong>」，可以这样作答：</p><blockquote><p>主要解决三个问题，而且这三者的根源是同一件事——<strong>知识被固化在了模型参数里</strong>。</p><p>一是<strong>知识时效性</strong>：LLM 训练完成的那一刻知识就「冻住」了，训练截止日期之后的信息一无所知；二是<strong>私有知识覆盖</strong>：公司内部文档、行业专有数据根本没机会进训练集，模型「压根没有」这些知识；三是<strong>幻觉问题</strong>：没有知识依据时，模型会编出听起来合理但实际错误的答案。</p><p>RAG 的解法是把知识从参数里搬到外部知识库，用户提问时实时检索相关片段、注入 prompt，让 LLM 基于参考资料作答——<strong>一个思路同时解决三个问题</strong>：知识可随时更新、私有知识即时可用、答案有依据可溯源。</p></blockquote><hr><h2 id="1-大模型的-RAG-主要用来解决什么问题？">1 大模型的 RAG 主要用来解决什么问题？</h2><h3 id="1-1-LLM-的「知识冻结」问题">1.1 LLM 的「知识冻结」问题</h3><p>先理解根本原因。LLM 在预训练阶段通过阅读海量文本，把知识&quot;编码&quot;进了模型的参数权重里。你可以把它想象成<strong>一本印死的百科全书</strong>：书里知识丰富，但印刷完成之后，内容就再也改不了了。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776780944864-109e1d2b-72d7-4f03-bb6d-6c120ec46a21.png" alt="LLM 的知识被编码进参数"></p><p>训练数据收集到哪一天，模型就只知道那一天之前的事；训练完成后，无论外部世界发生什么，它都不会自动更新。这就是「知识冻结」。</p><p>有人可能会说：那重新训练不就行了？问题是成本。训练一次 GPT 级别的大模型，成本是<strong>千万美元级</strong>的，不可能为了每周冒出的新知识反复重来。微调（Fine-tuning）倒是能注入一些新知识，但同样成本不低，而且还有一个致命弱点：<strong>无法溯源</strong>——你根本不知道模型是从哪条知识推出这个答案的，出了问题也找不到原因。</p><p>所以「知识冻结」不是靠重新训练就能轻易解决的，它是 <strong>LLM 架构的固有特性</strong>。正是这个特性，直接引发了下文三个环环相扣的问题。</p><h3 id="1-2-知识过期：训练数据有截止日期">1.2 知识过期：训练数据有截止日期</h3><p>第一个问题，是<strong>知识会过期</strong>。</p><p>模型的全部知识以训练数据的截止日期为界。你问它截止日期之后的问题，它只能根据历史规律去&quot;推测&quot;一个听起来合理的答案。比如金融场景下，模型不知道某家公司最近一个季度的财报数据，它的分析就是基于过期信息做出的。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776781219139-406c354f-227d-4bba-99ee-493e142bb1c7.png" alt="知识过期：训练数据有截止日期"></p><h3 id="1-3-知识空白：私有数据根本没进过训练集">1.3 知识空白：私有数据根本没进过训练集</h3><p>第二个问题，是<strong>知识存在空白</strong>。</p><p>公开互联网上的知识，模型多少见过一些；但企业内部的数据——产品手册、客服知识库、合同模板、行业规范——这些根本不在公开训练集里。注意区分：知识过期说的是&quot;旧了&quot;，知识空白说的是&quot;压根没有&quot;。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776781317619-b18247ff-89ce-4abb-81bf-05109504418e.png" alt="知识空白：私有数据未进入训练集"></p><p>比如让 LLM 扮演客服，回答&quot;我们产品的退款政策是什么&quot;，它不可能知道——因为这条信息根本不在它的训练集里。如果它回答了，那一定是编的。<strong>这是企业落地 AI 最普遍的痛点</strong>：数据天天在更新，总不能每次更新都重新训练一次模型。</p><h3 id="1-4-知识缺失的副产品：幻觉">1.4 知识缺失的副产品：幻觉</h3><p>第三个问题，也是大家最熟悉的——<strong>幻觉</strong>。</p><p>要理解幻觉，得先理解 LLM 的机制：它的训练目标本质上是<strong>预测下一个 token</strong>——给定前面这些文字，预测下一个最可能出现的 token。注意，它的机制里<strong>没有&quot;我不确定就停下来&quot;这个选项</strong>，它只会顺着往下生成，直到碰到停止符。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776781397538-2f152db8-4a8c-4092-bc3b-c038478fdbf4.png" alt="LLM 的 next-token 预测机制"></p><p>所以当参数里没有对应知识时，它不会说&quot;我不知道&quot;，而是硬着头皮往下生成，把相关不相关的知识拼凑成一个&quot;听起来合理&quot;的答案。这就是幻觉。在医疗、法律、金融这些低容错的场景里，这样的编造可能造成实际损失。</p><p>这里有个容易踩的误区：<strong>幻觉不是独立的 bug，不需要单独治理</strong>。它是知识缺失的副产品，是模型在缺乏可靠依据时的&quot;应急策略&quot;。知识过期、知识空白都会导致幻觉，根源是同一个——参数里没有对应知识。</p><h3 id="1-5-RAG-是怎么同时解决这三个问题的">1.5 RAG 是怎么同时解决这三个问题的</h3><p>RAG 的做法我们在上一篇讲过：把知识整理成文档存入向量数据库 → 用户提问时检索出相关片段 → 和问题一起塞进 prompt → 让 LLM 基于参考资料回答。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776781539986-8871073b-be46-4ac0-b728-5acaa50faa8f.png" alt="RAG 同时解决三个问题"></p><p>对着三个问题逐一验证：</p><ul><li><strong>知识时效性</strong>：新内容随时可以入库，知识库一更新立刻生效，不需要重新训练；</li><li><strong>知识空白</strong>：公司文档入库后，LLM 就能&quot;看到&quot;这些私有知识，企业内部问题也能给出准确回答；</li><li><strong>幻觉问题</strong>：LLM 有了真实的参考依据，是在&quot;复述&quot;检索到的内容，而不是凭记忆发挥，幻觉率显著下降。而且每条答案都能<strong>溯源到原文</strong>，用户可以自己核实，可信度大幅提升。</li></ul><p>本质就是给 LLM <strong>开了一个&quot;开卷考试&quot;的口子</strong>：知识存在外面，用到的时候翻出来看，不用全靠死记硬背。</p><p>这里藏着 RAG 最核心的设计思想：<strong>知识管理与模型能力彻底解耦</strong>。更新知识不用碰模型，扩展领域知识只需扩展知识库。这也是 RAG 能成为企业 AI 落地首选方案的根本原因。</p><hr><h2 id="2-面试总结">2 面试总结</h2><p>面试官问&quot;RAG 主要解决什么问题&quot;，要让他看到你对 LLM 局限性的<strong>系统性理解</strong>：</p><ol><li>讲清三个问题：<strong>知识时效性</strong>（训练数据有截止日期）、<strong>私有知识缺失</strong>（企业内部数据没进过训练集）、<strong>幻觉</strong>（没有依据时模型编答案）。</li><li>指出三者根源是同一件事：<strong>知识被冻在了模型参数里</strong>。</li><li>再说清 RAG 的解法：<strong>把知识从参数搬到外部知识库，用时实时检索注入，不动模型本身</strong>。一个思路同时解决三个问题，而且知识可随时更新、答案可溯源。</li></ol><p>如果被追问&quot;幻觉是不是 RAG 专门解决的&quot;，标准回答是：<strong>幻觉只是知识缺失的副产品，RAG 解决的是根源，而不是单独在治幻觉</strong>。</p><hr><h2 id="参考">参考</h2><ul><li><a href="https://xiaolinnote.com/ai/rag/2_rag_problems.html">2. 大模型的 RAG 主要用来解决什么问题？ | 小林面试笔记</a></li></ul><blockquote><p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p></blockquote>]]></content>
+    
+    
+    <categories>
+      
+      <category>追逐繁星</category>
+      
+      <category>RAG</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>AI</tag>
+      
+      <tag>大模型</tag>
+      
+      <tag>LLM</tag>
+      
+      <tag>RAG</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>「RAG」什么是 RAG？详细描述一个完整 RAG 系统的详细工作流程？</title>
+    <link href="/2026/08/12/20260812_%E4%BB%80%E4%B9%88%E6%98%AFRAG/"/>
+    <url>/2026/08/12/20260812_%E4%BB%80%E4%B9%88%E6%98%AFRAG/</url>
+    
+    <content type="html"><![CDATA[<h2 id="0-前言">0 前言</h2><blockquote><p>本文内容整理自公众号「小林面试笔记」的文章 <a href="https://xiaolinnote.com/ai/rag/1_whatisrag.html">1. 什么是 RAG？详细描述一个完整 RAG 系统的详细工作流程？</a>，用于记录与总结 RAG 相关的核心面试知识点。</p></blockquote><p>「<strong>什么是 RAG？如何描述一个完整 RAG 系统的工作流程？</strong>」，可以这样作答：</p><blockquote><p>RAG 全称 <strong>Retrieval-Augmented Generation（检索增强生成）</strong>，核心思想是：在让大模型生成答案之前，先从外部知识库中检索出与用户问题相关的内容，再把「检索结果 + 用户问题」一起交给 LLM，让它基于给定的上下文来回答——本质上就是给 LLM 开卷考试，不用靠死记硬背，而是现场翻资料。</p><p>它要解决的是 LLM 的「知识冻结」困境：模型训练完知识就「冻住」了，既不知道训练截止日期之后的信息，也看不到公司内部的私有文档。与微调（把知识写进模型参数）不同，RAG <strong>不修改模型参数</strong>，把知识放在外部、实时检索，可以热更新、成本极低。</p><p>一个完整的 RAG 系统分离线、在线两个阶段：<strong>离线阶段</strong>只做一次，提前把知识准备好（文档加载 → 文档切割 Chunking → 向量化 Embedding → 入库向量数据库）；<strong>在线阶段</strong>每次提问实时执行（Query 改写 → 向量检索粗排 → Rerank 精排 → 拼接 prompt → LLM 生成）。核心价值两点：<strong>知识可热更新、答案可溯源</strong>。</p></blockquote><hr><h2 id="1-什么是-RAG？">1 什么是 RAG？</h2><h3 id="1-1-LLM-的「知识冻结」困境">1.1 LLM 的「知识冻结」困境</h3><p>为什么需要 RAG？得先看普通 LLM 的软肋。</p><p>大模型在训练完成的那一刻，它的知识就被&quot;冻住&quot;了。你可以把它想象成一个高考之后就再也不看新闻的人——你问他今天的股价、最新的热点，他完全答不上来，因为他的知识截止在训练数据结束的那一天。同样的，公司内部的规章制度、某个项目的私有文档，模型在训练时根本没见过，自然也答不上。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776780238801-220c9a22-7bef-4be6-83ac-1ef9d208280c.png" alt="LLM 的「知识冻结」困境"></p><p>理论上，微调（Fine-tuning）可以更新模型的知识，但代价巨大：为了一条新知识就要重新训练一遍模型，成本高、周期长。知识一旦写进参数，想更新就得重来，就像为了让一个人记住一条新闻，让他重新上四年大学一样不划算。</p><h3 id="1-2-RAG-的思路：给-LLM-开卷考试">1.2 RAG 的思路：给 LLM 开卷考试</h3><p>RAG 走了一条完全不同的路：<strong>它不把知识塞进模型参数，而是放外面，用到的时候再取</strong>。</p><p>LLM 天生就有很强的阅读理解能力——只要相关内容出现在它的上下文（Context）里，它就能基于这段内容作答。那我们就顺着这个特性来：先生成答案之前，先去外部知识库里把相关的内容「捞」出来，连同问题一起丢进 prompt，让模型照着资料回答。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776780356644-7a5fc45a-2167-411d-a2bf-bd6337e40623.png" alt="RAG 的核心思想：给 LLM 开卷考试"></p><p>所以 RAG 和微调本质上是两种思路：</p><table><thead><tr><th>对比维度</th><th>微调（Fine-tuning）</th><th>RAG</th></tr></thead><tbody><tr><td>知识存储位置</td><td>写进模型参数</td><td>放在外部知识库，实时检索</td></tr><tr><td>是否修改模型</td><td>改，重新训练</td><td>不改，原样使用</td></tr><tr><td>更新知识的成本</td><td>高（要重新训练）</td><td>极低（往库里加文档即可）</td></tr><tr><td>适用场景</td><td>学习某种「能力/风格」</td><td>补充「最新信息 / 私有知识」</td></tr></tbody></table><p>一句话总结：<strong>微调是让模型&quot;学会&quot;，RAG 是让模型&quot;查到&quot;。</strong></p><hr><h2 id="2-一个完整-RAG-系统的工作流程">2 一个完整 RAG 系统的工作流程</h2><p>一个完整的 RAG 系统，分离线和在线两个阶段：<strong>离线阶段只做一次，提前把知识准备好；在线阶段每次用户提问都实时执行，对响应速度有要求</strong>。</p><p><img src="https://cdn.xiaolincoding.com//picgo/b66ad41973c9bfe6151edcfe56428633.png" alt="RAG 系统总览：离线 + 在线两阶段"></p><h3 id="2-1-离线阶段：提前把知识准备好">2.1 离线阶段：提前把知识准备好</h3><p>离线阶段的目标，是把散落在各处的文档整理成一份「机器能快速检索」的知识库。整个过程可以分为四步：</p><p><strong>第一步：文档加载。</strong> 原始数据可能是 PDF、Word、Markdown、网页，甚至是数据库里的记录。可以通过 LlamaIndex 或 LangChain 提供的 DocumentLoader 来读取，这类加载器通常支持几十种不同的数据源格式。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776780432784-992cb9f5-6fe5-4d59-89c7-4df9911ed2d1.png" alt="离线阶段流程示意图"></p><p><strong>第二步：文档切割（Chunking）。</strong> 为什么要把一整篇文档切开？有两个原因：</p><ul><li>向量模型有输入长度限制（一般几百到几千 token），整篇文档可能塞不进去；</li><li>即便塞得进去，把整篇文档压缩成一个向量，细节也会被&quot;平均&quot;掉。就像你问&quot;这道菜到底怎么样&quot;，得到的却是&quot;中国菜整体偏咸&quot;这种笼统回答。</li></ul><p>所以要把文档切成大小合适的块（Chunk）。切多大有讲究：太大（比如 2000 token）信息太杂、召回时容易混入不相关的内容；太小（比如 50 token）语义又不完整。实践中通常取 <strong>500~1000 token 一个 chunk</strong>，并且<strong>前后各重叠约 100 token</strong>，避免在两个 chunk 的交界处把完整语义切断。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776780516173-81e4da8a-f00c-4d83-98e1-308110102d80.png" alt="文档切割（Chunking）示意图"></p><p><strong>第三步：Embedding（向量化）——最核心的一步。</strong> 把每个 chunk 的文本转成一个高维数字向量（比如 1536 维的浮点数），这一步叫向量化。可以把它理解为把文字放进一个「语义坐标系」：意思相近的文本在空间里离得近，毫不相关的离得远。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776780574480-09f2fa03-b7a7-45b8-8896-91f2e6bd777c.png" alt="Embedding：文本的「语义坐标系」"></p><p>这个向量是模型训练出来的：Embedding 模型在海量文本上通过<strong>对比学习</strong>调整权重，把语义相近的文本向量拉近、把无关的推远。所以&quot;苹果手机怎么截图&quot;和&quot;iPhone 如何截屏&quot;，用词不同、意思相同，它们的向量会非常接近。本质上是把「意思」编码成了数学坐标，做的是<strong>语义检索</strong>，而不是死板的关键词匹配。</p><p><strong>第四步：入库。</strong> 把每个 chunk 的向量连同原始文本一起存入<strong>向量数据库</strong>（如 Chroma、Milvus、Qdrant、Weaviate 等）。这类数据库专门优化了高维向量的存储和相似度搜索，能支撑千万量级向量的快速检索。</p><h3 id="2-2-在线阶段：用户提问时实时检索">2.2 在线阶段：用户提问时实时检索</h3><p>在线阶段是每次用户提问都会实时跑一遍的流程，对延迟更敏感。同样分四步：</p><p><strong>第一步：Query 处理 / 改写。</strong> 用户的问题往往是口语化、模糊的。比如&quot;上次说的那个方案怎么样&quot;，脱离了上下文根本没法检索。这时需要用 LLM 把问题改写成适合检索的形式，或者从对话历史里补充上下文。</p><p><strong>第二步：向量检索（粗排）。</strong> 把处理好的用户问题转成向量，在向量库里做相似度搜索，取 <strong>Top-K</strong> 个最相近的 chunk。这一步非常快，百万量级的向量库通常几十毫秒就能返回结果。但它的代价是：只比较向量距离，没有真正理解语义关系，结果里可能混入一些&quot;看着近、其实不相关&quot;的内容。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776780651212-e2e3cd73-110d-45e1-afff-b4d7bdbc8bb3.png" alt="在线阶段流程示意图"></p><p><strong>第三步：Rerank（精排）。</strong> 为了补救粗排的粗糙，再用一个 <strong>Cross-Encoder 结构</strong>的 Rerank 模型，把用户问题和每个候选 chunk <strong>拼接在一起</strong>深度理解相关性，重新排序，并过滤掉不相关的结果。打个比方：<strong>粗排就像用肉眼在书架前快速扫一遍，精排则是一本本翻开目录仔细读</strong>。精排更准但更慢，所以通常只对粗排返回的 <strong>Top-20</strong> 做精排，最终留下 <strong>Top-3 到 Top-5</strong> 给模型。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776780732684-5e9b48db-1137-4546-b56d-9eed2b768930.png" alt="检索 → 粗排 → 精排流程示意图"></p><p><strong>第四步：生成。</strong> 把「用户问题 + 精排后的 chunk」拼成 prompt 交给 LLM。这里有个关键技巧：<strong>在 prompt 里明确告诉模型&quot;只根据提供的资料回答，资料里没有的内容就说不知道&quot;</strong>，能有效抑制幻觉（模型编造答案）。</p><h3 id="2-3-完整流程串联">2.3 完整流程串联</h3><p>把两阶段串起来，整个 RAG 就是这样一个闭环：</p><ul><li><strong>离线（只做一次）</strong>：文档切割 → 转为向量 → 存入向量数据库。</li><li><strong>在线（每次提问都跑）</strong>：问题向量化 → 数据库检索 → 精排 → 拼 prompt → LLM 生成。</li></ul><p><img src="https://cdn.xiaolincoding.com//picgo/1776780836039-782aae86-a6ad-4bb3-83ad-2af0647a4c47.png" alt="完整 RAG 工作流程图"></p><hr><h2 id="3-RAG-的两大核心价值">3 RAG 的两大核心价值</h2><p>讲完流程，面试时最好再补两点价值，让回答更完整：</p><ol><li><strong>知识可热更新</strong>：往知识库里加一份新文档，就等于更新了模型的知识，完全不需要重新训练，成本极低。这是 RAG 相比微调最突出的优势。</li><li><strong>答案可溯源</strong>：每一条回答都能追溯到具体的 chunk，可解释性很强。如果答错了，也能定位到是哪块知识出了问题，方便排查。</li></ol><p>这两点一个解决了「更新难」，一个解决了「不可解释」，恰好补上了大模型落地时最头疼的两个短板。</p><hr><h2 id="参考">参考</h2><ul><li><a href="https://xiaolinnote.com/ai/rag/1_whatisrag.html">1. 什么是 RAG？详细描述一个完整 RAG 系统的详细工作流程？ | 小林面试笔记</a></li></ul><blockquote><p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p></blockquote>]]></content>
+    
+    
+    <categories>
+      
+      <category>追逐繁星</category>
+      
+      <category>RAG</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>AI</tag>
+      
+      <tag>大模型</tag>
+      
+      <tag>LLM</tag>
+      
+      <tag>RAG</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>「AI Agent」如何赋予 LLM 规划能力：CoT、ToT、GoT 与 Plan-and-Execute</title>
     <link href="/2026/08/10/20260810_Agent%E8%A7%84%E5%88%92%E8%83%BD%E5%8A%9B/"/>
     <url>/2026/08/10/20260810_Agent%E8%A7%84%E5%88%92%E8%83%BD%E5%8A%9B/</url>
@@ -700,9 +766,9 @@
     
     <tags>
       
-      <tag>Linux</tag>
-      
       <tag>多线程</tag>
+      
+      <tag>Linux</tag>
       
     </tags>
     
@@ -729,9 +795,9 @@
     
     <tags>
       
-      <tag>Linux</tag>
-      
       <tag>多线程</tag>
+      
+      <tag>Linux</tag>
       
     </tags>
     
@@ -758,9 +824,9 @@
     
     <tags>
       
-      <tag>Linux</tag>
-      
       <tag>多线程</tag>
+      
+      <tag>Linux</tag>
       
     </tags>
     
@@ -787,9 +853,9 @@
     
     <tags>
       
-      <tag>Linux</tag>
-      
       <tag>多线程</tag>
+      
+      <tag>Linux</tag>
       
     </tags>
     
@@ -2168,9 +2234,9 @@
       
       <tag>std::mutex</tag>
       
-      <tag>std::future</tag>
-      
       <tag>std::condition_variable</tag>
+      
+      <tag>std::future</tag>
       
     </tags>
     
@@ -3090,13 +3156,13 @@
       
       <tag>C++</tag>
       
+      <tag>多线程</tag>
+      
       <tag>Ubuntu</tag>
       
       <tag>Linux</tag>
       
       <tag>VS Code</tag>
-      
-      <tag>多线程</tag>
       
     </tags>
     

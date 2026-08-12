@@ -1,0 +1,810 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="RAG 的定义与「知识冻结」困境；RAG 与微调的本质区别；一个完整 RAG 系统的离线（文档加载 → Chunking → Embedding → 入库）与在线（Query 改写 → 向量检索粗排 → Rerank 精排 → 生成）两阶段流程；RAG 的核心价值（知识可热更新、答案可溯源）。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「RAG」什么是 RAG？详细描述一个完整 RAG 系统的详细工作流程？">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/12/20260812_%E4%BB%80%E4%B9%88%E6%98%AFRAG/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="RAG 的定义与「知识冻结」困境；RAG 与微调的本质区别；一个完整 RAG 系统的离线（文档加载 → Chunking → Embedding → 入库）与在线（Query 改写 → 向量检索粗排 → Rerank 精排 → 生成）两阶段流程；RAG 的核心价值（知识可热更新、答案可溯源）。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg">
+<meta property="article:published_time" content="2026-08-12T08:07:50.625Z">
+<meta property="article:modified_time" content="2026-08-12T08:07:50.626Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="RAG">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg">
+  
+  
+  
+  <title>「RAG」什么是 RAG？详细描述一个完整 RAG 系统的详细工作流程？ - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「RAG」什么是 RAG？详细描述一个完整 RAG 系统的详细工作流程？"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-12 16:07" pubdate>
+          2026年8月12日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          20 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「RAG」什么是 RAG？详细描述一个完整 RAG 系统的详细工作流程？</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<blockquote>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/1_whatisrag.html">1. 什么是 RAG？详细描述一个完整 RAG 系统的详细工作流程？</a>，用于记录与总结 RAG 相关的核心面试知识点。</p>
+</blockquote>
+<p>「<strong>什么是 RAG？如何描述一个完整 RAG 系统的工作流程？</strong>」，可以这样作答：</p>
+<blockquote>
+<p>RAG 全称 <strong>Retrieval-Augmented Generation（检索增强生成）</strong>，核心思想是：在让大模型生成答案之前，先从外部知识库中检索出与用户问题相关的内容，再把「检索结果 + 用户问题」一起交给 LLM，让它基于给定的上下文来回答——本质上就是给 LLM 开卷考试，不用靠死记硬背，而是现场翻资料。</p>
+<p>它要解决的是 LLM 的「知识冻结」困境：模型训练完知识就「冻住」了，既不知道训练截止日期之后的信息，也看不到公司内部的私有文档。与微调（把知识写进模型参数）不同，RAG <strong>不修改模型参数</strong>，把知识放在外部、实时检索，可以热更新、成本极低。</p>
+<p>一个完整的 RAG 系统分离线、在线两个阶段：<strong>离线阶段</strong>只做一次，提前把知识准备好（文档加载 → 文档切割 Chunking → 向量化 Embedding → 入库向量数据库）；<strong>在线阶段</strong>每次提问实时执行（Query 改写 → 向量检索粗排 → Rerank 精排 → 拼接 prompt → LLM 生成）。核心价值两点：<strong>知识可热更新、答案可溯源</strong>。</p>
+</blockquote>
+<hr>
+<h2 id="1-什么是-RAG？">1 什么是 RAG？</h2>
+<h3 id="1-1-LLM-的「知识冻结」困境">1.1 LLM 的「知识冻结」困境</h3>
+<p>为什么需要 RAG？得先看普通 LLM 的软肋。</p>
+<p>大模型在训练完成的那一刻，它的知识就被&quot;冻住&quot;了。你可以把它想象成一个高考之后就再也不看新闻的人——你问他今天的股价、最新的热点，他完全答不上来，因为他的知识截止在训练数据结束的那一天。同样的，公司内部的规章制度、某个项目的私有文档，模型在训练时根本没见过，自然也答不上。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776780238801-220c9a22-7bef-4be6-83ac-1ef9d208280c.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="LLM 的「知识冻结」困境"></p>
+<p>理论上，微调（Fine-tuning）可以更新模型的知识，但代价巨大：为了一条新知识就要重新训练一遍模型，成本高、周期长。知识一旦写进参数，想更新就得重来，就像为了让一个人记住一条新闻，让他重新上四年大学一样不划算。</p>
+<h3 id="1-2-RAG-的思路：给-LLM-开卷考试">1.2 RAG 的思路：给 LLM 开卷考试</h3>
+<p>RAG 走了一条完全不同的路：<strong>它不把知识塞进模型参数，而是放外面，用到的时候再取</strong>。</p>
+<p>LLM 天生就有很强的阅读理解能力——只要相关内容出现在它的上下文（Context）里，它就能基于这段内容作答。那我们就顺着这个特性来：先生成答案之前，先去外部知识库里把相关的内容「捞」出来，连同问题一起丢进 prompt，让模型照着资料回答。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776780356644-7a5fc45a-2167-411d-a2bf-bd6337e40623.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="RAG 的核心思想：给 LLM 开卷考试"></p>
+<p>所以 RAG 和微调本质上是两种思路：</p>
+<table>
+<thead>
+<tr>
+<th>对比维度</th>
+<th>微调（Fine-tuning）</th>
+<th>RAG</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>知识存储位置</td>
+<td>写进模型参数</td>
+<td>放在外部知识库，实时检索</td>
+</tr>
+<tr>
+<td>是否修改模型</td>
+<td>改，重新训练</td>
+<td>不改，原样使用</td>
+</tr>
+<tr>
+<td>更新知识的成本</td>
+<td>高（要重新训练）</td>
+<td>极低（往库里加文档即可）</td>
+</tr>
+<tr>
+<td>适用场景</td>
+<td>学习某种「能力/风格」</td>
+<td>补充「最新信息 / 私有知识」</td>
+</tr>
+</tbody>
+</table>
+<p>一句话总结：<strong>微调是让模型&quot;学会&quot;，RAG 是让模型&quot;查到&quot;。</strong></p>
+<hr>
+<h2 id="2-一个完整-RAG-系统的工作流程">2 一个完整 RAG 系统的工作流程</h2>
+<p>一个完整的 RAG 系统，分离线和在线两个阶段：<strong>离线阶段只做一次，提前把知识准备好；在线阶段每次用户提问都实时执行，对响应速度有要求</strong>。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/b66ad41973c9bfe6151edcfe56428633.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="RAG 系统总览：离线 + 在线两阶段"></p>
+<h3 id="2-1-离线阶段：提前把知识准备好">2.1 离线阶段：提前把知识准备好</h3>
+<p>离线阶段的目标，是把散落在各处的文档整理成一份「机器能快速检索」的知识库。整个过程可以分为四步：</p>
+<p><strong>第一步：文档加载。</strong> 原始数据可能是 PDF、Word、Markdown、网页，甚至是数据库里的记录。可以通过 LlamaIndex 或 LangChain 提供的 DocumentLoader 来读取，这类加载器通常支持几十种不同的数据源格式。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776780432784-992cb9f5-6fe5-4d59-89c7-4df9911ed2d1.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="离线阶段流程示意图"></p>
+<p><strong>第二步：文档切割（Chunking）。</strong> 为什么要把一整篇文档切开？有两个原因：</p>
+<ul>
+<li>向量模型有输入长度限制（一般几百到几千 token），整篇文档可能塞不进去；</li>
+<li>即便塞得进去，把整篇文档压缩成一个向量，细节也会被&quot;平均&quot;掉。就像你问&quot;这道菜到底怎么样&quot;，得到的却是&quot;中国菜整体偏咸&quot;这种笼统回答。</li>
+</ul>
+<p>所以要把文档切成大小合适的块（Chunk）。切多大有讲究：太大（比如 2000 token）信息太杂、召回时容易混入不相关的内容；太小（比如 50 token）语义又不完整。实践中通常取 <strong>500~1000 token 一个 chunk</strong>，并且<strong>前后各重叠约 100 token</strong>，避免在两个 chunk 的交界处把完整语义切断。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776780516173-81e4da8a-f00c-4d83-98e1-308110102d80.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="文档切割（Chunking）示意图"></p>
+<p><strong>第三步：Embedding（向量化）——最核心的一步。</strong> 把每个 chunk 的文本转成一个高维数字向量（比如 1536 维的浮点数），这一步叫向量化。可以把它理解为把文字放进一个「语义坐标系」：意思相近的文本在空间里离得近，毫不相关的离得远。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776780574480-09f2fa03-b7a7-45b8-8896-91f2e6bd777c.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Embedding：文本的「语义坐标系」"></p>
+<p>这个向量是模型训练出来的：Embedding 模型在海量文本上通过<strong>对比学习</strong>调整权重，把语义相近的文本向量拉近、把无关的推远。所以&quot;苹果手机怎么截图&quot;和&quot;iPhone 如何截屏&quot;，用词不同、意思相同，它们的向量会非常接近。本质上是把「意思」编码成了数学坐标，做的是<strong>语义检索</strong>，而不是死板的关键词匹配。</p>
+<p><strong>第四步：入库。</strong> 把每个 chunk 的向量连同原始文本一起存入<strong>向量数据库</strong>（如 Chroma、Milvus、Qdrant、Weaviate 等）。这类数据库专门优化了高维向量的存储和相似度搜索，能支撑千万量级向量的快速检索。</p>
+<h3 id="2-2-在线阶段：用户提问时实时检索">2.2 在线阶段：用户提问时实时检索</h3>
+<p>在线阶段是每次用户提问都会实时跑一遍的流程，对延迟更敏感。同样分四步：</p>
+<p><strong>第一步：Query 处理 / 改写。</strong> 用户的问题往往是口语化、模糊的。比如&quot;上次说的那个方案怎么样&quot;，脱离了上下文根本没法检索。这时需要用 LLM 把问题改写成适合检索的形式，或者从对话历史里补充上下文。</p>
+<p><strong>第二步：向量检索（粗排）。</strong> 把处理好的用户问题转成向量，在向量库里做相似度搜索，取 <strong>Top-K</strong> 个最相近的 chunk。这一步非常快，百万量级的向量库通常几十毫秒就能返回结果。但它的代价是：只比较向量距离，没有真正理解语义关系，结果里可能混入一些&quot;看着近、其实不相关&quot;的内容。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776780651212-e2e3cd73-110d-45e1-afff-b4d7bdbc8bb3.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="在线阶段流程示意图"></p>
+<p><strong>第三步：Rerank（精排）。</strong> 为了补救粗排的粗糙，再用一个 <strong>Cross-Encoder 结构</strong>的 Rerank 模型，把用户问题和每个候选 chunk <strong>拼接在一起</strong>深度理解相关性，重新排序，并过滤掉不相关的结果。打个比方：<strong>粗排就像用肉眼在书架前快速扫一遍，精排则是一本本翻开目录仔细读</strong>。精排更准但更慢，所以通常只对粗排返回的 <strong>Top-20</strong> 做精排，最终留下 <strong>Top-3 到 Top-5</strong> 给模型。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776780732684-5e9b48db-1137-4546-b56d-9eed2b768930.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="检索 → 粗排 → 精排流程示意图"></p>
+<p><strong>第四步：生成。</strong> 把「用户问题 + 精排后的 chunk」拼成 prompt 交给 LLM。这里有个关键技巧：<strong>在 prompt 里明确告诉模型&quot;只根据提供的资料回答，资料里没有的内容就说不知道&quot;</strong>，能有效抑制幻觉（模型编造答案）。</p>
+<h3 id="2-3-完整流程串联">2.3 完整流程串联</h3>
+<p>把两阶段串起来，整个 RAG 就是这样一个闭环：</p>
+<ul>
+<li><strong>离线（只做一次）</strong>：文档切割 → 转为向量 → 存入向量数据库。</li>
+<li><strong>在线（每次提问都跑）</strong>：问题向量化 → 数据库检索 → 精排 → 拼 prompt → LLM 生成。</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776780836039-782aae86-a6ad-4bb3-83ad-2af0647a4c47.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="完整 RAG 工作流程图"></p>
+<hr>
+<h2 id="3-RAG-的两大核心价值">3 RAG 的两大核心价值</h2>
+<p>讲完流程，面试时最好再补两点价值，让回答更完整：</p>
+<ol>
+<li><strong>知识可热更新</strong>：往知识库里加一份新文档，就等于更新了模型的知识，完全不需要重新训练，成本极低。这是 RAG 相比微调最突出的优势。</li>
+<li><strong>答案可溯源</strong>：每一条回答都能追溯到具体的 chunk，可解释性很强。如果答错了，也能定位到是哪块知识出了问题，方便排查。</li>
+</ol>
+<p>这两点一个解决了「更新难」，一个解决了「不可解释」，恰好补上了大模型落地时最头疼的两个短板。</p>
+<hr>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/1_whatisrag.html">1. 什么是 RAG？详细描述一个完整 RAG 系统的详细工作流程？ | 小林面试笔记</a></li>
+</ul>
+<blockquote>
+<p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/RAG/" class="category-chain-item">RAG</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/tags/RAG/" class="print-no-link">#RAG</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「RAG」什么是 RAG？详细描述一个完整 RAG 系统的详细工作流程？</div>
+      <div>https://marisamagic.github.io/2026/08/12/20260812_什么是RAG/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月12日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/08/12/20260812_RAG%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98/" title="「RAG」大模型的 RAG 主要用来解决什么问题？">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「RAG」大模型的 RAG 主要用来解决什么问题？</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/10/20260810_Agent%E8%A7%84%E5%88%92%E8%83%BD%E5%8A%9B/" title="「AI Agent」如何赋予 LLM 规划能力：CoT、ToT、GoT 与 Plan-and-Execute">
+                        <span class="hidden-mobile">「AI Agent」如何赋予 LLM 规划能力：CoT、ToT、GoT 与 Plan-and-Execute</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
