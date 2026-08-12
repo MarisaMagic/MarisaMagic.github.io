@@ -26,26 +26,16 @@
 <meta property="og:site_name" content="MarisaMagic&#39;s Blog">
 <meta property="og:description" content="规划能力是把 LLM 隐式的推理过程显式化；为什么需要规划（普通问答一口气生成答案、next-token 机制在多步任务上误差累积）；CoT 思维链（最简单、Zero-shot&#x2F;Few-shot 两种触发、写下的推理会成为后续依据、单条路径走错无法纠偏）；ToT 思维树（生成→评估→剪枝循环、选优继续深入、成本是 CoT 的 3-5 倍甚至更高）；GoT 思维图（树→图、中间结论可合并复用、适合多">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://cdn.xiaolincoding.com//picgo/69bb980648f10fa386dc24636e792ea5.png">
-<meta property="og:image" content="https://cdn.xiaolincoding.com//picgo/01_no_plan_vs_plan.png">
-<meta property="og:image" content="https://cdn.xiaolincoding.com//picgo/image-20260305213047557.png?image_process=watermark,text_eGlhb2xpbm5vdGUuY29tQOWwj-ael-mdouivleeslOiusA,g_south,size_35,type_aHloZWk,color_304ffe">
-<meta property="og:image" content="https://cdn.xiaolincoding.com//picgo/image-20260305213105782.png?image_process=watermark,text_eGlhb2xpbm5vdGUuY29tQOWwj-ael-mdouivleeslOiusA,g_south,size_35,type_aHloZWk,color_304ffe">
-<meta property="og:image" content="https://cdn.xiaolincoding.com//picgo/image-20260305213615714.png?image_process=watermark,text_eGlhb2xpbm5vdGUuY29tQOWwj-ael-mdouivleeslOiusA,g_south,size_35,type_aHloZWk,color_304ffe">
-<meta property="og:image" content="https://cdn.xiaolincoding.com//picgo/image-20260305213559790.png?image_process=watermark,text_eGlhb2xpbm5vdGUuY29tQOWwj-ael-mdouivleeslOiusA,g_south,size_35,type_aHloZWk,color_304ffe">
-<meta property="og:image" content="https://cdn.xiaolincoding.com//picgo/02_tot_tree_search.png">
-<meta property="og:image" content="https://cdn.xiaolincoding.com//picgo/image-20260305213142940.png?image_process=watermark,text_eGlhb2xpbm5vdGUuY29tQOWwj-ael-mdouivleeslOiusA,g_center,size_35,type_aHloZWk,color_304ffe">
-<meta property="og:image" content="https://cdn.xiaolincoding.com//picgo/03_tot_vs_got.png">
-<meta property="og:image" content="https://cdn.xiaolincoding.com//picgo/04_cot_tot_got_evolution.png">
-<meta property="og:image" content="https://cdn.xiaolincoding.com//picgo/05_plan_and_execute_loop.png">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/12/15eek.jpg">
 <meta property="article:published_time" content="2026-08-10T05:11:11.489Z">
-<meta property="article:modified_time" content="2026-08-10T05:11:11.489Z">
+<meta property="article:modified_time" content="2026-08-12T14:32:20.686Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="Agent">
 <meta property="article:tag" content="大模型">
 <meta property="article:tag" content="LLM">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://cdn.xiaolincoding.com//picgo/69bb980648f10fa386dc24636e792ea5.png">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/08/12/15eek.jpg">
   
   
   
@@ -232,7 +222,7 @@
   
 
 <div id="banner" class="banner" parallax=true
-     style="background: url('https://sukicdn.com/wyx/i/2025/01/10/3lgax.png') no-repeat center center; background-size: cover;">
+     style="background: url('https://sukicdn.com/wyx/i/2026/08/12/15eek.jpg') no-repeat center center; background-size: cover;">
   <div class="full-bg-img">
     <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
       <div class="banner-text text-center fade-in-up">
