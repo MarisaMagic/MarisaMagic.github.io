@@ -19,16 +19,16 @@
   <meta name="author" content="MarisaMagic">
   <meta name="keywords" content="">
   
-    <meta name="description" content="微调与 RAG 的本质区别（改参数 vs 不改参数）；微调的优势（效果彻底、深度定制、低延迟）与代价（成本高、更新难、不可溯源）；RAG 的优势（更新即时生效、答案可溯源、成本低）与不足（检索延迟、检索质量卡住上限、复杂推理提升有限）；组合使用：微调解决「怎么说」，RAG 解决「说什么」；面试答题要点（先说本质、再各说优劣、最后提组合）。">
+    <meta name="description" content="文档不能整篇入库的两大原因（向量模型输入长度限制、细节被平均掉）；chunk 记录三要素（向量负责&quot;找到&quot;、原文负责&quot;阅读&quot;、metadata 负责过滤与溯源）；粒度取舍无银弹（500~1000 token 为起点）；四大切割策略（固定大小+重叠兜底、语义边界切割、代码按函数切&#x2F;表格整块保留、父子切割）+ Late Chunking 新思路；策略选型对比与面试答题要点。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="「RAG」相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？">
-<meta property="og:url" content="https://marisamagic.github.io/2026/08/12/20260812_RAG%E4%B8%8E%E5%BE%AE%E8%B0%83/index.html">
+<meta property="og:title" content="「RAG」RAG 中的文档是怎么存的？粒度是多大？详细说说文档切割（Chunking）策略？">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/13/20260812_RAG%E6%96%87%E6%A1%A3%E5%AD%98%E5%82%A8%E4%B8%8EChunking/index.html">
 <meta property="og:site_name" content="MarisaMagic&#39;s Blog">
-<meta property="og:description" content="微调与 RAG 的本质区别（改参数 vs 不改参数）；微调的优势（效果彻底、深度定制、低延迟）与代价（成本高、更新难、不可溯源）；RAG 的优势（更新即时生效、答案可溯源、成本低）与不足（检索延迟、检索质量卡住上限、复杂推理提升有限）；组合使用：微调解决「怎么说」，RAG 解决「说什么」；面试答题要点（先说本质、再各说优劣、最后提组合）。">
+<meta property="og:description" content="文档不能整篇入库的两大原因（向量模型输入长度限制、细节被平均掉）；chunk 记录三要素（向量负责&quot;找到&quot;、原文负责&quot;阅读&quot;、metadata 负责过滤与溯源）；粒度取舍无银弹（500~1000 token 为起点）；四大切割策略（固定大小+重叠兜底、语义边界切割、代码按函数切&#x2F;表格整块保留、父子切割）+ Late Chunking 新思路；策略选型对比与面试答题要点。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg">
-<meta property="article:published_time" content="2026-08-12T09:52:51.374Z">
-<meta property="article:modified_time" content="2026-08-12T09:52:51.374Z">
+<meta property="article:published_time" content="2026-08-13T05:54:05.197Z">
+<meta property="article:modified_time" content="2026-08-13T05:54:05.201Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="大模型">
@@ -39,7 +39,7 @@
   
   
   
-  <title>「RAG」相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？ - MarisaMagic&#39;s Blog</title>
+  <title>「RAG」RAG 中的文档是怎么存的？粒度是多大？详细说说文档切割（Chunking）策略？ - MarisaMagic&#39;s Blog</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -228,7 +228,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="「RAG」相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？"></span>
+            <span id="subtitle" data-typed-text="「RAG」RAG 中的文档是怎么存的？粒度是多大？详细说说文档切割（Chunking）策略？"></span>
           
         </div>
 
@@ -244,8 +244,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2026-08-12 17:52" pubdate>
-          2026年8月12日 下午
+        <time datetime="2026-08-13 13:54" pubdate>
+          2026年8月13日 下午
         </time>
       </span>
     
@@ -256,7 +256,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          1.9k 字
+          3.1k 字
         
       </span>
     
@@ -267,7 +267,7 @@
         
         
         
-          17 分钟
+          26 分钟
         
       </span>
     
@@ -308,123 +308,161 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">「RAG」相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？</h1>
+            <h1 id="seo-header">「RAG」RAG 中的文档是怎么存的？粒度是多大？详细说说文档切割（Chunking）策略？</h1>
             
             
               <div class="markdown-body">
                 
                 <h2 id="0-前言">0 前言</h2>
 <blockquote>
-<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/3_rag_vs_finetune.html">3. 相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？</a>，用于记录与总结 RAG 相关的核心面试知识点。</p>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/4_chunking.html">4. RAG 中的文档是怎么存的？粒度是多大？详细说说文档切割（Chunking）策略？</a>，用于记录与总结 RAG 相关的核心面试知识点。</p>
 </blockquote>
-<p>「<strong>相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？</strong>」，可以这样作答：</p>
+<p>「<strong>RAG 中的文档是怎么存的？粒度是多大？详细说说文档切割（Chunking）策略？</strong>」，可以这样作答：</p>
 <blockquote>
-<p>微调和 RAG 解决的<strong>不是同一层面的问题，不是谁替代谁的关系</strong>。微调是<strong>改模型参数</strong>——拿自己的数据让模型继续训练，把知识直接&quot;烧&quot;进参数里，适合定制输出格式、行业语气、培养深度专业能力；RAG 是<strong>不改参数</strong>——把知识放在外部知识库，推理时实时检索相关片段注入 prompt，让模型照着资料回答，适合知识频繁更新、需要答案可溯源的场景。</p>
-<p>判断标准很清晰：<strong>知识库类问答首选 RAG</strong>，成本低、加完文档就生效、回答可溯源；<strong>要模型学会特定的输出格式或行业语气，微调更合适</strong>。两者并不冲突，还能组合使用：先微调让模型学会&quot;怎么说&quot;，再用 RAG 提供&quot;说什么&quot;的具体内容。</p>
+<p>文档不能整篇直接存进向量库，必须先切成语义完整的小块（chunk），逐块向量化后作为一条记录入库。原因是<strong>向量模型有输入长度限制</strong>，而且<strong>整篇压成一个向量会把细节&quot;平均掉&quot;</strong>，检索时无法精准定位。每条记录有三个核心部分：<strong>向量</strong>负责相似度检索、<strong>原文</strong>是检索命中后塞给 LLM 阅读的内容、<strong>metadata</strong> 负责过滤与溯源。</p>
+<p>粒度没有银弹，一般<strong>以 500~1000 token 为起点</strong>，更关键的是按文档类型选策略：普通文本用<strong>固定大小 + 重叠</strong>保底；有段落、标题结构的文档按<strong>语义边界</strong>切；代码按函数切、表格整块保留；既要检索精度又要上下文完整时，用<strong>父子切割</strong>——小块检索、大块返回。</p>
 </blockquote>
 <hr>
-<h2 id="1-同一问题的两种解法：改参数-vs-不改参数">1 同一问题的两种解法：改参数 vs 不改参数</h2>
-<p>聊微调与 RAG 之前，先回到一个根本前提：LLM 的「知识」到底是什么。</p>
-<p>大模型的知识是训练时从海量文本里学来的，最终以<strong>权重参数</strong>的形式固化在模型里。你可以把它理解成<strong>把知识烧进了 ROM</strong>——训练完成的那一刻，这些知识就被&quot;刻死&quot;了，不会自己更新。想知道训练截止日期之后的事？抱歉，参数里没有。</p>
-<p>理解了这一点，微调和 RAG 的本质就浮出水面了：<strong>这两个方案其实在解决同一个问题——怎么把模型训练时没学到的知识给它补上</strong>。只不过思路截然相反：一个直接改参数，让模型把新知识&quot;记&quot;进去；一个不动参数，留到推理时现查现用。</p>
-<p><img src="https://cdn.xiaolincoding.com//picgo/1776781677589-27e6b631-1bbc-49ad-91c1-8786310de74e.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="微调与 RAG：改参数 vs 不改参数"></p>
-<p>这也是这道面试题最核心的答法：<strong>先别急着对比优劣，先讲清两者根本不在同一层面</strong>。</p>
-<hr>
-<h2 id="2-微调（Fine-tuning）：把知识直接烧进模型">2 微调（Fine-tuning）：把知识直接烧进模型</h2>
-<p>微调是<strong>直接改模型参数</strong>的方案：拿着自己的业务数据，让模型继续训练一段时间，把新知识&quot;记住&quot;。思路很直白——既然参数里没有，那就把参数改一改，改到有为止。</p>
-<h3 id="2-1-微调的优势">2.1 微调的优势</h3>
-<ul>
-<li><strong>效果彻底</strong>：知识从模型内部改变，不是外部拼接，整个模型的行为都会被重塑；</li>
-<li><strong>深度定制</strong>：专业词汇、输出格式、回答风格都能按需塑造，让模型&quot;像你这个行业里的人&quot;；</li>
-<li><strong>延迟低</strong>：推理时不需要额外的检索步骤，问完直接答，响应速度最快。</li>
-</ul>
-<h3 id="2-2-微调的代价">2.2 微调的代价</h3>
-<p>优点很诱人，但代价同样实在：</p>
+<h2 id="1-文档是怎么存的？">1 文档是怎么存的？</h2>
+<h3 id="1-1-为什么不能整篇直接存？">1.1 为什么不能整篇直接存？</h3>
+<p>先说结论：<strong>原始文档不能直接进向量库，必须先切成小块（chunk）再存</strong>。上一篇我们说 RAG 把知识&quot;放进外部知识库&quot;，那这个库里装的东西到底是什么形态？答案就是 chunk——文档存进向量库的最小知识单元。</p>
+<p>为什么不能偷懒整篇存？两个硬原因：</p>
 <ol>
-<li><strong>成本高</strong>：要准备标注数据、租 GPU、跑训练，人力财力都是实打实的投入；</li>
-<li><strong>知识更新难</strong>：业务数据每周都在变，可每次微调都要几小时甚至几天的训练，总不能每周都来一遍；</li>
-<li><strong>答案不可溯源</strong>：回答来自参数，你永远不知道它是基于哪条知识算出来的，出了问题也没法定位。</li>
+<li><strong>向量模型有输入长度限制</strong>：Embedding 模型一般只能处理几百到几千 token，一篇几千字的文档根本塞不进去；</li>
+<li><strong>细节会被&quot;平均掉&quot;</strong>：就算模型支持超长输入，把整篇文章压缩成一个向量，所有细节都会被揉成一团——你想找&quot;退款政策&quot;，向量里却混着&quot;配送时效&quot;“积分规则”，最后检索到的只能是这篇笼统的文档，而不是精确的那段话。</li>
 </ol>
-<p>这里还有个常见的认知误区：<strong>很多人以为微调之后模型就&quot;懂&quot;了你的业务知识，其实它只是记住了训练数据里的模式</strong>——它到底记住了什么、记错了什么，你根本无从得知。</p>
-<p><img src="https://cdn.xiaolincoding.com//picgo/1776781810697-0ebca069-371c-4ee2-856b-6b82ae27fcd8.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="微调：把知识直接烧进模型参数"></p>
-<hr>
-<h2 id="3-RAG：不改参数，推理时现查知识">3 RAG：不改参数，推理时现查知识</h2>
-<p>RAG 走的是完全相反的路：<strong>模型参数一动不动，把知识放在外部，用到的时候再查</strong>。前两篇我们详细拆解过它的流程——文档入库 → 提问时检索相关片段 → 拼进 prompt → 模型照着资料回答。</p>
-<h3 id="3-1-RAG-的优势">3.1 RAG 的优势</h3>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776782122213-ba05a890-c0bb-4fa9-b5f8-2559dcb552b8.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="整篇存储的问题：细节被平均掉"></p>
+<p>向量模型并没有那么神通广大，它和人类阅读一样：<strong>信息太密集就抓不住重点</strong>。所以正确姿势是提前把文档切成可检索的小块，入库流程是这样的：</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/image-20260304222654203.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="文档入库完整流程"></p>
+<p>一篇 5000 字的文档，切成 500 字一个 chunk，就变成向量库里的 <strong>10 条记录</strong>；100 篇文档就是 1000 条记录。RAG 存储的本质，就是&quot;一篇文档 → 多条 chunk 记录&quot;的转换。</p>
+<h3 id="1-2-每条-chunk-记录里存了什么">1.2 每条 chunk 记录里存了什么</h3>
+<p>向量库里每一条记录包含三个部分，<strong>缺一不可</strong>：</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/image-20260304222712145.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="chunk 记录的三要素结构"></p>
+<p>可以用一个直观的类比来记：<strong>向量是索引卡，原文是书页，metadata 是书签</strong>。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776782361627-d8c09577-ad8b-4858-9e47-2581da256948.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="向量=索引卡、原文=书页、metadata=书签"></p>
 <ul>
-<li><strong>更新即时生效</strong>：知识库更新只需往向量库里加文档，加完就能用，不需要重新训练；</li>
-<li><strong>答案可溯源</strong>：回答可以附上来源 chunk，出错能立刻定位是哪条知识有问题；</li>
-<li><strong>成本低</strong>：小团队用 OpenAI Embedding + Chroma 就能把整套系统跑起来。</li>
+<li><strong>向量</strong>：一串高维浮点数，决定这段内容在&quot;语义坐标系&quot;里的位置，用于快速找到相关 chunk；</li>
+<li><strong>原文</strong>：纯文字，检索命中后<strong>原封不动</strong>塞进 prompt，这才是 LLM 真正读的内容；</li>
+<li><strong>metadata</strong>：来源文件名、页码、章节等附加信息，用于<strong>过滤</strong>（“只搜客服部门的文档”）和<strong>溯源</strong>（“这个答案来自哪个文件的第几页”）。</li>
 </ul>
-<h3 id="3-2-RAG-的不足">3.2 RAG 的不足</h3>
-<ol>
-<li><strong>检索延迟</strong>：整体响应比纯 LLM 多出几百毫秒到一秒，对实时性要求极高的场景要注意；</li>
-<li><strong>检索质量卡住上限</strong>：生成层只是在复述和整理检索到的内容，<strong>检索不到的知识，LLM 再强也&quot;变&quot;不出来</strong>。所以 RAG 系统调优的主战场永远是<strong>检索这一层</strong>，而不是换更贵的模型——很多人一上来就想着升级模型，往往是南辕北辙；</li>
-<li><strong>复杂推理提升有限</strong>：RAG 提供的是&quot;参考资料&quot;，如果希望模型对某个领域有更深的推理能力，还是得靠微调。</li>
-</ol>
-<p><img src="https://cdn.xiaolincoding.com//picgo/1776781912137-c9127239-897a-4f75-8723-f1131ab52665.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="RAG：检索层决定系统上限"></p>
-<hr>
-<h2 id="4-组合使用：微调解决「怎么说」，RAG-解决「说什么」">4 组合使用：微调解决「怎么说」，RAG 解决「说什么」</h2>
-<p>两个方案各有短板，而短板恰好互补——所以实践中真正的主流用法是<strong>组合出拳</strong>：</p>
+<p>花一分钟想这个问题：为什么向量和原文要同时存？因为两者角色完全不同——<strong>向量是一串浮点数，LLM 看不懂，只有检索系统用它；原文是纯文字，没有向量就无法做相似度检索</strong>。向量负责&quot;找到&quot;，原文负责&quot;阅读&quot;，缺了谁都不行。</p>
+<h3 id="1-3-查询时的完整链路">1.3 查询时的完整链路</h3>
+<p>理解了存储结构，查询时就顺理成章了：</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/image-20260304222803915.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="RAG 查询检索流程"></p>
 <blockquote>
-<p><strong>先对基础模型做一轮微调</strong>，让它学会输出格式、语气风格、行业术语；<strong>再用 RAG 来提供具体的知识内容</strong>——微调解决「怎么说」，RAG 解决「说什么」，各司其职。</p>
+<p>用户问题 → 向量化 → 在向量库里找相似的 chunk → 取出 chunk 的原文 → 塞进 prompt → LLM 生成答案</p>
 </blockquote>
-<p>把两者放在同一张表里看，各自的定位就非常清楚了：</p>
+<p>注意这条链路里：<strong>向量只在&quot;找&quot;的阶段出场，喂给 LLM 的一直是原文</strong>。</p>
+<hr>
+<h2 id="2-切割粒度怎么定？">2 切割粒度怎么定？</h2>
+<p>既然要切，切多大合适？粒度选择本质上是一场<strong>取舍</strong>，切得大则笼统、切得小则碎片：</p>
+<ul>
+<li><strong>chunk 太大</strong>：向量把太多语义压缩在一起，变得笼统，容易召回只和问题部分相关的内容，还可能超出 Embedding 模型的长度上限；</li>
+<li><strong>chunk 太小</strong>：单个 chunk 语义不完整、上下文丢失，LLM 拿到碎片也看不懂，而且检索噪音更多。</li>
+</ul>
+<p>所以切割粒度<strong>没有银弹</strong>，500~1000 token 只是合理起点，更关键的是<strong>结合文档的内容结构选择策略</strong>——这就是下一节的内容。</p>
+<hr>
+<h2 id="3-文档切割策略有哪些？">3 文档切割策略有哪些？</h2>
+<h3 id="3-1-策略一：固定大小切割（Fixed-Size-Chunking）">3.1 策略一：固定大小切割（Fixed Size Chunking）</h3>
+<p>最简单粗暴的方式：不管语义，按固定字符数或 token 数硬切。优点是实现简单、chunk 大小可控；缺点是<strong>可能在句子中间截断，撕坏语义</strong>。</p>
+<p>纯固定大小几乎不会单独用，通常会加上**重叠（overlap）**来缓解边界截断：前一个 chunk 的末尾和下一个 chunk 的开头保留一段重叠内容，确保跨边界的语义至少被一个 chunk 完整覆盖。就像扫描仪扫跨页内容时，特意把两页的边缘都扫两遍。</p>
+<p>举个例子，<code>chunk_size=500</code>、<code>overlap=100</code>：后一个 chunk 的前 100 个字符和前一个 chunk 的后 100 个字符是相同的——就算边界恰好切在一句话中间，这句话也一定完整地出现在某个 chunk 里。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776782264644-8ca24da1-4a85-424c-81ff-d1be07d38dd2.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="固定大小切割 + 重叠（overlap）"></p>
+<p>一句话总结：<strong>固定大小 + 重叠是最简单也是最保底的策略</strong>，适合纯文本、没有明显结构的文档。</p>
+<h3 id="3-2-策略二：语义边界切割（Semantic-Structure-Based-Chunking）">3.2 策略二：语义边界切割（Semantic / Structure Based Chunking）</h3>
+<p>固定大小最大的毛病是可能切断语义，那为什么不顺着文本的天然断点来切？这就是语义边界切割：<strong>按段落、句子、标题层级等自然边界切分，绝不在语义中间下刀</strong>。</p>
+<p>为什么语义边界更好？因为<strong>一个句子是语言表达意思的最小完整单位</strong>——在句子中间截断，就像切断一段话的呼吸，前半句后半句单独拿出来都看不懂；按段落切就更进一步，每个 chunk 都是围绕同一话题展开的完整段落，语义独立性最好。</p>
+<p>实际操作时，常见的做法是维护一个<strong>分隔符优先级列表</strong>：先尝试按段落切，段落太大就按句子切，句子还超限就按标点切，逐级降级直到满足 chunk_size 限制。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776782298108-784a2736-4268-40f3-8d8b-fddd2a8d2e67.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="分隔符优先级逐级切分"></p>
+<p>对于有明确标题结构的 Markdown / HTML 文档，<strong>按标题层级切</strong>是更优选择：每个 chunk 对应文档中的一个完整章节，metadata 自动带上所属标题（比如&quot;产品手册 &gt; 退款政策 &gt; 申请流程&quot;），既语义独立，又方便过滤和溯源。</p>
+<h3 id="3-3-策略三：特殊内容专项处理">3.3 策略三：特殊内容专项处理</h3>
+<p>通用切割策略碰到代码和表格就会露馅，这两类内容需要单独开小灶：</p>
+<ul>
+<li><strong>代码按函数 / 类切</strong>：一个函数是最小的语义完整单元，从函数中间截断就失去了逻辑意义——试想把函数参数定义和返回值拆到两个 chunk，单独看哪一个都不知道这段代码在干嘛。实践中可以用语法解析工具（比如 Python 的 AST 模块）识别函数和类的边界；</li>
+<li><strong>表格整块保留，转成 Markdown 存储</strong>：表格的每一行都依赖表头才有意义，&quot;2 小时&quot;单独看不知道是什么，配上列名&quot;响应时间：2 小时&quot;才清晰。整张表作为一个完整 chunk，才能保留列语义和行间对比关系。</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776782395148-2cf0384c-8fda-4c16-a815-bd95c203b623.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="代码按函数切、表格整块保留"></p>
+<h3 id="3-4-策略四：父子切割（Parent-Child-Chunking）">3.4 策略四：父子切割（Parent-Child Chunking）</h3>
+<p>前面几种策略各有局限：固定大小可能切断语义，语义边界切割质量好但粒度不好控。有没有办法<strong>同时兼顾检索精度和上下文完整</strong>？父子切割就是工程里效果最显著的答案之一，核心思路一句话：</p>
+<blockquote>
+<p><strong>检索时用放大镜（小块，精准定位），返回时用全景图（大块，上下文完整）。</strong></p>
+</blockquote>
+<p>存储时同一段内容存两份：一份是细粒度的<strong>小 chunk</strong>（比如 200 token），语义聚焦、检索精度高，专门用于向量检索；另一份是包含小 chunk 前后上下文的<strong>大 chunk</strong>（比如 1000 token），通过 ID 与小 chunk 关联。查询时先用小 chunk 定位精准命中点，再顺着关联 ID 取出大 chunk，把完整上下文交给 LLM 阅读。</p>
+<p>可以类比图书馆找书：<strong>你用目录卡（小 chunk）定位到某章某节，但拿出来读的是完整的那一章（大 chunk），而不是目录卡上的那句简介</strong>。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776782433095-7b22fb1e-7ce8-41b4-9f79-4bef0d4802a9.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="父子切割：小块检索、大块返回"></p>
+<p>代价也很直白：<strong>存储量翻倍、索引构建更复杂</strong>。但在召回质量要求高的场景下，这个成本是值得的。</p>
+<h3 id="3-5-补充：Late-Chunking——先编码，后切分">3.5 补充：Late Chunking——先编码，后切分</h3>
+<p>最后聊一个 2024 年出现的新思路：<strong>Late Chunking</strong>（Jina AI 提出）。它换个角度解决&quot;切割丢失上下文&quot;的问题。</p>
+<p>传统做法是<strong>先切块再编码</strong>：每个 chunk 独立过一遍 Embedding 模型，跨块的上下文（代词指代、前后背景）在编码阶段就丢了。Late Chunking 反过来，<strong>先编码后切分</strong>：</p>
+<ol>
+<li>把整篇文档丢给支持长上下文的 Embedding 模型，做一次完整的<strong>前向传播</strong>，输出文档里每个 token 的向量——由于注意力机制，这些 token 向量彼此感知过全文语境；</li>
+<li>再按 chunk 边界，把落在同一个 chunk 里的 token 向量做 <strong>mean pooling（均值池化）</strong>，得到这个 chunk 的最终向量。</li>
+</ol>
+<p>关键在于&quot;延迟&quot;二字：先编码后切分，每个 chunk 的向量天然融入了全文语境，跨块的代词、背景、对比关系都能保留。代价是对模型要求高：需要支持足够长的上下文（比如 jina-embeddings-v2 支持 8192 token），且要保留 token 级中间结果，开销比传统方式大。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776782503776-1f18902f-ef65-423d-a240-45df9a48f6f6.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Late Chunking：先整篇编码再按边界池化"></p>
+<h3 id="3-6-策略选型总览">3.6 策略选型总览</h3>
+<p>把几种策略梳理成一张表，选型时可以对照来看：</p>
 <table>
 <thead>
 <tr>
-<th>维度</th>
-<th>微调（Fine-tuning）</th>
-<th>RAG</th>
+<th>策略</th>
+<th>适用文档</th>
+<th>优点</th>
+<th>缺点</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>知识更新</td>
-<td>要重新训练，成本高、周期长</td>
-<td>更新知识库即可，实时生效</td>
+<td>固定大小 + 重叠</td>
+<td>纯文本、无明显结构</td>
+<td>实现简单、chunk 大小可控</td>
+<td>可能在语义中间截断</td>
 </tr>
 <tr>
-<td>推理延迟</td>
-<td>低，没有额外检索步骤</td>
-<td>较高，多一次检索耗时</td>
+<td>语义边界切割</td>
+<td>段落分明的文章</td>
+<td>语义完整、召回质量好</td>
+<td>实现稍复杂，chunk 大小不均</td>
 </tr>
 <tr>
-<td>实现成本</td>
-<td>高，需要 GPU 和标注数据</td>
-<td>低，向量库 + Embedding 即可</td>
+<td>标题层级切割</td>
+<td>Markdown / HTML 文档</td>
+<td>天然语义独立，带结构 metadata</td>
+<td>依赖文档有清晰标题结构</td>
 </tr>
 <tr>
-<td>答案可溯源</td>
-<td>不支持，答案来自模型参数</td>
-<td>支持，可追溯到具体 chunk</td>
+<td>代码按函数切</td>
+<td>代码文件</td>
+<td>保留代码逻辑完整性</td>
+<td>需要 AST 解析，限定语言</td>
 </tr>
 <tr>
-<td>适合场景</td>
-<td>定制输出风格、培养深度专业能力</td>
-<td>私有知识问答、数据动态更新</td>
+<td>父子切割</td>
+<td>各类文档（追求高质量）</td>
+<td>检索精准 + 上下文完整两全</td>
+<td>存储量翻倍，索引构建复杂</td>
 </tr>
 <tr>
-<td>知识上限</td>
-<td>受限于训练数据的质量与规模</td>
-<td>受限于检索质量与 context 长度</td>
+<td>Late Chunking</td>
+<td>各类文档</td>
+<td>chunk 向量保留全文上下文</td>
+<td>需要模型支持长输入</td>
 </tr>
 </tbody>
 </table>
-<p><img src="https://cdn.xiaolincoding.com//picgo/1776781981828-cf529b55-35f5-423c-987b-a565ca7ffdbd.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="微调 + RAG 组合使用"></p>
 <hr>
-<h2 id="5-面试总结">5 面试总结</h2>
-<p>这道题最忌讳的就是**「二选一」思维**——微调和 RAG 不是竞争关系，而是两条不同层面的路径。答题按三步走：</p>
+<h2 id="4-面试总结">4 面试总结</h2>
+<p>Chunking 这道题，考的是你对 RAG <strong>存储层</strong>的理解深度。答题按三步走：</p>
 <ol>
-<li><strong>先说本质</strong>：微调是改模型参数，RAG 是不改参数、推理时注入知识，两者不在同一层面，不是替代关系；</li>
-<li><strong>再各说优劣</strong>：微调擅长定制输出风格、培养深度专业能力，但成本高、更新慢、不可溯源；RAG 擅长知识频繁更新、答案可溯源的场景，但多了检索延迟，且检索质量卡住效果上限；</li>
-<li><strong>最后提组合</strong>：微调解决「怎么说」，RAG 解决「说什么」，两者可以配合使用。</li>
+<li><strong>先说为什么不能整篇存</strong>：向量模型有输入长度限制；整篇压成一个向量，细节会被平均掉，检索无法精准定位；</li>
+<li><strong>再说怎么切</strong>：固定大小 + 重叠是最基础的兜底；语义边界切割更智能；代码和表格要特殊处理；父子切割能兼顾检索精度与上下文完整；</li>
+<li><strong>最后强调粒度无银弹</strong>：500~1000 token 只是起点，关键是按文档类型选策略。</li>
 </ol>
-<p>如果被追问&quot;知识库问答为什么首选 RAG&quot;，标准回答是：<strong>成本低、更新即生效、答案可溯源，企业私有知识问答的三个硬需求它全占了</strong>；如果被追问&quot;RAG 有什么缺点&quot;，别忘了检索延迟、检索质量上限、复杂推理提升有限这三点。</p>
+<p>如果被追问&quot;你实际用的什么策略&quot;，标准回答是：<strong>固定大小加重叠做兜底，结构化文档用语义边界切割，高质量要求场景用父子切割</strong>——这个回答既有层次，又显得有工程经验。</p>
 <hr>
 <h2 id="参考">参考</h2>
 <ul>
-<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/3_rag_vs_finetune.html">3. 相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？ | 小林面试笔记</a></li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/4_chunking.html">4. RAG 中的文档是怎么存的？粒度是多大？详细说说文档切割（Chunking）策略？ | 小林面试笔记</a></li>
 </ul>
 <blockquote>
 <p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
@@ -487,8 +525,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>「RAG」相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？</div>
-      <div>https://marisamagic.github.io/2026/08/12/20260812_RAG与微调/</div>
+      <div>「RAG」RAG 中的文档是怎么存的？粒度是多大？详细说说文档切割（Chunking）策略？</div>
+      <div>https://marisamagic.github.io/2026/08/13/20260812_RAG文档存储与Chunking/</div>
     </div>
     <div class="license-meta">
       
@@ -500,7 +538,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2026年8月12日</div>
+          <div>2026年8月13日</div>
         </div>
       
       
@@ -532,18 +570,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2026/08/13/20260812_RAG%E6%96%87%E6%A1%A3%E5%AD%98%E5%82%A8%E4%B8%8EChunking/" title="「RAG」RAG 中的文档是怎么存的？粒度是多大？详细说说文档切割（Chunking）策略？">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">「RAG」RAG 中的文档是怎么存的？粒度是多大？详细说说文档切割（Chunking）策略？</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2026/08/12/20260812_RAG%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98/" title="「RAG」大模型的 RAG 主要用来解决什么问题？">
-                        <span class="hidden-mobile">「RAG」大模型的 RAG 主要用来解决什么问题？</span>
+                      <a href="/2026/08/12/20260812_RAG%E4%B8%8E%E5%BE%AE%E8%B0%83/" title="「RAG」相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？">
+                        <span class="hidden-mobile">「RAG」相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
