@@ -1,0 +1,808 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Query Rewrite 的目的（弥合用户口语与文档书面语之间的语义鸿沟）；四种方法（直接改写处理口语化与指代、HyDE 用假设答案做检索代理解决文体差异、Step-back Prompting 后退为背景问题、多 Query 扩展多角度召回）；选型口诀（口语化用改写、文体差异用 HyDE、太具体用 Step-back、角度单一用多 Query 扩展）；对比表与面试答题要点。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「RAG」如何润色用户的 Query（Query Rewrite）？目的是什么？">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/14/20260812_RAG%E6%9F%A5%E8%AF%A2%E9%87%8D%E5%86%99/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="Query Rewrite 的目的（弥合用户口语与文档书面语之间的语义鸿沟）；四种方法（直接改写处理口语化与指代、HyDE 用假设答案做检索代理解决文体差异、Step-back Prompting 后退为背景问题、多 Query 扩展多角度召回）；选型口诀（口语化用改写、文体差异用 HyDE、太具体用 Step-back、角度单一用多 Query 扩展）；对比表与面试答题要点。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg">
+<meta property="article:published_time" content="2026-08-14T05:44:33.151Z">
+<meta property="article:modified_time" content="2026-08-14T05:44:33.151Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="RAG">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg">
+  
+  
+  
+  <title>「RAG」如何润色用户的 Query（Query Rewrite）？目的是什么？ - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「RAG」如何润色用户的 Query（Query Rewrite）？目的是什么？"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-14 13:44" pubdate>
+          2026年8月14日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.6k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          22 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「RAG」如何润色用户的 Query（Query Rewrite）？目的是什么？</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<blockquote>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/12_query_rewrite.html">12. 如何润色用户的 Query（Query Rewrite）？目的是什么？</a>，用于记录与总结 RAG 相关的核心面试知识点。</p>
+</blockquote>
+<p>「<strong>如何润色用户的 Query（Query Rewrite）？目的是什么？</strong>」，可以这样作答：</p>
+<blockquote>
+<p>目的是<strong>弥合用户提问和知识库文档之间的「语义鸿沟」</strong>：用户的问题口语化、模糊、带缩写和指代，而文档是正式书面语，两者在向量空间里的&quot;坐标&quot;天然离得很远，导致该召回的内容没被召回。常见四种方法：</p>
+<p>一是<strong>直接改写</strong>，让 LLM 把口语化问题改写成更精准的书面检索表述，同时补全指代和上下文，适合多轮对话场景；二是 <strong>HyDE</strong>，先让 LLM 生成一段&quot;假设答案&quot;、用假设答案的向量去检索——因为<strong>答案到答案的向量距离比问题到答案近得多</strong>，假设答案只充当&quot;风格像文档&quot;的检索代理，解决问句与陈述句的文体差异；三是 <strong>Step-back Prompting</strong>，把太具体的问题向上升级成背景问题，先检索背景原理再作答（如&quot;HNSW ef 参数设多少合适&quot;→&quot;HNSW 索引的参数调优原则&quot;）；四是<strong>多 Query 扩展</strong>，把问题改写成 3~5 个不同角度分别检索、合并去重，像拦截网一样提升覆盖面。</p>
+<p>一句话选型口诀：<strong>口语化用直接改写，文体差异用 HyDE，问题太具体用 Step-back，角度单一用多 Query 扩展</strong>。</p>
+</blockquote>
+<hr>
+<h2 id="1-为什么需要-Query-Rewrite？">1 为什么需要 Query Rewrite？</h2>
+<p>先看它要解决的问题。用户在说话，文档在写话，这两者之间存在一道天然的<strong>表述鸿沟</strong>：</p>
+<ul>
+<li>用户可能这样问：「这东西坏了咋整」，而文档里写的是「产品故障排查与维修指南」；</li>
+<li>你可能会想：这两句话意思差不多，向量检索应该能匹配上吧？</li>
+</ul>
+<p>遗憾的是，实际效果往往不如预期——<strong>即便语义相关，向量相似度也可能低到召回不了正确文档</strong>，因为口语和书面语在向量空间里的「坐标」差距不小。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776825805308-db8dd766-72ed-44ef-9699-eedc7d84aa02.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="用户提问与文档表述之间的语义鸿沟"></p>
+<p>上一讲（在线工作流程）我们说过：<strong>用户提问的质量决定了后续所有环节的天花板</strong>。Query Rewrite 就是在检索之前先对问题做加工，让它在向量空间里离正确文档更近——相当于<strong>出发前先校准导航</strong>：目的地不变，但路线更准。</p>
+<p>接下来看具体怎么做，四种方法各有各的&quot;用武之地&quot;。</p>
+<hr>
+<h2 id="2-方法一：直接改写（Query-Rewriting）">2 方法一：直接改写（Query Rewriting）</h2>
+<p>表述鸿沟最简单的形态，就是<strong>口语化</strong>。把所有口语化、模糊的表达改写成更精准、更书面化的检索表述，这是最基础的改写方式——「这东西咋退」和「申请退款的操作流程」在向量空间里不是同一个邻居，改写就是把前者的向量拉近到后者。</p>
+<p>顺带还能做两件事：<strong>补全上下文</strong>（&quot;这个功能&quot;改写成具体功能名称）、<strong>处理代词指代</strong>（多轮对话里的模糊引用变成检索可识别的具体词汇）。给 LLM 的 Prompt 长这样：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs text">请将用户的问题改写成更适合知识库检索的表述。<br><br>要求：去掉口语化表达、补全缩写和指代、使用更正式的书面语、保留核心意图。<br><br>对话历史：&#123;最近几轮对话&#125;<br><br>用户问题：&#123;原始问题&#125;<br><br>只输出改写后的问题，不要解释：<br></code></pre></td></tr></table></figure>
+<p>效果示例：原始「上次说的那个退款的事，流程是啥」→ 改写后「申请商品退款的完整操作流程是什么」。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776825886765-2c5721ea-84f9-4ac5-85d1-e65ee8ffb2dc.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="直接改写：口语化 → 书面检索表述"></p>
+<p>但直接改写有个绕不过去的天花板：<strong>问题也好、文档也罢，本来就是不同的文体</strong>——一个是疑问句、一个是陈述句。就算把问题改写得再规范，它在向量空间里还是&quot;问句&quot;的坐标，而文档是&quot;陈述句&quot;的坐标，两类文体之间天然有距离。这个问题，催生了 HyDE。</p>
+<hr>
+<h2 id="3-方法二：HyDE（Hypothetical-Document-Embeddings）">3 方法二：HyDE（Hypothetical Document Embeddings）</h2>
+<p>HyDE 的直觉可以这样理解：<strong>正常是用&quot;问题的影子&quot;去找答案的样子，HyDE 先描绘出答案可能长什么样，再去找长得像它的文档</strong>——先让 LLM 根据用户问题生成一段「假设性的答案」，再用这段假设答案的向量去检索。</p>
+<p>第一次听说的人多半会觉得奇怪：让 LLM 生成一个可能不准确的答案，再用它去检索，不是多此一举吗？其实不然，关键在于向量空间里的一条规律：</p>
+<blockquote>
+<p><strong>答案到答案的距离，比问题到答案的距离近得多。</strong></p>
+</blockquote>
+<p>假设答案不需要准确，只需要**「风格像文档」**就够了——它的作用是充当一个向量上更好的「检索代理」。用原始问题检索是&quot;拿着问题的影子找答案&quot;，用假设答案检索是&quot;拿着答案的画像找答案&quot;，命中率自然天差地别。生成假设答案的 Prompt：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs text">请根据以下问题，生成一段可能的答案。<br><br>注意：不需要完全准确，只需要用于辅助检索，风格尽量像知识库文档。<br><br>问题：&#123;用户问题&#125;<br><br>假设答案：<br></code></pre></td></tr></table></figure>
+<p>效果示例：问题向量「退款政策是什么」和文档「申请售后退款须知」距离较远；而假设答案向量「用户可在购买后 14 天内申请退款…」和文档距离很近，能被正确召回。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776825956495-f7d46fc4-72b2-47d5-b580-3a3705518ca4.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="HyDE：假设答案与文档在向量空间更近"></p>
+<p>（我们在第 10 篇在线流程里提过 HyDE 的江湖地位，这篇算是把它讲透了。）HyDE 解决的是「文体差异」，但还有一类情况是改写和 HyDE 都处理不好的——<strong>问题太具体，知识库里没有直接答案，只有背景原理</strong>。这就轮到 Step-back 登场。</p>
+<hr>
+<h2 id="4-方法三：Step-back-Prompting（后退提问）">4 方法三：Step-back Prompting（后退提问）</h2>
+<p>有些问题涉及具体细节，知识库里没有直接对应的答案，但有背景原理文档。<strong>Step-back 把具体问题&quot;后退一步&quot;，提升到更抽象的层次</strong>，先检索背景知识，再结合背景知识回答具体问题。</p>
+<p>类比一下就很直观：做一道数学题，不是一上来就硬套公式，而是先想想「这道题用的是哪种定理」，再用定理解题。知识库里可能没有「ef 参数设 100 是否合适」的直接答案，但一定有「HNSW 参数调优原则」这样的背景文档——<strong>把具体问题后退成背景问题，才能找到真正有用的参考资料</strong>。生成&quot;后退版本&quot;的 Prompt：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">请将以下具体问题转化为一个更通用的背景问题，用于检索相关背景知识。<br><br>具体问题：&#123;原始问题&#125;<br><br>背景问题：<br></code></pre></td></tr></table></figure>
+<p>效果示例：具体问题「Qdrant 的 HNSW ef 参数设多少合适」→ 后退问题「HNSW 索引的参数调优原则是什么」。后退后的问题能命中更多通用背景文档，让 LLM 生成有原理支撑的答案。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776826053676-5c7605f0-72c7-4e2a-bfaf-45f711f655aa.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Step-back：具体问题后退为背景问题"></p>
+<hr>
+<h2 id="5-方法四：多-Query-扩展">5 方法四：多 Query 扩展</h2>
+<p>前面三种方法都在「一个问题」上做文章——要么改写它、要么给它配个假设答案、要么把它抽象化。但<strong>有时候问题角度本身就窄</strong>，用一个角度去检索，覆盖面不够。这时候换个思路：不求一个问题改得更好，而是<strong>多生成几个不同角度的问题</strong>。</p>
+<p>用 LLM 把用户原始问题改写成 <strong>3~5 个不同角度的版本</strong>，分别去检索，再把所有结果合并去重。核心思路是：只要有一个改写版本和文档的表述对上了，就能把正确的内容召回来——<strong>就像拦截网越宽，捕到鱼的概率越高</strong>。适合用户提问风格多变、和文档表述差异大的场景，代价是多几次 LLM 调用。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776826169999-dabd9a4f-3d2f-47fb-8526-2281ffcb60e9.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="多 Query 扩展：多角度检索合并去重"></p>
+<hr>
+<h2 id="6-方法对比与选型">6 方法对比与选型</h2>
+<p>把四种方法放在一起对比，各自的定位一目了然：</p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>解决的核心问题</th>
+<th>额外开销</th>
+<th>适合场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>直接改写</td>
+<td>口语化、指代不清、上下文丢失</td>
+<td>1 次 LLM 调用</td>
+<td>多轮对话场景</td>
+</tr>
+<tr>
+<td>HyDE</td>
+<td>问题和文档文体风格差异大</td>
+<td>1 次 LLM 调用</td>
+<td>专业知识库、文体差异明显</td>
+</tr>
+<tr>
+<td>Step-back</td>
+<td>具体问题需要背景知识辅助</td>
+<td>1 次 LLM 调用</td>
+<td>技术文档、需要原理支撑的场景</td>
+</tr>
+<tr>
+<td>多 Query 扩展</td>
+<td>单一角度覆盖不全</td>
+<td>N 次 LLM 调用</td>
+<td>答案涉及多个维度的复杂问题</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="7-面试总结">7 面试总结</h2>
+<p>这道题的<strong>最大扣分点是只说一种方法</strong>——&quot;把口语转书面语&quot;是标配答案，但对不了几招。完整的答题框架分两层：</p>
+<ol>
+<li><strong>先说目的</strong>：Query Rewrite 不是&quot;把口语转成书面语&quot;这么简单，它的核心是<strong>弥合用户提问和文档表述之间的语义鸿沟</strong>，而这道鸿沟有四种不同形态；</li>
+<li><strong>再按鸿沟形态配方法</strong>：口语化表达用<strong>直接改写</strong>、文体差异用 <strong>HyDE</strong>、问题太具体用 <strong>Step-back</strong>、角度单一用<strong>多 Query 扩展</strong>——让面试官看到你理解了&quot;不同场景需要不同策略&quot;。</li>
+</ol>
+<p>如果被追问&quot;改写之后还是对不上怎么办&quot;，标准回答是顺着鸿沟形态走一遍：改写解决口语化 → 对不上可能是文体差异（上 HyDE）→ 再不行可能是问题太具体（上 Step-back）→ 角度太窄就用多 Query 扩展；如果被追问&quot;四种方法什么时候组合使用&quot;，答：<strong>多轮对话里改写和 HyDE 可以串用（先改写再假设答案），复杂问题四者可以并行、按各自召回合并结果</strong>。</p>
+<hr>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/12_query_rewrite.html">12. 如何润色用户的 Query（Query Rewrite）？目的是什么？ | 小林面试笔记</a></li>
+</ul>
+<blockquote>
+<p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/RAG/" class="category-chain-item">RAG</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/tags/RAG/" class="print-no-link">#RAG</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「RAG」如何润色用户的 Query（Query Rewrite）？目的是什么？</div>
+      <div>https://marisamagic.github.io/2026/08/14/20260812_RAG查询重写/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月14日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/14/20260812_RAG%E5%9C%A8%E7%BA%BF%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B/" title="「RAG」你使用 RAG 给大模型一个输入，系统是怎样的工作流程？">
+                        <span class="hidden-mobile">「RAG」你使用 RAG 给大模型一个输入，系统是怎样的工作流程？</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

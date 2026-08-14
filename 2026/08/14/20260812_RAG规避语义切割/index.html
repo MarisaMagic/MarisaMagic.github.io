@@ -1,0 +1,857 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="语义截断问题的本质（不是信息丢了，而是语义被拆散后每半都不够强、检索全军覆没）；方向一：切的时候别截断（重叠切割 10%~20%、语义边界切割按句子&#x2F;段落）；方向二：切完补回上下文（句子窗口检索、父子切割、命题化切割、Contextual Retrieval 向量化前补背景）；Prompt Caching 将 LLM 成本降 80%~90%；工程组合：重叠兜底 + 语义边界保质量 + 高质量场景加">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「RAG」怎么规避语义被切割掉的问题？">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/14/20260812_RAG%E8%A7%84%E9%81%BF%E8%AF%AD%E4%B9%89%E5%88%87%E5%89%B2/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="语义截断问题的本质（不是信息丢了，而是语义被拆散后每半都不够强、检索全军覆没）；方向一：切的时候别截断（重叠切割 10%~20%、语义边界切割按句子&#x2F;段落）；方向二：切完补回上下文（句子窗口检索、父子切割、命题化切割、Contextual Retrieval 向量化前补背景）；Prompt Caching 将 LLM 成本降 80%~90%；工程组合：重叠兜底 + 语义边界保质量 + 高质量场景加">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg">
+<meta property="article:published_time" content="2026-08-14T04:27:46.240Z">
+<meta property="article:modified_time" content="2026-08-14T04:27:46.240Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="RAG">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg">
+  
+  
+  
+  <title>「RAG」怎么规避语义被切割掉的问题？ - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「RAG」怎么规避语义被切割掉的问题？"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-14 12:27" pubdate>
+          2026年8月14日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          28 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「RAG」怎么规避语义被切割掉的问题？</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<blockquote>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/5_semantic_cuts.html">5. 怎么规避语义被切割掉的问题？</a>，用于记录与总结 RAG 相关的核心面试知识点。</p>
+</blockquote>
+<p>「<strong>怎么规避语义被切割掉的问题？</strong>」，可以这样作答：</p>
+<blockquote>
+<p>语义截断的本质是：<strong>一个完整的语义被切成了两半，每一半单独看相关度都不够，检索时直接全军覆没</strong>——不是信息丢了，而是被拆散之后没人认得它。规避思路有两条线：<strong>一是切的时候别截断</strong>——用重叠切割（overlap）兜底，相邻 chunk 保留 10%~20% 的重叠内容，再用语义边界切割顺着句子、段落这类自然边界下刀；<strong>二是切完之后把上下文补回来</strong>——句子窗口检索（单句向量化、命中后前后几句一起返回）、父子切割（小块检索、大块返回）、命题化切割（用 LLM 把文档拆成天然自包含的命题），以及 Anthropic 的 Contextual Retrieval（向量化之前先让 LLM 看整篇文档、给每个 chunk 生成一句背景说明再入库）。</p>
+<p>工程上通常是组合使用：<strong>重叠切割做兜底，语义边界切割保切割质量，高质量场景再加父子切割或 Contextual Retrieval</strong>。</p>
+</blockquote>
+<hr>
+<h2 id="1-语义被切割是什么问题？">1 语义被切割是什么问题？</h2>
+<p>先说清问题本身。上一篇讲 Chunking 时我们提过，固定大小切割可能在句子中间下刀，这里把具体的&quot;事故现场&quot;亮出来。假设文档里有这么一段：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs text">...前三条款适用于个人用户。<br>第四条：企业用户享有优先客服通道，响应时间不超过 2 小时，<br>并可申请专属技术顾问服务。此条款自 2024 年起生效。...<br></code></pre></td></tr></table></figure>
+<p>如果 chunk 的边界恰好切在「响应时间不超过 2 小时，」这里，「企业用户享有优先客服通道」和「并可申请专属技术顾问服务」就被分到了两个 chunk。</p>
+<p>你可能会想：两个 chunk 里都有部分答案，搜到其中一个不就行了？问题恰恰出在这里——<strong>两个 chunk 单独来看相关度都不够高，极可能一个都召回不了，答案就断了</strong>。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776782545963-8e2b3b26-5966-4e89-9a3b-1cb9eeb69256.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="语义被切割：信息被拆散后检索失败"></p>
+<p>这就是语义截断的核心问题：<strong>不是信息丢了，而是信息被拆散之后，每一半都不够强，检索时全军覆没</strong>。理解了这一点，后面的所有方案都是在回答同一个问题——怎么让拆散后的每一半都&quot;够强&quot;。</p>
+<hr>
+<h2 id="2-方向一：切的时候别截断">2 方向一：切的时候别截断</h2>
+<p>第一个方向很直觉：<strong>既然切会切坏，那就切得聪明一点，别在语义中间下刀</strong>。这一方向下有两大方案。</p>
+<h3 id="2-1-重叠切割（Overlap）">2.1 重叠切割（Overlap）</h3>
+<p>最基础的方案：让相邻 chunk 之间保留一段重叠内容，就算边界恰好切在语义中间，跨边界的内容也一定完整地出现在其中一个 chunk 里。</p>
+<p>重叠量通常取 <strong>chunk_size 的 10%~20%</strong>，比如 <code>chunk_size=800</code>、<code>overlap=150</code>。</p>
+<p>你可能会问：为什么不干脆重叠 40%？这是实践摸出来的平衡点：</p>
+<ul>
+<li><strong>太小（比如 5%）</strong>：重叠区域覆盖不了完整的跨边界语义，保护效果弱；</li>
+<li><strong>太大（比如 40%）</strong>：重复内容太多，存储和检索成本上升，大量重复还会干扰 LLM 的阅读理解。</li>
+</ul>
+<p>需要再次强调：<strong>重叠切割只是兜底</strong>。它保证跨边界的文字不丢失，却解决不了「一个完整语义被拆散」的根本问题——很多人以为加了 overlap 就万事大吉，面试官最想看到你否定这一点。</p>
+<h3 id="2-2-语义边界切割">2.2 语义边界切割</h3>
+<p>既然要避免在语义中间截断，最简单的办法就是<strong>只在自然的语义边界处切</strong>——也就是按句子、段落切。</p>
+<p>为什么句子的优先级这么高？因为<strong>句子是语言表达意思的最小完整单位</strong>：一个句子有主语、谓语、宾语，能独立表达一个意思；而把句子从中间截断，前半截后半截单独看都是残缺的，向量化出来的语义也是扭曲的。</p>
+<p>实际操作时，用 NLP 工具（比如 spacy、nltk）识别句子结束位置，然后以句子为单位填充 chunk：一句句往当前 chunk 里加，加满了就封存、开启新的，绝不拦腰截断。对于段落分明的文档，还可以在句子边界的基础上<strong>优先在段落边界处切</strong>，效果更好。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776785196912-f9193ca7-b8e3-4ff4-adf2-4836357d78bb.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="按语义边界（句子/段落）切割"></p>
+<hr>
+<h2 id="3-方向二：切完之后补回上下文">3 方向二：切完之后补回上下文</h2>
+<p>切得再聪明，也难免有失手的时候。第二个方向换个思路：<strong>切切归切，检索的时候再把上下文补回来</strong>。这一方向下方案更多，也更有亮点。</p>
+<h3 id="3-1-句子窗口检索（Sentence-Window-Retrieval）">3.1 句子窗口检索（Sentence Window Retrieval）</h3>
+<p>前两个方案都在「怎么切」上做文章，句子窗口检索直接换了个战场：<strong>不追求 chunk 大小，而是让检索粒度细、返回范围宽</strong>。</p>
+<p>类比一下：在图书馆里你用关键词定位到了某本书里的<strong>一句话</strong>，但你实际阅读的是这句话所在的<strong>整个段落</strong>，而不是只拿走那一行。</p>
+<p>具体做法是：存储时把文档切成单个句子，每个句子单独向量化，用于精准检索；检索命中某个句子后，并不只返回它，而是把它<strong>前后各 N 个句子</strong>一起取出来，形成完整的上下文窗口交给 LLM。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776785289000-4b0fd01c-69e2-4481-aa5d-c3a8a66daff6.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="句子窗口检索：单句检索、窗口返回"></p>
+<p>好处是两全其美：<strong>检索粒度细</strong>（单句定位准、相关度高），<strong>给 LLM 的内容却是完整上下文</strong>，不会因为检索太细导致信息残缺。代价是存储量较大——每个句子都要向量化，记录数等于文档的句子总数。</p>
+<h3 id="3-2-父子切割（Parent-Child-Chunking）">3.2 父子切割（Parent-Child Chunking）</h3>
+<p>父子切割我们在上一篇（Chunking 策略）详细讲过：<strong>小 chunk 检索命中、大 chunk 内容输出</strong>，两者通过 ID 关联。这里只补一个和句子窗口检索的对比，方便面试时串起来讲：</p>
+<ul>
+<li><strong>句子窗口检索</strong>是&quot;检索命中后<strong>动态扩展</strong>上下文&quot;，实现简单，但窗口大小不灵活；</li>
+<li><strong>父子切割</strong>是&quot;<strong>提前把父子关系存好</strong>&quot;，更结构化的实现，父 chunk 大小可以精确控制，代价是要维护父子 ID 关系、存储翻倍。</li>
+</ul>
+<p>一句话：两者思路同源，都是从&quot;检索取到点、生成读到面&quot;出发，只是实现方式不同。</p>
+<h3 id="3-3-命题化切割（Propositions-based-Chunking）">3.3 命题化切割（Propositions-based Chunking）</h3>
+<p>前面几个方案，要么在&quot;怎么切&quot;上打补丁，要么在&quot;检索后&quot;补上下文。命题化切割想得更远：<strong>能不能让每个 chunk 天生就是完整独立的？</strong></p>
+<p>做法是：<strong>用 LLM 把文档分解成一条条独立的「命题」（Proposition）</strong>——每个命题都是一个完整、自包含的陈述句，只包含一个核心事实，单独拿出来就能看懂，不依赖任何上下文。举个例子，原文是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">企业用户享有优先客服通道，响应时间不超过 2 小时，并可申请专属技术顾问服务。<br></code></pre></td></tr></table></figure>
+<p>分解成命题后变成三条独立陈述：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs text">企业用户享有优先客服通道。<br>企业用户的客服响应时间不超过 2 小时。<br>企业用户可以申请专属技术顾问服务。<br></code></pre></td></tr></table></figure>
+<p>这三条单独拿出来都能看懂，不需要上下文辅助，向量化后的语义密度极高。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776785368137-ad871e20-fc15-422f-adbd-5629a5bf3b55.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="命题化切割：LLM 拆解为自包含命题"></p>
+<p><strong>质量最高，成本也最高</strong>——每个 chunk 都要额外调 LLM 来生成命题，适合对检索质量要求极高的核心知识库。</p>
+<h3 id="3-4-Contextual-Retrieval（Anthropic）">3.4 Contextual Retrieval（Anthropic）</h3>
+<p>命题化切割是用 LLM <strong>重组</strong> chunk 内容，而 Contextual Retrieval 换了一个角度：<strong>不改变 chunk 本身，在向量化之前把缺失的上下文补进去</strong>。这是 Anthropic 在 2024 年提出的方案。</p>
+<p>先看它要解决的根本问题：<strong>chunk 被单独拿出来后，就失去了语境</strong>。</p>
+<p>chunk 向量化时，Embedding 模型只能看到这段文字本身，不知道它来自哪篇文档、讲的是什么主题。比如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">此条款自 2024 年 1 月 1 日起生效，适用于所有企业版订阅用户。<br></code></pre></td></tr></table></figure>
+<p>孤立地看，完全不知道「此条款」指的是什么。你可能会奇怪：向量不是能捕捉语义吗，为什么会丢信息？原因很简单：<strong>向量只能编码它&quot;看到&quot;的文字里的语义，它看不到的背景信息，自然无法编码进向量</strong>。向量里没有主题信息，正是孤立 chunk 召回质量低的根本原因。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776785329798-a2f2b7b3-4853-45fd-a662-cbea05afcd02.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="孤立 chunk 失去语境的问题"></p>
+<p>Contextual Retrieval 的核心做法分两步：</p>
+<ol>
+<li><strong>生成 Context</strong>：让 LLM 看着整篇原始文档，为每一个 chunk 生成一段简短的背景说明（通常 1~2 句话），说清这个 chunk 在文档中的位置和主题；</li>
+<li><strong>拼接再向量化</strong>：把生成的 Context 前置拼到 chunk 前面，然后对这个「Context + chunk」整体做 Embedding 和 BM25 索引。</li>
+</ol>
+<p>还是刚才的例子，LLM 生成的 Context 可能是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">这段内容说明了企业用户专属客服和技术顾问服务条款的生效日期和适用范围。<br></code></pre></td></tr></table></figure>
+<p>拼在一起入库的就是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs text">这段内容说明了企业用户专属客服和技术顾问服务条款的生效日期和适用范围。<br><br>此条款自 2024 年 1 月 1 日起生效，适用于所有企业版订阅用户。<br></code></pre></td></tr></table></figure>
+<p>现在这个 chunk 的向量里就包含了「企业用户」「客服条款」「生效日期」这些关键语义，被正确召回的概率大幅提升。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776785405140-b09592e4-a332-450d-bc42-557fbb5d413d.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Context + chunk 拼接后向量化"></p>
+<h3 id="3-5-成本控制：Prompt-Caching">3.5 成本控制：Prompt Caching</h3>
+<p>你可能会担心：每个 chunk 都要调一次 LLM，成本得多高？这确实是 Contextual Retrieval 最大的顾虑，但 Anthropic 的 <strong>Prompt Caching</strong> 特性可以把成本降低 80%~90%。</p>
+<p>原理是：同一篇文档的所有 chunk 请求共享相同的前缀（full_document）。开启 Prompt Caching 后，<strong>第一次调用把文档内容缓存进 KV Cache，后续同一篇文档的 chunk 请求都复用这份缓存</strong>，只有 chunk 部分需要重新计算。</p>
+<p>算一笔账就清楚了。一篇文档有 100 个 chunk：传统做法要把整篇文档的 token 重复处理 100 次；开启 Prompt Caching 后，第一次写入缓存时文档部分按 1.25 倍计费（25% 的写入溢价），后续 99 次命中缓存的部分只按正常价的 <strong>10%</strong> 计费——文档部分的成本整体降到原来的 10%~20%。按 Anthropic 官方参考数据，<strong>8k token 的文档配合 800 token 的 chunk，处理一百万文档 token 的总成本大约 1 美元出头</strong>，完全可控。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776785452782-3b4f4ecb-39d3-4ce5-8333-fa7c782b7500.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Prompt Caching 大幅降低 LLM 调用成本"></p>
+<p>工程效果上，Anthropic 的测评数据显示：<strong>Contextual Retrieval 结合 BM25 混合检索，能将检索失败率（Top-20 未命中目标 chunk 的比例）降低约 49%</strong>，是目前业界实测效果最显著的 chunk 质量提升方案之一。</p>
+<hr>
+<h2 id="4-方案选型对比">4 方案选型对比</h2>
+<p>把六个方案的核心思路、适用场景和代价放在一张表里，实际选型时对照着挑：</p>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>核心思路</th>
+<th>适合场景</th>
+<th>代价</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>重叠切割</td>
+<td>相邻 chunk 内容重叠</td>
+<td>所有场景，基础兜底</td>
+<td>存储轻微增加</td>
+</tr>
+<tr>
+<td>语义边界切割</td>
+<td>在句子/段落边界处切</td>
+<td>段落结构清晰的文档</td>
+<td>需要 NLP 工具</td>
+</tr>
+<tr>
+<td>句子窗口检索</td>
+<td>精细检索 + 扩展返回窗口</td>
+<td>追求高召回精度</td>
+<td>存储量大</td>
+</tr>
+<tr>
+<td>父子切割</td>
+<td>小块检索、大块返回</td>
+<td>通用场景，效果均衡</td>
+<td>存储翻倍、索引复杂</td>
+</tr>
+<tr>
+<td>命题化切割</td>
+<td>LLM 拆解为独立命题</td>
+<td>高质量要求、重要知识库</td>
+<td>LLM 调用成本高</td>
+</tr>
+<tr>
+<td>Contextual Retrieval</td>
+<td>向量化前补全背景上下文</td>
+<td>文档语境强、chunk 孤立感重的场景</td>
+<td>LLM 调用成本（Prompt Caching 可大幅降低）</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="5-面试总结">5 面试总结</h2>
+<p>面试官问你语义截断，<strong>回答不能只停留在&quot;加个 overlap&quot;</strong>——那是这道题最明显的扣分点。完整的答题框架分三步：</p>
+<ol>
+<li><strong>先说清问题本质</strong>：chunk 被单独拿出来后失去语境，完整语义被拆散，每一半相关度都不够，导致检索召回不到——不是信息丢了，是没人认得它了；</li>
+<li><strong>再分两个方向讲方案</strong>：切的时候别截断（重叠切割、语义边界切割），切完之后补回上下文（句子窗口检索、父子切割、命题化切割、Contextual Retrieval）；</li>
+<li><strong>最后落回工程组合</strong>：重叠切割兜底 + 语义边界切割保证质量 + 高质量场景再加父子切割或 Contextual Retrieval——能把这套组合思路讲出来，面试官就满意了。</li>
+</ol>
+<p>如果被追问&quot;overlap 不是够用了吗&quot;，标准回答：<strong>overlap 只是兜底，它能保证跨边界的文字不丢失，但一个完整语义被拆散之后，每一半单独看相关度依然不够，该召回失败还是失败</strong>；如果被追问 Contextual Retrieval 的成本问题，记得用 Prompt Caching（成本降 80%~90%、百万 token 约 1 美元）来应答。</p>
+<hr>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/5_semantic_cuts.html">5. 怎么规避语义被切割掉的问题？ | 小林面试笔记</a></li>
+</ul>
+<blockquote>
+<p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/RAG/" class="category-chain-item">RAG</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/tags/RAG/" class="print-no-link">#RAG</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「RAG」怎么规避语义被切割掉的问题？</div>
+      <div>https://marisamagic.github.io/2026/08/14/20260812_RAG规避语义切割/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月14日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/08/14/20260812_RAG%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" title="「RAG」什么是向量数据库？有没有做过向量数据库的对比选型？">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「RAG」什么是向量数据库？有没有做过向量数据库的对比选型？</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/13/20260812_RAG%E6%96%87%E6%A1%A3%E5%AD%98%E5%82%A8%E4%B8%8EChunking/" title="「RAG」RAG 中的文档是怎么存的？粒度是多大？详细说说文档切割（Chunking）策略？">
+                        <span class="hidden-mobile">「RAG」RAG 中的文档是怎么存的？粒度是多大？详细说说文档切割（Chunking）策略？</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
