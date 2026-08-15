@@ -1,0 +1,849 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="向量数据库的定义与 ANN 核心能力；为什么 B-tree 对高维向量失效、需要专门的数据库；HNSW 与 IVF 两种索引算法的原理、对比与适用场景；生产级核心能力（Metadata 过滤、实时增量更新、BM25 混合检索）；选型建议（Chroma&#x2F;Qdrant&#x2F;Milvus&#x2F;Pinecone&#x2F;pgvector）与面试答题要点。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「RAG」什么是向量数据库？">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/14/20260814_RAG%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="向量数据库的定义与 ANN 核心能力；为什么 B-tree 对高维向量失效、需要专门的数据库；HNSW 与 IVF 两种索引算法的原理、对比与适用场景；生产级核心能力（Metadata 过滤、实时增量更新、BM25 混合检索）；选型建议（Chroma&#x2F;Qdrant&#x2F;Milvus&#x2F;Pinecone&#x2F;pgvector）与面试答题要点。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg">
+<meta property="article:published_time" content="2026-08-14T04:54:06.954Z">
+<meta property="article:modified_time" content="2026-08-14T05:57:01.184Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="RAG">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg">
+  
+  
+  
+  <title>「RAG」什么是向量数据库？ - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「RAG」什么是向量数据库？"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-14 12:54" pubdate>
+          2026年8月14日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          25 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「RAG」什么是向量数据库？</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<blockquote>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/8_vectordb.html">8. 什么是向量数据库？有没有做过向量数据库的对比选型？</a>，用于记录与总结 RAG 相关的核心面试知识点。</p>
+</blockquote>
+<p>「<strong>什么是向量数据库？有没有做过向量数据库的对比选型？</strong>」，可以这样作答：</p>
+<blockquote>
+<p>向量数据库是<strong>专门用来存储和检索高维向量的数据库</strong>，核心能力是<strong>近似最近邻搜索（ANN）</strong>——在百万甚至亿级的向量里毫秒级找出最相似的 Top-K 个。它和&quot;普通数据库加个向量字段&quot;有本质区别：MySQL 擅长精确匹配（<code>WHERE id = 123</code>），向量数据库擅长语义相似，两者解决的是完全不同的问题。普通关系型数据库的 <strong>B-tree 索引只能处理一维有序数据</strong>，对 1024 维向量的相似度检索基本失效，暴力遍历百万条又不可接受，所以才需要专门设计。</p>
+<p>索引算法主要讲两个：<strong>HNSW</strong>（多层图结构逐层导航，召回率高、查询快、吃内存，Qdrant/Milvus/Chroma 默认使用）和 <strong>IVF</strong>（聚类分桶、只搜相关桶，省内存、适合超大规模，需调参）。选型按三个维度——<strong>数据规模、部署方式、是否需要混合检索</strong>：原型验证用 Chroma，中到大规模生产用 Qdrant，千万到亿级分布式选 Milvus，不想运维用 Pinecone（注意数据出境合规），已有 PostgreSQL 就用 pgvector 插件。</p>
+</blockquote>
+<hr>
+<h2 id="1-什么是向量数据库？">1 什么是向量数据库？</h2>
+<p>向量数据库，顾名思义，就是<strong>专门用来存储和检索「向量」的数据库</strong>。</p>
+<p>这里的向量，指的是嵌入模型（Embedding Model）把文本、图片、音频等内容转换出的一串浮点数——一句话可能被转换成像 <code>[0.12, -0.87, 0.34, ...]</code> 这样的 768 维或 1024 维数组。每一个向量都代表了这段内容的<strong>语义含义</strong>：语义越相近的内容，它们的向量在高维空间里的距离就越近。</p>
+<p>向量数据库支持的核心操作叫<strong>近似最近邻搜索（ANN，Approximate Nearest Neighbor）</strong>：给你一个查询向量，在库里找出和它最相似的 K 个向量，返回对应的原始内容。这正是 RAG 里「检索」那一步的底层支撑——用户提问 → 问题向量化 → 去向量库里找最相关的文档片段 → 喂给大模型生成回答。我们在第一篇讲离线流程时提到的&quot;向量数据库（Chroma、Milvus、Qdrant）&quot;，干的就是这件事。</p>
+<p>这里有个高频误解必须澄清：<strong>向量数据库 ≠ MySQL 加个向量字段</strong>。用一句话概括两者的本质区别：</p>
+<blockquote>
+<p><strong>MySQL 擅长精确匹配（<code>WHERE id = 123</code>），向量数据库擅长语义相似（“找和这个意思最接近的内容”）</strong>，两者解决的是完全不同的问题，不是互相替代的关系。</p>
+</blockquote>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776786102650-bc5b5f0a-a488-4c3b-b2d9-29430edc44a4.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="向量数据库与 MySQL 的本质区别"></p>
+<hr>
+<h2 id="2-为什么需要专门的向量数据库？">2 为什么需要专门的向量数据库？</h2>
+<p>理解了它是干什么的，自然会问：<strong>为什么不直接在 MySQL 或者 ES 里存向量，非要引入一个新数据库？</strong> 两个理由。</p>
+<p>第一，<strong>普通数据库的索引对高维向量失效</strong>。关系型数据库（MySQL、PostgreSQL）依靠 B-tree 索引做结构化数据查询，<code>WHERE id = 123</code> 这种精确匹配效率极高。但向量检索完全不是&quot;找等于&quot;，而是&quot;找最相近&quot;——没有精确匹配，只有相似度排序。而 <strong>B-tree 只能处理一维的有序索引</strong>：你不可能对一个 1024 维的向量建一棵 B-tree，然后说&quot;帮我找和它最近的&quot;，因为「近」本身是高维空间的<strong>综合判断</strong>，不是某一个维度上的排序。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776786143570-3ae9a709-bfcf-4a4c-b238-b65283ede60d.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="B-tree 对高维向量检索失效"></p>
+<p>第二，<strong>暴力遍历代价不可接受</strong>。朴素做法是把查询向量和库里每一条向量都算一遍相似度——百万条数据就要算一百万次，延迟完全不可接受。至于 Elasticsearch，它的向量检索能力是后来加的&quot;补丁&quot;，不是原生设计，数据量一大性能就扛不住。</p>
+<p>所以向量数据库的价值就在于：<strong>用专门的索引结构把相似度搜索加速，在可接受的精度损失下把延迟压到毫秒级</strong>。那它是怎么做到的？秘密全在索引算法上。</p>
+<hr>
+<h2 id="3-核心索引算法：HNSW-与-IVF">3 核心索引算法：HNSW 与 IVF</h2>
+<p>目前主流的两大索引算法，面试至少要把这两个讲清楚。</p>
+<h3 id="3-1-HNSW：多层图导航">3.1 HNSW：多层图导航</h3>
+<p><strong>HNSW（Hierarchical Navigable Small World）</strong> 是目前召回率最高的 ANN 算法之一。它构建一个<strong>多层图结构</strong>：查询时从最上层的稀疏图开始导航，逐层收窄范围，最终在底层找到最近邻。</p>
+<p>打个比方：在<strong>地图上找最近的餐厅</strong>，你不会把全国所有餐厅都遍历一遍，而是先在全国层面确定大致方向，再锁定省、市、区，一层层缩小范围——HNSW 就是把这个&quot;逐层逼近&quot;的过程建成了结构。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776786197825-fa87f39c-d56a-4485-8552-daf0e0ae410e.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="HNSW：多层图结构逐层导航"></p>
+<ul>
+<li><strong>优点</strong>：召回率高（相同延迟下通常能到 95%+）、查询速度快；</li>
+<li><strong>缺点</strong>：建索引时<strong>内存消耗大</strong>，不适合内存极度受限的场景；</li>
+<li><strong>市场地位</strong>：Qdrant、Milvus、Chroma 默认都用 HNSW。</li>
+</ul>
+<h3 id="3-2-IVF：聚类分桶">3.2 IVF：聚类分桶</h3>
+<p><strong>IVF（Inverted File Index）</strong> 是另一种思路：先对向量做<strong>聚类</strong>，把相似的向量分进同一个「桶」里；查询时只搜最相关的几个桶，而不是全量遍历。</p>
+<p>类比图书馆的分类体系：找一本编程书，不需要把整个图书馆翻一遍——先找到「计算机科学」那个区域，再在里面找，范围瞬间缩小。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776786766596-d46173f9-f8fc-4d7c-aab8-15616b27a8cc.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="IVF：聚类分桶、只搜相关桶"></p>
+<ul>
+<li><strong>优点</strong>：内存占用小，适合超大规模；</li>
+<li><strong>缺点</strong>：精度比 HNSW 略低，需要调参（聚类数量 <code>nlist</code>、搜索桶数量 <code>nprobe</code>）；</li>
+<li><strong>市场地位</strong>：Milvus 在超大规模场景下会用 IVF 系列索引。</li>
+</ul>
+<h3 id="3-3-为什么两个都要？">3.3 为什么两个都要？</h3>
+<p>你可能会问：HNSW 精度高、速度快，为什么还需要 IVF？原因很简单——<strong>HNSW 的内存消耗和向量数量成正比</strong>，到了亿级规模内存可能扛不住；IVF 用聚类换内存，牺牲一点精度换来处理超大规模的能力。<strong>一个吃内存换精度，一个省内存换规模</strong>，各有各的适用场景，面试时把这个取舍讲清楚就很有深度。</p>
+<hr>
+<h2 id="4-向量数据库的核心能力">4 向量数据库的核心能力</h2>
+<p>索引算法是底层核心，但生产级向量数据库光有 ANN 搜索还不够，还要具备几个关键工程能力：</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/image-20260305010013871.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="向量数据库的工程能力总览"></p>
+<h3 id="4-1-Metadata-过滤（混合检索）">4.1 Metadata 过滤（混合检索）</h3>
+<p>实际业务里，知识库往往横跨多个部门、多个产品线，用户只想搜&quot;技术部的文档&quot;或&quot;2024 年更新的内容&quot;。向量数据库支持给每个向量挂上 <strong>metadata 字段</strong>，检索时先加过滤条件，<strong>只在符合条件的子集里做 ANN 搜索</strong>。</p>
+<p>你可能会想：为什么不先 ANN 搜完再过滤？因为那样搜出来的 Top-K 结果可能大部分都不满足条件，<strong>白白浪费检索名额</strong>。先过滤再搜索，才能保证召回的都是真正想要的。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776824040865-5f8ae4c8-a780-4c19-9073-d056f42e6993.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Metadata 过滤：先过滤再 ANN 搜索"></p>
+<h3 id="4-2-实时更新">4.2 实时更新</h3>
+<p>RAG 的知识库经常要新增、修改、删除文档，<strong>向量索引不是建好就不能动的</strong>：主流向量数据库都支持在线写入，新数据进来后增量构建索引，不需要停服重建。</p>
+<h3 id="4-3-与关键词检索融合">4.3 与关键词检索融合</h3>
+<p>纯向量检索对精确词语（比如产品型号「GPT-4o」、专有名词）效果不好，所以很多向量数据库同时支持<strong>向量检索 + BM25 关键词检索</strong>的混合召回，两者互补效果更好。</p>
+<hr>
+<h2 id="5-选型建议">5 选型建议</h2>
+<p>产品落地总绕不开&quot;到底选哪个&quot;的问题。选型主要看三个维度：<strong>数据规模、部署方式、是否需要混合检索</strong>。主流的五个选项逐一过一遍：</p>
+<ul>
+<li><strong>Chroma</strong>：上手最快的选项，Python <code>pip install</code> 后本地内存直接跑，零配置，配合 LangChain / LlamaIndex 原生集成非常方便；现在也支持 Client-Server 模式和云托管，2025 年还加入了 BM25/SPLADE 稀疏向量混合检索。<strong>适合快速原型验证和中小规模生产</strong>，超大规模（千万级以上）的稳定性和性能还比不过专门为大规模设计的方案；</li>
+<li><strong>Qdrant</strong>：Rust 写的，性能稳、API 简洁、文档完善，Docker 一条命令就能部署；支持分布式模式（分片 + 副本），已有亿级规模的生产案例。<strong>作为中小到大规模生产环境的首选，覆盖面广</strong>——很多团队先用 Chroma 做原型，上生产再切 Qdrant，是条常见路径；</li>
+<li><strong>Milvus</strong>：支持多种索引类型、有完整的集群方案，国内大厂（字节、小米等）用得最多。<strong>适合千万到亿级的分布式场景</strong>，但部署运维复杂度也最高，团队需要有人力维护；</li>
+<li><strong>Pinecone</strong>：全托管 SaaS，按用量付费，无需运维，适合快速验证商业化产品。<strong>注意数据出境问题</strong>——业务数据有合规要求时就不合适了；</li>
+<li><strong>pgvector</strong>：如果项目已经在用 PostgreSQL 且数据量不大，直接装个插件就行，<strong>不用引入新组件</strong>，查询还能和业务数据做 SQL JOIN，运维成本为零。</li>
+</ul>
+<p>把几个常用选项摆在一起对比：</p>
+<table>
+<thead>
+<tr>
+<th>数据库</th>
+<th>部署方式</th>
+<th>适合规模</th>
+<th>混合检索</th>
+<th>主要优势</th>
+<th>主要劣势</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Chroma</td>
+<td>本地 / Client-Server / 云</td>
+<td>中小规模</td>
+<td>支持（BM25 / SPLADE）</td>
+<td>零配置上手快，生态集成好</td>
+<td>超大规模稳定性待验证</td>
+</tr>
+<tr>
+<td>Qdrant</td>
+<td>自托管 / 云（支持分布式）</td>
+<td>中到大规模（亿级）</td>
+<td>支持</td>
+<td>性能好、API 简洁、Rust 高性能</td>
+<td>超大规模需调优</td>
+</tr>
+<tr>
+<td>Milvus</td>
+<td>自托管（分布式）</td>
+<td>大规模（亿级）</td>
+<td>支持</td>
+<td>可水平扩展，大厂验证多</td>
+<td>部署运维复杂</td>
+</tr>
+<tr>
+<td>Pinecone</td>
+<td>全托管云服务</td>
+<td>中大规模</td>
+<td>支持</td>
+<td>无需运维，按量付费</td>
+<td>费用高，数据出境</td>
+</tr>
+<tr>
+<td>pgvector</td>
+<td>PostgreSQL 插件</td>
+<td>中小规模</td>
+<td>支持（配合全文检索）</td>
+<td>无需新组件，可 JOIN 业务数据</td>
+<td>性能弱于专用向量库</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="6-面试总结">6 面试总结</h2>
+<p>面试官问&quot;什么是向量数据库&quot;，千万不能把它理解成&quot;普通数据库加个向量字段&quot;——那是这道题最典型的雷。完整答题框架分三层：</p>
+<ol>
+<li><strong>先说定义与本质</strong>：专门为高维向量相似度搜索设计的数据库，核心能力是 ANN（近似最近邻搜索）；普通关系型数据库的 B-tree 索引对高维向量检索基本失效，这不是加个字段能解决的；</li>
+<li><strong>再讲索引算法</strong>：HNSW 多层图导航、召回率高但吃内存（Qdrant/Milvus/Chroma 默认）；IVF 聚类分桶、省内存适合超大规模、需调 <code>nlist</code>/<code>nprobe</code> 参数——这是核心技术点，面试官大概率追问；</li>
+<li><strong>最后给选型</strong>：从<strong>数据规模、部署方式、是否需要混合检索</strong>三个维度回答——原型用 Chroma、中到大规模生产用 Qdrant、超大规模分布式选 Milvus、不想运维上 Pinecone、已有 PostgreSQL 用 pgvector。</li>
+</ol>
+<p>如果被追问&quot;你最常踩的选型坑是什么&quot;，答案很现成：<strong>别拿 GitHub Star 数量当选型依据</strong>——Chroma 的 Star 最多，但超大规模生产场景它并不是最优解，要看数据规模和部署需求；如果被追问混合检索的实现，记得答&quot;向量检索 + BM25 关键词检索并行召回再合并&quot;。</p>
+<hr>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/8_vectordb.html">8. 什么是向量数据库？有没有做过向量数据库的对比选型？ | 小林面试笔记</a></li>
+</ul>
+<blockquote>
+<p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/RAG/" class="category-chain-item">RAG</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/tags/RAG/" class="print-no-link">#RAG</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「RAG」什么是向量数据库？</div>
+      <div>https://marisamagic.github.io/2026/08/14/20260814_RAG向量数据库/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月14日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/08/14/20260814_RAG%E5%9C%A8%E7%BA%BF%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B/" title="「RAG」RAG 在线阶段工作流程">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「RAG」RAG 在线阶段工作流程</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/14/20260814_RAG%E8%A7%84%E9%81%BF%E8%AF%AD%E4%B9%89%E5%88%87%E5%89%B2/" title="「RAG」怎么规避语义被切割掉的问题？">
+                        <span class="hidden-mobile">「RAG」怎么规避语义被切割掉的问题？</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

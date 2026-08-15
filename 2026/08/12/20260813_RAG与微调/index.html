@@ -19,16 +19,16 @@
   <meta name="author" content="MarisaMagic">
   <meta name="keywords" content="">
   
-    <meta name="description" content="RAG 在线流程六步链路（Query 预处理 → Query 向量化 → 向量检索+多路召回 → Rerank 精排 → Prompt 拼装 → 生成+溯源）；Query 改写三种技术（简单改写、HyDE、多角度扩写）；Embedding 模型必须与建库一致（坐标系类比）；向量检索与 BM25 各有所长、RRF 融合；两阶段检索策略（粗排 Top-20 → 精排 Top-3~5）；Prompt 约">
+    <meta name="description" content="微调与 RAG 的本质区别（改参数 vs 不改参数）；微调的优势（效果彻底、深度定制、低延迟）与代价（成本高、更新难、不可溯源）；RAG 的优势（更新即时生效、答案可溯源、成本低）与不足（检索延迟、检索质量卡住上限、复杂推理提升有限）；组合使用：微调解决「怎么说」，RAG 解决「说什么」；面试答题要点（先说本质、再各说优劣、最后提组合）。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="「RAG」RAG 在线阶段工作流程？">
-<meta property="og:url" content="https://marisamagic.github.io/2026/08/14/20260812_RAG%E5%9C%A8%E7%BA%BF%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B/index.html">
+<meta property="og:title" content="「RAG」相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/12/20260813_RAG%E4%B8%8E%E5%BE%AE%E8%B0%83/index.html">
 <meta property="og:site_name" content="MarisaMagic&#39;s Blog">
-<meta property="og:description" content="RAG 在线流程六步链路（Query 预处理 → Query 向量化 → 向量检索+多路召回 → Rerank 精排 → Prompt 拼装 → 生成+溯源）；Query 改写三种技术（简单改写、HyDE、多角度扩写）；Embedding 模型必须与建库一致（坐标系类比）；向量检索与 BM25 各有所长、RRF 融合；两阶段检索策略（粗排 Top-20 → 精排 Top-3~5）；Prompt 约">
+<meta property="og:description" content="微调与 RAG 的本质区别（改参数 vs 不改参数）；微调的优势（效果彻底、深度定制、低延迟）与代价（成本高、更新难、不可溯源）；RAG 的优势（更新即时生效、答案可溯源、成本低）与不足（检索延迟、检索质量卡住上限、复杂推理提升有限）；组合使用：微调解决「怎么说」，RAG 解决「说什么」；面试答题要点（先说本质、再各说优劣、最后提组合）。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg">
-<meta property="article:published_time" content="2026-08-14T05:26:08.880Z">
-<meta property="article:modified_time" content="2026-08-14T05:57:34.672Z">
+<meta property="article:published_time" content="2026-08-12T09:52:51.374Z">
+<meta property="article:modified_time" content="2026-08-12T09:52:51.374Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="大模型">
@@ -39,7 +39,7 @@
   
   
   
-  <title>「RAG」RAG 在线阶段工作流程？ - MarisaMagic&#39;s Blog</title>
+  <title>「RAG」相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？ - MarisaMagic&#39;s Blog</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -228,7 +228,7 @@
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="「RAG」RAG 在线阶段工作流程？"></span>
+            <span id="subtitle" data-typed-text="「RAG」相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？"></span>
           
         </div>
 
@@ -244,8 +244,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2026-08-14 13:26" pubdate>
-          2026年8月14日 下午
+        <time datetime="2026-08-12 17:52" pubdate>
+          2026年8月12日 下午
         </time>
       </span>
     
@@ -256,7 +256,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          2.9k 字
+          1.9k 字
         
       </span>
     
@@ -267,7 +267,7 @@
         
         
         
-          25 分钟
+          17 分钟
         
       </span>
     
@@ -308,101 +308,123 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">「RAG」RAG 在线阶段工作流程？</h1>
+            <h1 id="seo-header">「RAG」相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？</h1>
             
             
               <div class="markdown-body">
                 
                 <h2 id="0-前言">0 前言</h2>
 <blockquote>
-<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/10_online_workflow.html">10. 你使用 RAG 给大模型一个输入，系统是怎样的工作流程？</a>，用于记录与总结 RAG 相关的核心面试知识点。</p>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/3_rag_vs_finetune.html">3. 相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？</a>，用于记录与总结 RAG 相关的核心面试知识点。</p>
 </blockquote>
-<p>「<strong>你使用 RAG 给大模型一个输入，系统是怎样的工作流程？</strong>」，可以这样作答：</p>
+<p>「<strong>相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？</strong>」，可以这样作答：</p>
 <blockquote>
-<p>RAG 在线流程是一条「<strong>检索 → 整理 → 生成</strong>」的流水线，用户问题不会直接丢给大模型，而是先经过六步：</p>
-<p>① <strong>Query 预处理</strong>：把口语化、带指代的问题改写成适合检索的形式，常用三种技术——简单改写、HyDE（让 LLM 先假设一个答案、拿假设答案的向量去检索）、多角度扩写（扩展成 3~5 种表述分别检索再合并）；② <strong>Query Embedding</strong>：把问题向量化，<strong>必须用和离线建库时完全相同的 Embedding 模型</strong>，否则两边的向量不在同一坐标系，距离计算没有意义；③ <strong>向量检索 + 多路召回</strong>：ANN 搜索找 Top-K 相似片段，同时并行做 BM25 关键词检索——向量抓语义、BM25 抓精确词，结果用 RRF 融合；④ <strong>Rerank 精排</strong>：粗排结果混有噪音，用 Cross-Encoder 把问题和每个候选拼在一起深度打分，最终只留 Top 3-5；⑤ <strong>Prompt 拼装</strong>：用约束&quot;只根据资料回答、资料里没有就说不知道&quot;抑制幻觉，参考资料编号方便溯源；⑥ <strong>大模型生成 + 溯源</strong>：模型基于参考资料作答，答案标注来源可回到原始文档验证。</p>
-<p>一句话总结：<strong>每一步都在为下一步准备更好的输入，最终目标是让大模型&quot;开卷作答&quot;，而不是凭空发挥</strong>。</p>
+<p>微调和 RAG 解决的<strong>不是同一层面的问题，不是谁替代谁的关系</strong>。微调是<strong>改模型参数</strong>——拿自己的数据让模型继续训练，把知识直接&quot;烧&quot;进参数里，适合定制输出格式、行业语气、培养深度专业能力；RAG 是<strong>不改参数</strong>——把知识放在外部知识库，推理时实时检索相关片段注入 prompt，让模型照着资料回答，适合知识频繁更新、需要答案可溯源的场景。</p>
+<p>判断标准很清晰：<strong>知识库类问答首选 RAG</strong>，成本低、加完文档就生效、回答可溯源；<strong>要模型学会特定的输出格式或行业语气，微调更合适</strong>。两者并不冲突，还能组合使用：先微调让模型学会&quot;怎么说&quot;，再用 RAG 提供&quot;说什么&quot;的具体内容。</p>
 </blockquote>
 <hr>
-<h2 id="1-为什么不能直接把问题扔给大模型？">1 为什么不能直接把问题扔给大模型？</h2>
-<p>先说为什么需要这套流程。两个直接原因：</p>
-<ol>
-<li><strong>上下文窗口有限</strong>：大模型的窗口装不下整个知识库，不可能把全部资料都塞进去；</li>
-<li><strong>没有依据就会编</strong>：缺乏外部知识时，模型只靠参数里的记忆回答，容易产生幻觉（这个我们在第二篇讲过）。</li>
-</ol>
-<p>所以 RAG 的在线流程本质是一个**「精准取件」**的过程：从海量知识里找到和这个问题最相关的那几段，再让大模型在这个「小范围」里作答——还是第一篇那句老话，给 LLM 开卷考试，只不过这次要仔细说说&quot;翻书&quot;的每一个步骤。</p>
-<p><img src="https://cdn.xiaolincoding.com//picgo/1776824818845-cfd9a96b-ff71-4809-b33a-a69a9557a9ee.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="RAG 在线流程总览"></p>
-<p>你可能会想：为什么不把用户问题直接拿去向量库里搜，搜完就完了？因为实际业务里，<strong>用户的提问往往是口语化的、带指代的、甚至有歧义的</strong>，直接拿去检索效果极差。所以整个在线流程按顺序分六步，每一步都在为下一步准备更好的输入。</p>
+<h2 id="1-同一问题的两种解法：改参数-vs-不改参数">1 同一问题的两种解法：改参数 vs 不改参数</h2>
+<p>聊微调与 RAG 之前，先回到一个根本前提：LLM 的「知识」到底是什么。</p>
+<p>大模型的知识是训练时从海量文本里学来的，最终以<strong>权重参数</strong>的形式固化在模型里。你可以把它理解成<strong>把知识烧进了 ROM</strong>——训练完成的那一刻，这些知识就被&quot;刻死&quot;了，不会自己更新。想知道训练截止日期之后的事？抱歉，参数里没有。</p>
+<p>理解了这一点，微调和 RAG 的本质就浮出水面了：<strong>这两个方案其实在解决同一个问题——怎么把模型训练时没学到的知识给它补上</strong>。只不过思路截然相反：一个直接改参数，让模型把新知识&quot;记&quot;进去；一个不动参数，留到推理时现查现用。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776781677589-27e6b631-1bbc-49ad-91c1-8786310de74e.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="微调与 RAG：改参数 vs 不改参数"></p>
+<p>这也是这道面试题最核心的答法：<strong>先别急着对比优劣，先讲清两者根本不在同一层面</strong>。</p>
 <hr>
-<h2 id="2-第一步：Query-预处理（Query-Rewrite）">2 第一步：Query 预处理（Query Rewrite）</h2>
-<p>为什么把它放在第一步？因为<strong>用户原始提问的质量决定了后续所有环节的天花板</strong>——输入就差，后面再怎么精排、怎么拼 Prompt 都是白搭。</p>
-<p>用户的提问要么口语化、带指代（&quot;上次那个方案怎么样&quot;离开对话上下文完全没法检索），要么用词和知识库文档不一致（直接检索命中率低）。这一步通常让 LLM 对原始问题做改写，常见三种技术：</p>
+<h2 id="2-微调（Fine-tuning）：把知识直接烧进模型">2 微调（Fine-tuning）：把知识直接烧进模型</h2>
+<p>微调是<strong>直接改模型参数</strong>的方案：拿着自己的业务数据，让模型继续训练一段时间，把新知识&quot;记住&quot;。思路很直白——既然参数里没有，那就把参数改一改，改到有为止。</p>
+<h3 id="2-1-微调的优势">2.1 微调的优势</h3>
 <ul>
-<li><strong>简单改写</strong>：把口语化问题改写成更正式、独立完整的检索句；</li>
-<li><strong>HyDE（Hypothetical Document Embeddings）</strong>：让 LLM 先&quot;假设&quot;一个可能的答案，再<strong>用假设答案的向量去检索</strong>。你可能会觉得奇怪——不用问题去搜，反而用假设答案去搜？原因在于：<strong>问题和答案的用词往往差异很大，但假设答案和真实答案的用词更接近</strong>，它们的语义空间天然更匹配，命中率往往更高；</li>
-<li><strong>多角度扩写</strong>：把同一个问题扩展成 3~5 种不同表述，分别检索后合并结果，覆盖面更广。</li>
+<li><strong>效果彻底</strong>：知识从模型内部改变，不是外部拼接，整个模型的行为都会被重塑；</li>
+<li><strong>深度定制</strong>：专业词汇、输出格式、回答风格都能按需塑造，让模型&quot;像你这个行业里的人&quot;；</li>
+<li><strong>延迟低</strong>：推理时不需要额外的检索步骤，问完直接答，响应速度最快。</li>
 </ul>
-<p><img src="https://cdn.xiaolincoding.com//picgo/1776824891491-f343ccbb-293c-4e87-ae9d-1cb8b4fc8eb4.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="HyDE：用假设答案的向量去检索"></p>
+<h3 id="2-2-微调的代价">2.2 微调的代价</h3>
+<p>优点很诱人，但代价同样实在：</p>
+<ol>
+<li><strong>成本高</strong>：要准备标注数据、租 GPU、跑训练，人力财力都是实打实的投入；</li>
+<li><strong>知识更新难</strong>：业务数据每周都在变，可每次微调都要几小时甚至几天的训练，总不能每周都来一遍；</li>
+<li><strong>答案不可溯源</strong>：回答来自参数，你永远不知道它是基于哪条知识算出来的，出了问题也没法定位。</li>
+</ol>
+<p>这里还有个常见的认知误区：<strong>很多人以为微调之后模型就&quot;懂&quot;了你的业务知识，其实它只是记住了训练数据里的模式</strong>——它到底记住了什么、记错了什么，你根本无从得知。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776781810697-0ebca069-371c-4ee2-856b-6b82ae27fcd8.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="微调：把知识直接烧进模型参数"></p>
 <hr>
-<h2 id="3-第二步：Query-Embedding（问题向量化）">3 第二步：Query Embedding（问题向量化）</h2>
-<p>问题改写好了，下一步把它转换成向量，才能去向量库里搜索。这一步本身很简单，但藏着一个<strong>最容易翻车的细节</strong>：</p>
+<h2 id="3-RAG：不改参数，推理时现查知识">3 RAG：不改参数，推理时现查知识</h2>
+<p>RAG 走的是完全相反的路：<strong>模型参数一动不动，把知识放在外部，用到的时候再查</strong>。前两篇我们详细拆解过它的流程——文档入库 → 提问时检索相关片段 → 拼进 prompt → 模型照着资料回答。</p>
+<h3 id="3-1-RAG-的优势">3.1 RAG 的优势</h3>
+<ul>
+<li><strong>更新即时生效</strong>：知识库更新只需往向量库里加文档，加完就能用，不需要重新训练；</li>
+<li><strong>答案可溯源</strong>：回答可以附上来源 chunk，出错能立刻定位是哪条知识有问题；</li>
+<li><strong>成本低</strong>：小团队用 OpenAI Embedding + Chroma 就能把整套系统跑起来。</li>
+</ul>
+<h3 id="3-2-RAG-的不足">3.2 RAG 的不足</h3>
+<ol>
+<li><strong>检索延迟</strong>：整体响应比纯 LLM 多出几百毫秒到一秒，对实时性要求极高的场景要注意；</li>
+<li><strong>检索质量卡住上限</strong>：生成层只是在复述和整理检索到的内容，<strong>检索不到的知识，LLM 再强也&quot;变&quot;不出来</strong>。所以 RAG 系统调优的主战场永远是<strong>检索这一层</strong>，而不是换更贵的模型——很多人一上来就想着升级模型，往往是南辕北辙；</li>
+<li><strong>复杂推理提升有限</strong>：RAG 提供的是&quot;参考资料&quot;，如果希望模型对某个领域有更深的推理能力，还是得靠微调。</li>
+</ol>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776781912137-c9127239-897a-4f75-8723-f1131ab52665.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="RAG：检索层决定系统上限"></p>
+<hr>
+<h2 id="4-组合使用：微调解决「怎么说」，RAG-解决「说什么」">4 组合使用：微调解决「怎么说」，RAG 解决「说什么」</h2>
+<p>两个方案各有短板，而短板恰好互补——所以实践中真正的主流用法是<strong>组合出拳</strong>：</p>
 <blockquote>
-<p><strong>必须用和离线建库时完全相同的 Embedding 模型。</strong></p>
+<p><strong>先对基础模型做一轮微调</strong>，让它学会输出格式、语气风格、行业术语；<strong>再用 RAG 来提供具体的知识内容</strong>——微调解决「怎么说」，RAG 解决「说什么」，各司其职。</p>
 </blockquote>
-<p>为什么？不同 Embedding 模型的训练数据、目标函数、输出维度、向量空间的&quot;形状&quot;都不一样：模型 A 可能让「苹果手机」和「iPhone」的向量落在空间的某个方向，模型 B 则让它们落在完全另一个方向；甚至维度都对不上（A 是 1024 维，B 是 1536 维，根本没法算距离）。用 A 建的库、拿 B 来检索，两边的向量就像在不同坐标系里，距离计算完全没有意义。</p>
-<p><img src="https://cdn.xiaolincoding.com//picgo/1776825082795-a5cb7b9e-f251-4c9c-89b1-80b6d4f2855f.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Query Embedding：必须与建库模型一致"></p>
-<p>类比一下：用经纬度定位，一个系统用的是北京坐标系、另一个用 WGS84 坐标系——数值看起来差不多，实际位置却差了十万八千里。所以<strong>一旦换 Embedding 模型，整个知识库必须重建</strong>，老向量和新查询不在同一套坐标系里，没法兼容。</p>
+<p>把两者放在同一张表里看，各自的定位就非常清楚了：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>微调（Fine-tuning）</th>
+<th>RAG</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>知识更新</td>
+<td>要重新训练，成本高、周期长</td>
+<td>更新知识库即可，实时生效</td>
+</tr>
+<tr>
+<td>推理延迟</td>
+<td>低，没有额外检索步骤</td>
+<td>较高，多一次检索耗时</td>
+</tr>
+<tr>
+<td>实现成本</td>
+<td>高，需要 GPU 和标注数据</td>
+<td>低，向量库 + Embedding 即可</td>
+</tr>
+<tr>
+<td>答案可溯源</td>
+<td>不支持，答案来自模型参数</td>
+<td>支持，可追溯到具体 chunk</td>
+</tr>
+<tr>
+<td>适合场景</td>
+<td>定制输出风格、培养深度专业能力</td>
+<td>私有知识问答、数据动态更新</td>
+</tr>
+<tr>
+<td>知识上限</td>
+<td>受限于训练数据的质量与规模</td>
+<td>受限于检索质量与 context 长度</td>
+</tr>
+</tbody>
+</table>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776781981828-cf529b55-35f5-423c-987b-a565ca7ffdbd.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="微调 + RAG 组合使用"></p>
 <hr>
-<h2 id="4-第三步：向量检索（ANN）-多路召回">4 第三步：向量检索（ANN）+ 多路召回</h2>
-<p>拿着问题向量，去向量数据库做<strong>近似最近邻搜索（ANN）</strong>，找出相似度最高的 Top-K 个片段。这一步非常快：百万量级的向量库通常<strong>几十毫秒</strong>就返回结果（索引算法的原理我们上一篇讲过）。</p>
-<p>但工程实践里，只用向量检索这一路往往不够，所以这一步通常同时做<strong>多路召回</strong>：</p>
-<ul>
-<li><strong>向量检索</strong>负责捕获语义相似性（“找意思接近的”）；</li>
-<li><strong>BM25 / 全文检索</strong>负责捕获关键词精确匹配（“找词面一样的”）。</li>
-</ul>
-<p>很多人以为向量检索已经够用了，为什么还要 BM25？因为<strong>向量检索对精确词语（产品型号、专有名词、错误拼写）的识别能力弱，而 BM25 对精确匹配更在行</strong>。比如用户问&quot;LSTM 和 Transformer 的区别&quot;：向量检索能找到&quot;序列模型对比&quot;相关的语义内容，BM25 能精准命中包含「LSTM」「Transformer」这两个词的文档。</p>
-<p><img src="https://cdn.xiaolincoding.com//picgo/1776825140114-fc52f671-4cd4-4df6-8ef0-885b2f45c996.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="向量检索 + BM25 多路召回与 RRF 融合"></p>
-<p>多路结果通过 <strong>RRF（Reciprocal Rank Fusion，互倒排名融合）</strong> 算法合并——各路结果按排名倒数加权求和，最终召回的覆盖面比单路更广、质量更高。</p>
-<hr>
-<h2 id="5-第四步：Rerank-精排">5 第四步：Rerank 精排</h2>
-<p>粗排召回的 Top-20 里不可能条条都相关，肯定混了干扰项。<strong>Rerank 就是来收拾这个残局的</strong>。</p>
-<p>向量检索是&quot;粗排&quot;，算的是向量距离，速度快但粗糙。Rerank 模型采用 <strong>Cross-Encoder 结构</strong>：把用户问题和每个候选片段<strong>拼在一起</strong>输入，深度理解它们之间的语义匹配程度，重新打分排序，最后只保留 <strong>Top-3 到 Top-5</strong> 的高质量片段，把噪音过滤掉。</p>
-<p>你可能会问：为什么不直接用 Rerank 模型检索，还要先粗排再精排？因为 Cross-Encoder 要把查询和每个候选拼起来过一遍模型，<strong>计算量比向量检索大得多</strong>——拿它对百万条数据逐一算分，延迟完全不可接受。所以工程上采用**「粗排筛到几十条，精排再从几十条里挑最好的几条」的两阶段策略**，兼顾速度和质量。Rerank 整体耗时几百毫秒以内，对用户体感影响不大，质量提升却非常明显。</p>
-<p><img src="https://cdn.xiaolincoding.com//picgo/1776825213793-994b6250-7b84-4a0f-912f-4094431ca3f7.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="两阶段策略：粗排筛量、精排提质"></p>
-<hr>
-<h2 id="6-第五步：Prompt-拼装">6 第五步：Prompt 拼装</h2>
-<p>高质量片段到手，接下来把它们和用户的<strong>原始问题</strong>（不是改写后的问题）组装成 Prompt 交给大模型。典型模板长这样：</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><code class="hljs python">prompt = <span class="hljs-string">f&quot;&quot;&quot;</span><br><span class="hljs-string">你是一个专业助手，请根据以下参考资料回答用户的问题。</span><br><span class="hljs-string">如果参考资料中没有相关信息，请回答「根据现有资料无法回答」，不要自行猜测。</span><br><span class="hljs-string">参考资料：</span><br><span class="hljs-string">[1] <span class="hljs-subst">&#123;chunk_1&#125;</span></span><br><span class="hljs-string">[2] <span class="hljs-subst">&#123;chunk_2&#125;</span></span><br><span class="hljs-string">[3] <span class="hljs-subst">&#123;chunk_3&#125;</span></span><br><span class="hljs-string">用户问题：</span><br><span class="hljs-string"><span class="hljs-subst">&#123;user_query&#125;</span></span><br><span class="hljs-string">&quot;&quot;&quot;</span><br></code></pre></td></tr></table></figure>
-<p>这个 Prompt 看起来简单，但<strong>每一条指令都有明确的工程意图</strong>：</p>
-<ul>
-<li><strong>「只根据资料回答」</strong>：抑制模型凭记忆发挥的倾向——大模型天生爱&quot;帮忙&quot;，你问什么它都想着回答，哪怕资料里没有；</li>
-<li><strong>「资料里没有就说不知道」</strong>：防止它在信息不足时强行补全、编出幻觉内容；</li>
-<li><strong>「参考资料带编号」</strong>：为后续引用溯源做准备，让用户知道每句话的依据来自哪份资料。</li>
-</ul>
-<p>很多人以为把检索结果丢给大模型就行了，其实 <strong>Prompt 拼得不好，大模型一样会乱回答</strong>。</p>
-<hr>
-<h2 id="7-第六步：大模型生成-溯源">7 第六步：大模型生成 + 溯源</h2>
-<p>大模型拿到 Prompt 后，基于参考资料生成答案。到这一步，在线流程的核心工作就完成了，工程上还会要求模型<strong>在答案里标注每句话的来源</strong>（比如&quot;根据资料[1]…&quot;）。</p>
-<p>这一步容易被人忽视，但它非常关键：<strong>大模型即使在有参考资料的情况下，依然可能过度发挥或误读资料</strong>，溯源让用户有能力判断哪些内容是可靠的、哪些需要再确认——这也是 RAG&quot;答案可溯源&quot;价值的最后一公里。</p>
-<p><img src="https://cdn.xiaolincoding.com//picgo/1776825287574-a96bcc30-c2e3-4dbe-9b05-531841902d16.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="RAG 在线流程全链路"></p>
-<p>把整个链路串起来，在线阶段的耗时分布大概是：Query 改写几十毫秒 → 向量检索几十毫秒 → Rerank 几百毫秒 → Prompt 组装可忽略不计 → <strong>大模型生成 1~10 秒</strong>（取决于输出长度，是最耗时的一环）。常见的工程优化手段：<strong>缓存高频 Query 的检索结果</strong>，以及<strong>把向量检索和 BM25 并行执行</strong>，让两路召回的延迟从&quot;串行叠加&quot;变成&quot;取最大值&quot;。</p>
-<hr>
-<h2 id="8-面试总结">8 面试总结</h2>
-<p>面试官问&quot;RAG 在线流程是怎样的&quot;，<strong>不能只说「检索 + 生成」四个字就完事</strong>——这就像别人问&quot;一顿饭怎么做&quot;，你回答&quot;买菜和做饭&quot;，中间的洗菜、切菜、调味、火候一个都没提。正确回答按顺序把六步讲清楚：</p>
+<h2 id="5-面试总结">5 面试总结</h2>
+<p>这道题最忌讳的就是**「二选一」思维**——微调和 RAG 不是竞争关系，而是两条不同层面的路径。答题按三步走：</p>
 <ol>
-<li><strong>Query 预处理</strong>（改写、HyDE、多角度扩写），把口语化问题转成适合检索的形式；</li>
-<li><strong>Query Embedding</strong>，必须用和建库时相同的模型；</li>
-<li><strong>向量检索 + 多路召回</strong>，向量和 BM25 各有所长，RRF 融合结果；</li>
-<li><strong>Rerank 精排</strong>，Cross-Encoder 深度理解语义，过滤粗排噪音；</li>
-<li><strong>Prompt 拼装</strong>，约束&quot;只根据资料回答、不知道就说不知道&quot;；</li>
-<li><strong>生成 + 溯源</strong>，标注引用来源提升可信度。</li>
+<li><strong>先说本质</strong>：微调是改模型参数，RAG 是不改参数、推理时注入知识，两者不在同一层面，不是替代关系；</li>
+<li><strong>再各说优劣</strong>：微调擅长定制输出风格、培养深度专业能力，但成本高、更新慢、不可溯源；RAG 擅长知识频繁更新、答案可溯源的场景，但多了检索延迟，且检索质量卡住效果上限；</li>
+<li><strong>最后提组合</strong>：微调解决「怎么说」，RAG 解决「说什么」，两者可以配合使用。</li>
 </ol>
-<p>每个环节的<strong>干什么、为什么需要、有什么工程细节</strong>都要能说清楚，面试官就知道你的理解不只在表面。</p>
-<p>如果被追问&quot;HyDE 为什么有效&quot;，标准回答是：<strong>问题与答案的用词空间差异大，假设答案与真实答案的用词更接近，用假设答案的向量检索命中率更高</strong>；如果被追问&quot;Rerank 为什么不能直接检索&quot;，答案是<strong>Cross-Encoder 计算量太大，必须先粗排把候选缩到几十条再做两阶段精排</strong>。</p>
+<p>如果被追问&quot;知识库问答为什么首选 RAG&quot;，标准回答是：<strong>成本低、更新即生效、答案可溯源，企业私有知识问答的三个硬需求它全占了</strong>；如果被追问&quot;RAG 有什么缺点&quot;，别忘了检索延迟、检索质量上限、复杂推理提升有限这三点。</p>
 <hr>
 <h2 id="参考">参考</h2>
 <ul>
-<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/10_online_workflow.html">10. 你使用 RAG 给大模型一个输入，系统是怎样的工作流程？ | 小林面试笔记</a></li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/3_rag_vs_finetune.html">3. 相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？ | 小林面试笔记</a></li>
 </ul>
 <blockquote>
 <p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
@@ -465,8 +487,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>「RAG」RAG 在线阶段工作流程？</div>
-      <div>https://marisamagic.github.io/2026/08/14/20260812_RAG在线工作流程/</div>
+      <div>「RAG」相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？</div>
+      <div>https://marisamagic.github.io/2026/08/12/20260813_RAG与微调/</div>
     </div>
     <div class="license-meta">
       
@@ -478,7 +500,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2026年8月14日</div>
+          <div>2026年8月12日</div>
         </div>
       
       
@@ -510,9 +532,9 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2026/08/14/20260812_RAG%E6%9F%A5%E8%AF%A2%E9%87%8D%E5%86%99/" title="「RAG」如何润色用户的 Query（Query Rewrite）？目的是什么？">
+                      <a href="/2026/08/13/20260813_RAG%E6%96%87%E6%A1%A3%E5%AD%98%E5%82%A8%E4%B8%8EChunking/" title="「RAG」RAG 中的文档是怎么存的？有哪些文档切割（Chunking）策略？">
                         <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">「RAG」如何润色用户的 Query（Query Rewrite）？目的是什么？</span>
+                        <span class="hidden-mobile">「RAG」RAG 中的文档是怎么存的？有哪些文档切割（Chunking）策略？</span>
                         <span class="visible-mobile">上一篇</span>
                       </a>
                     
@@ -520,8 +542,8 @@
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2026/08/14/20260812_RAG%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" title="「RAG」什么是向量数据库？">
-                        <span class="hidden-mobile">「RAG」什么是向量数据库？</span>
+                      <a href="/2026/08/12/20260812_RAG%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98/" title="「RAG」大模型的 RAG 主要用来解决什么问题？">
+                        <span class="hidden-mobile">「RAG」大模型的 RAG 主要用来解决什么问题？</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>
