@@ -1,0 +1,820 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="文档与向量库是一对多、变文档等于重切块（先删后增）；内容 hash + 修改时间粗筛检测变更；chunk ID 带文档 ID 前缀&#x2F;存 metadata 建立关联；轮询 vs 消息队列&#x2F;Webhook 事件驱动；全量重建只在文档少或结构大改时用；灰度更新（version 标签 + 检索过滤切换）类比蓝绿部署；核心认知&quot;生产推荐事件驱动 + hash 检测 + 先删后增&quot;。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「RAG」RAG 知识库如何实现动态与持续更新？">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/17/20260817_RAG%E7%9F%A5%E8%AF%86%E5%BA%93%E5%8A%A8%E6%80%81%E6%9B%B4%E6%96%B0/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="文档与向量库是一对多、变文档等于重切块（先删后增）；内容 hash + 修改时间粗筛检测变更；chunk ID 带文档 ID 前缀&#x2F;存 metadata 建立关联；轮询 vs 消息队列&#x2F;Webhook 事件驱动；全量重建只在文档少或结构大改时用；灰度更新（version 标签 + 检索过滤切换）类比蓝绿部署；核心认知&quot;生产推荐事件驱动 + hash 检测 + 先删后增&quot;。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg">
+<meta property="article:published_time" content="2026-08-17T04:45:11.070Z">
+<meta property="article:modified_time" content="2026-08-17T04:45:11.073Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="RAG">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg">
+  
+  
+  
+  <title>「RAG」RAG 知识库如何实现动态与持续更新？ - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「RAG」RAG 知识库如何实现动态与持续更新？"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-17 12:45" pubdate>
+          2026年8月17日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          23 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「RAG」RAG 知识库如何实现动态与持续更新？</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<blockquote>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/19_dynamic_update.html">19. RAG 知识库如何实现动态与持续更新？</a>，用于记录与总结 RAG 相关的核心面试知识点。</p>
+</blockquote>
+<p>「<strong>RAG 知识库如何实现动态与持续更新？</strong>」，可以这样作答：</p>
+<blockquote>
+<p>核心挑战在于：<strong>文档一变，对应的 chunk 和向量都要跟着变</strong>，而且必须做到增量处理，不能每次全量重建。通用方案是<strong>给每篇文档算一个内容 hash</strong>，通过轮询或监听数据源变更来检测新增、修改、删除，一旦发现变化，<strong>先删掉旧的向量，再重新切割入库</strong>（先删后增）。</p>
+<p>细节上还有几个补充：检测变更前先用<strong>最后修改时间</strong>做粗筛，再对有变化的文档算 hash，能过滤掉绝大部分不动的内容；删除时靠 <strong>chunk ID 的文档 ID 前缀</strong>或 <strong>metadata 里的文档 ID 字段</strong>准确定位该文档的所有 chunk；对实时性要求高的场景，用 <strong>Kafka 等消息队列做事件驱动</strong>，实现秒级入库；生产环境推荐组合是「<strong>事件驱动 + hash 检测 + 先删后增</strong>」，实在不放心再叠一层灰度更新，新旧版本并行、验证后切换。</p>
+</blockquote>
+<hr>
+<h2 id="1-为什么更新-RAG-知识库比更新普通数据库麻烦？">1 为什么更新 RAG 知识库比更新普通数据库麻烦？</h2>
+<p>先想想普通数据库为什么简单：每条记录是独立的，改一条 UPDATE 一条，目标明确、互不影响。</p>
+<p>RAG 知识库完全不是这个逻辑。<strong>一篇文档和向量库是&quot;一对多&quot;的关系</strong>——一篇几十上百页的文档会被切成一堆 chunk，每个 chunk 再各自 Embedding 变成向量存进向量库。麻烦就麻烦在：<strong>文档内容一变，切割结果就可能完全不同</strong>——chunk 的数量变了、边界变了、每块的内容也变了。</p>
+<p>所以工程上最可靠的更新逻辑不是&quot;局部修补&quot;，而是**「先删后增」**：先删掉这篇旧文档对应的所有 chunk，再把新文档重新切割、Embedding、写入。为什么不推荐局部更新？因为局部更新的前提是 Chunking 策略完全稳定（比如固定按 token 窗口切割），而这种假设在真实业务里往往不成立——今天改一个段落，明天换一次算法，切割边界就漂移了，<strong>旧 chunk 和新内容根本不&quot;对位&quot;</strong>。与其在这种不确定性上博弈，不如直接走「先删后增」，简单可靠：</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776850537192-af6e0006-6cc7-48b5-9cb5-c23fda5f3700.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="先删后增的更新流程：先删除旧文档的全部 chunk，再重新切割入库"></p>
+<p>抽象来看，知识库的变更只有三种操作类型：</p>
+<ul>
+<li><strong>新增</strong>：最简单，完整走「切割 → Embedding → 写入」一套流程，没有历史包袱；</li>
+<li><strong>修改</strong>：最易踩坑。切割边界一变，原来第 3 个 chunk 里的内容可能被拆到新版本的第 3、4 个 chunk 里——<strong>局部打补丁彻底行不通，必须推倒重来</strong>。这就像装修拆了一面墙，原来的插座位置全对不上了，只能重新布线；</li>
+<li><strong>删除</strong>：最直接，文档下线了，把它对应的所有 chunk 从向量库里清干净，<strong>不能留&quot;僵尸 chunk&quot;</strong>——否则检索还是会命中文档已不存在的过期内容：</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com//picgo/ce5317b029029d03ee11ad9d7d94fb95.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="知识库变更的三种操作：新增、修改、删除，修改需要先删后增，删除要清掉全部 chunk"></p>
+<hr>
+<h2 id="2-如何知道文档是否发生了变化？">2 如何知道文档是否发生了变化？</h2>
+<p>先删后增解决了&quot;怎么更&quot;，下一个问题就是&quot;<strong>怎么知道该更了</strong>&quot;。系统怎么感知到一篇文档&quot;变没变&quot;？</p>
+<p>最常用的方案是<strong>内容 hash</strong>：入库时给每篇文档算一个摘要（<strong>MD5 或 SHA256</strong>），和文档 ID、它对应的 chunk ID 列表一起存起来（放 Redis 或数据库都行）。下次同步时重新算一遍，对比一下：<strong>hash 相同说明没变，跳过；hash 不同说明内容动了，触发重新处理</strong>。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776850585738-1505b92d-2257-4d28-b049-3572308ea4f1.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="内容 hash 检测文档变化：入库时记录摘要，重算对比，相同跳过、不同触发重切入库"></p>
+<p>这个方案有三个明显优点：hash 算得<strong>极快</strong>；哪怕只改了一个标点符号 hash 也会变，<strong>不漏任何变更</strong>；检测成本低到可以反复跑。</p>
+<p>还有个工程优化值得提：直接全量算 hash 对百万篇文档来说仍是开销，所以可以<strong>先用&quot;最后修改时间&quot;做轻量粗筛</strong>——只对时间戳变化过的文档算 hash。比如每晚同步一次，百万篇里真正改了的可能就几千篇，这一层粗筛就能<strong>过滤掉 99% 的文档</strong>，开销再降一个量级。</p>
+<hr>
+<h2 id="3-文档-ID-和-chunk-ID-的设计">3 文档 ID 和 chunk ID 的设计</h2>
+<p>「先删后增」里有个隐藏前提：<strong>说删就能删得干净</strong>。删除一篇文档的所有 chunk 前，你得先能&quot;按文档找到它的所有 chunk&quot;。这要求从一开始就把文档和 chunk 的关联关系设计好，两种常见做法：</p>
+<p><strong>做法一：chunk ID 带文档 ID 前缀。</strong> 比如文档 ID 是 <code>product_manual_v3</code>，它的 chunk 就叫 <code>product_manual_v3_chunk_001</code>、<code>product_manual_v3_chunk_002</code>……删除时按前缀批量查找、批量删除，一条命令搞定。</p>
+<p><strong>做法二：chunk 的 metadata 里存文档 ID 字段。</strong> 每个 chunk 写入时打上 <code>source_doc_id: &quot;product_manual_v3&quot;</code> 这样的标签，向量库大多支持按 metadata 字段过滤，删除时筛出所有 <code>source_doc_id = 文档ID</code> 的 chunk 批量清除。</p>
+<p>两条路都行，共同点是<strong>关联关系要在入库设计时就定好</strong>——别等真要删了，才发现翻遍库都找不齐这篇文档的 chunk。</p>
+<hr>
+<h2 id="4-两种主流的变更感知方式">4 两种主流的变更感知方式</h2>
+<p>系统通过什么方式&quot;定期&quot;知道文档变了？有两种主流方案，各有适用场景：</p>
+<p><strong>第一种：定时轮询（Polling）。</strong> 按固定间隔（比如每天凌晨两点、或者每小时）扫描一遍，对粗筛后的文档重算 hash 对比。优点：实现最简单，不依赖任何外部系统，一个定时任务就搞定。缺点也明显：<strong>有延迟</strong>——文档改了，要等到下一个轮询周期才生效；文档量大的时候，全量扫描本身也是一笔开销。</p>
+<p><strong>第二种：事件驱动（Event-Driven）。</strong> 数据源一有变更就发消息（Kafka、RabbitMQ 或者直接 Webhook），收到消息立刻处理，<strong>秒级生效</strong>。适合对实时性要求高的场景：客服知识库里的退款政策改了要马上生效，新闻资讯类内容要第一时间入库。代价是要数据源支持发消息，架构也更复杂一些。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776850625161-7f6c92be-b7d4-4ccc-a60a-4100ef447d0d.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="两种变更感知方式对比：定时轮询有延迟，事件驱动（消息队列/Webhook）秒级生效"></p>
+<p>有个细节值得点一下：不一定非要上大而全的消息队列。<strong>Confluence、Notion、语雀这些协作平台本身就支持 Webhook</strong>——文档一保存就主动推一个 HTTP 请求给你，订阅一下就能实现秒级更新，架构轻量很多。</p>
+<p>选择思路一句话：<strong>更新频率低、实时性要求不高就用轮询；更新频繁、要求秒级生效就用事件驱动。</strong></p>
+<hr>
+<h2 id="5-全量重建是最后的手段">5 全量重建是最后的手段</h2>
+<p>事件驱动、增量更新都是&quot;精细活&quot;，还有一种省事到底的方案——<strong>全量重建</strong>：不搞增量逻辑，直接把整个知识库重新处理一遍。</p>
+<p>它的优点恰好是增量方案的痛点：<strong>逻辑最简单</strong>——不用维护文档和 chunk 的对应关系，不用做 hash 检测，也不用担心旧 chunk 漏删，反正全推倒重来。</p>
+<p>但缺点同样绕不开：文档量大时，<strong>耗时间、耗 Embedding 的 API 费用</strong>；重建期间知识库要么不可用，要么一直在用旧数据。</p>
+<p>所以全量重建只适合两种场合：</p>
+<ol>
+<li><strong>规模真的小</strong>——几十篇文档，几分钟重跑完事，增量逻辑的复杂度反而不划算；</li>
+<li><strong>知识库结构大改</strong>——换了 Embedding 模型、改了 Chunking 策略，新旧向量根本不兼容，增量更新无从谈起，只能推倒重来。</li>
+</ol>
+<p>一句话：<strong>全量重建不是不能用，是只能用在&quot;小&quot;或&quot;改&quot;的场景，常态更新别指望它。</strong></p>
+<hr>
+<h2 id="6-灰度更新：稳妥地切换新版本">6 灰度更新：稳妥地切换新版本</h2>
+<p>生产环境的核心知识库，直接&quot;删旧写新&quot;风险不小——万一新版本有问题，想回滚却发现旧 chunk 已经删光了。稳妥的做法是把<strong>灰度更新</strong>加进来：</p>
+<ol>
+<li><strong>并行写入</strong>：新版本 chunk 带上 <code>version=new</code> 标签入库，旧的 <code>version=old</code> 保留不动；</li>
+<li><strong>验证比较</strong>：拿一批真实问题跑新旧两版，对比答案质量；</li>
+<li><strong>切换</strong>：验证通过后，把检索时的版本过滤条件从 <code>old</code> 切到 <code>new</code>——这一刻起线上命中的全是新版本；</li>
+<li><strong>清理</strong>：最终清掉旧版 chunk，完成更新。</li>
+</ol>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776850658577-890c41d5-cda3-4c36-acef-850b62366f7a.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="灰度更新：新旧版本并行、验证后切换检索过滤条件，类似蓝绿部署"></p>
+<p>这个方案很像软件发布里的<strong>蓝绿部署</strong>：新旧两套并存，切换即时生效，<strong>出了任何问题都能秒级切回去</strong>，而且切换不涉及重新入库。对知识库质量要求很高的场景（金融、医疗领域的问答系统），这种谨慎的更新策略非常有必要。</p>
+<p>把几种更新方案的特点放在一起对比，实际选型时对照着看：</p>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>延迟</th>
+<th>实现复杂度</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>定时轮询</td>
+<td>分钟~小时级</td>
+<td>低</td>
+<td>文档更新频率低、实时性要求不高</td>
+</tr>
+<tr>
+<td>Webhook 触发</td>
+<td>秒级</td>
+<td>中</td>
+<td>数据源支持 Webhook（Confluence、Notion、语雀）</td>
+</tr>
+<tr>
+<td>消息队列</td>
+<td>秒级</td>
+<td>中高</td>
+<td>大规模、高并发更新，生产环境首选</td>
+</tr>
+<tr>
+<td>全量重建</td>
+<td>分钟~小时级</td>
+<td>低</td>
+<td>文档量小，或知识库结构大改，不推荐常规使用</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="7-面试总结">7 面试总结</h2>
+<p>这道题考察的是<strong>工程思维的完整性</strong>，答题的核心是把&quot;更新&quot;这件事拆成一个闭环：<strong>先删后增的正确姿势（一对多、切割边界会变）→ 怎么感知变化（内容 hash + 修改时间粗筛）→ 怎么删得干净（chunk 与文档的关联设计）→ 按实时性选感知方式（轮询 / 事件驱动）→ 稳妥切换（灰度、蓝绿部署）</strong>。</p>
+<p>几个容易被追问的细节提前准备：</p>
+<ul>
+<li><strong>为什么不能只更新&quot;变了的那个 chunk&quot;？</strong> 因为切割边界会变化，新版本里&quot;对应&quot;的 chunk 根本不存在，内容和旧 chunk 对不上位，局部补丁没有意义；</li>
+<li><strong>hash 存在哪？</strong> Redis 或数据库，和文档 ID、chunk ID 列表一起存；</li>
+<li><strong>轮询间隔怎么定？</strong> 从业务能容忍的更新延迟倒推，等不起就换事件驱动。</li>
+</ul>
+<p>最后记住两句话：<strong>更新知识库，先想清楚怎么删</strong>（先删后增、关联设计是地基）；生产落地推荐「<strong>事件驱动 + hash 检测 + 先删后增</strong>」的组合，要求再高就叠加灰度更新，宁可多花一次入库的功夫，也不要删了才发现回不去。</p>
+<hr>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/19_dynamic_update.html">19. RAG 知识库如何实现动态与持续更新？ | 小林面试笔记</a></li>
+</ul>
+<blockquote>
+<p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/RAG/" class="category-chain-item">RAG</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/tags/RAG/" class="print-no-link">#RAG</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「RAG」RAG 知识库如何实现动态与持续更新？</div>
+      <div>https://marisamagic.github.io/2026/08/17/20260817_RAG知识库动态更新/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月17日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/17/20260817_RAG%E8%AF%84%E4%BC%B0/" title="「RAG」怎么量化你的 RAG 效果？">
+                        <span class="hidden-mobile">「RAG」怎么量化你的 RAG 效果？</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
