@@ -4,6 +4,72 @@
   
   
   <entry>
+    <title>「Agent Tool」LLM 如何学会调用外部工具？</title>
+    <link href="/2026/08/17/20260817_LLM%E5%AD%A6%E4%BC%9A%E8%B0%83%E7%94%A8%E5%A4%96%E9%83%A8%E5%B7%A5%E5%85%B7/"/>
+    <url>/2026/08/17/20260817_LLM%E5%AD%A6%E4%BC%9A%E8%B0%83%E7%94%A8%E5%A4%96%E9%83%A8%E5%B7%A5%E5%85%B7/</url>
+    
+    <content type="html"><![CDATA[<h2 id="0-前言">0 前言</h2><blockquote><p>本文内容整理自公众号「小林面试笔记」的文章 <a href="https://xiaolinnote.com/ai/tools/2_llm_tool_learning.html">2. LLM 是如何学会调用外部工具的？</a>，用于记录与总结 AI Agent 工具调用相关的核心面试知识点。</p></blockquote><p>「<strong>LLM 是如何学会调用外部工具的？</strong>」，可以这样作答：</p><blockquote><p>模型会调用工具不是天生的，而是<strong>训练出来的</strong>。这道题分两块答：先讲训练阶段模型怎么学会，再讲训练好之后运行时是怎么工作的。</p><p>训练靠两个阶段配合：<strong>SFT（监督微调）</strong> 负责「怎么调」——喂海量带完整工具调用流程的示范对话（工具说明书 → 提问 → 输出 <code>tool_calls</code> → 模拟返回结果 → 最终回答），让模型靠模仿学会整套流程；<strong>RLHF（基于人类反馈的强化学习）</strong> 负责「什么时候调」——收集人类对回答质量的好坏判断，训练一个奖励模型当裁判，再用强化学习反复调整主模型，让它学会「能直接回答就不调工具」的边界感。</p><p>运行时就是我们上一篇讲的 <strong>Function Calling</strong> 机制：应用代码把工具 schema 传给模型，模型判断需要工具时输出结构化的 <code>tool_calls</code> JSON，代码真正执行后把结果回填，模型再生成最终答案。核心认知始终只有一句话——模型全程只是「下指令」，真正执行工具的是宿主代码，<strong>模型决策、代码执行</strong>。</p></blockquote><p>ChatGPT 网页版的联网搜索、Cursor 的 Agent 帮你跑命令、Claude Code 的各类工具调用，能稳定工作而不是「乱调一气」，靠的就是模型在出厂前被这样训过：先学会怎么调（SFT），再学会什么时候不该调（RLHF）。你眼里每一个靠谱的工具调用，背后都站着一个被「教过技能、练过分寸」的模型。</p><hr><h2 id="1-原始-LLM-的世界：为什么不会调工具">1 原始 LLM 的世界：为什么不会调工具</h2><p>先看模型出厂、还没被「特训」时的状态。预训练完成的基础模型只活在文字世界里：它的全部训练目标就是预测下一个 token，它的全部本事是「文字接龙」。你问它「北京今天天气怎么样」，它能接出像模像样的文字，但它不知道世界上存在一个能真的查到天气的函数——它从没见过工具，更不知道怎么调用。</p><p><img src="https://cdn.xiaolincoding.com//picgo/image-20260306140403734.png" alt="预训练模型只会续写文字、从没见过工具调用"></p><p>这里藏着一个经典误区：有人觉得模型参数量够大、涌现能力够强，工具调用自然就会了。<strong>语言涌现和工具调用是两回事</strong>——预训练学的是「文字之间的关系」，工具调用要求模型输出特定格式的结构化 JSON，这属于「行为」而不是「语言」，预训练数据里根本没有这种示范，模型再大也学不出来。金句版：<strong>会写诗不等于会上网查天气，会接话不等于会干活</strong>。</p><p>所以模型要出厂干活，还得补课——补两门课，一门教技能，一门教分寸。</p><hr><h2 id="2-一前一后，两个训练阶段">2 一前一后，两个训练阶段</h2><p>补课方案是业界标准的两阶段训练：</p><ul><li><strong>第一阶段：SFT</strong>，解决「<strong>怎么调</strong>」——让模型见过、模仿一整套工具调用流程，学会输出规范的调用请求；</li><li><strong>第二阶段：RLHF</strong>，解决「<strong>什么时候调</strong>」——让模型建立分寸感，分清哪些问题该调工具、哪些问题直接回答。</li></ul><p><img src="https://cdn.xiaolincoding.com//picgo/1776864293645-da1f7644-7230-4f14-8dfd-4923ed531d42.png" alt="两阶段训练总览：SFT 教怎么调、RLHF 教什么时候调"></p><p>顺序不能反：得先会调，才谈得上什么时候该调。就像教新员工，先让他学会走流程，再教他什么流程不用走。</p><hr><h2 id="3-第一阶段：SFT——让模型「见过」工具调用">3 第一阶段：SFT——让模型「见过」工具调用</h2><p>SFT 的思路非常朴素：给模型看海量「标准答案」——人工构造或收集的、带完整工具调用流程的对话样本，让模型照着模仿。一条样本长这样，一共五段消息：</p><ul><li><strong>System</strong>：工具说明书（JSON schema），告诉模型有哪些工具、怎么用；</li><li><strong>User</strong>：用户提问，比如「北京今天天气怎么样？」；</li><li><strong>Assistant</strong>：不直接回答，而是输出结构化调用请求：<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-punctuation">&#123;</span><br>    <span class="hljs-attr">&quot;tool_calls&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-punctuation">&#123;</span><br>        <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;get_weather&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;arguments&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><span class="hljs-attr">&quot;city&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;北京&quot;</span><span class="hljs-punctuation">&#125;</span><br>    <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">]</span><br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure></li><li><strong>Tool</strong>：模拟工具返回的结果（真实的天气数据）；</li><li><strong>Assistant</strong>：基于工具结果，给出最终回答「北京今天天气晴朗，气温 15°C……」。</li></ul><p><img src="https://cdn.xiaolincoding.com//picgo/1776864555021-ea4eef67-832c-43d2-955c-f11f72d083c4.png" alt="SFT 训练样本结构：说明书、提问、调用请求、回填、最终回答"></p><p>几十万上百万条这样的样本，反复训练下来，模型就学会了整套流程：<strong>看到工具描述 → 判断要不要调 → 输出规范的 JSON 请求 → 接住工具结果组织回答</strong>。这就像新员工进公司，师傅丢给他一摞历史工单，看多了，接单、处理、汇报的规矩自然就明白了——SFT 就是让模型看工单。</p><hr><h2 id="4-SFT-的短板：会了，但不知道「该不该调」">4 SFT 的短板：会了，但不知道「该不该调」</h2><p>只看了工单的模型有个明显毛病：<strong>没有分寸感</strong>。它把「调用工具」当成了万能解题套路——你问它「1+1 等于几」，它也要先调一次 <code>get_weather</code> 再回答。因为在它见过的样本里，处处都是工具调用，它学会了「调」，却没学会「什么时候不该调」。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776864574204-50622124-0e9f-4879-966d-76f105346a2f.png" alt="SFT 的短板：连 1+1 都要先调工具、行为边界感很弱"></p><p>一句话概括：<strong>SFT 练出来的是肌肉记忆，而肌肉记忆没有分寸感</strong>。这个问题，就要交给第二阶段的 RLHF 解决。</p><hr><h2 id="5-第二阶段：RLHF——用反馈建立边界感">5 第二阶段：RLHF——用反馈建立边界感</h2><p>RLHF 的思路是引入「好坏标准」，让模型从反馈里学会判断。流程分四步：</p><ol><li><strong>生成多样回答</strong>：同一个问题，让模型生成多种回答——有先调工具的，有直接回答的；</li><li><strong>人类打分</strong>：让人类判断哪些回答更符合预期——问「1+1」直接回答的受好评，先调工具再算的受差评；</li><li><strong>训练奖励模型</strong>：把人类的打分喂给一个专门的模型进行训练，让它学会预测「哪种回答更受欢迎」——奖励模型就是那个「会打分的裁判」；</li><li><strong>强化学习调整主模型</strong>：用奖励模型给出的分数当反馈，通过强化学习反复调整主模型，让高分回答越来越多、低分回答越来越少。</li></ol><p><img src="https://cdn.xiaolincoding.com//picgo/image-20260309184728652.png" alt="RLHF 四步流程：生成多样回答、人类打分、训练奖励模型、强化学习调整"></p><p>这四步可以用公司场景类比：员工（主模型）干活 → 老板（人类）评价干得好不好 → 人事部门（奖励模型）把评价固化成一套打分标准 → 员工按标准调整自己的工作方式。标准越来越清晰，员工的判断也越来越有边界感。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776864764242-0e83c4fc-dc57-41c9-9ae2-63ae7e3389a8.png" alt="奖励模型打分闭环：奖励模型打分、强化学习不断调整主模型"></p><p>经过这个过程，模型逐渐学会了更微妙的判断：需要实时信息（天气、股价、订单状态）才调工具，能靠自身知识直接回答的就不调。这就是「<strong>该不该调</strong>」的边界感。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776864737286-b5b02d43-5ac7-4168-ba1b-6c22e42021a2.png" alt="RLHF 训练整体闭环示意"></p><p>顺带一提：RLHF 需要大量人类打分，成本不低，于是出现了 <strong>RLAIF（基于 AI 反馈的强化学习）</strong>——让更强的 AI 模型来当代打分员，替代人类评分。成本低、可规模化，是面试里的加分项。</p><hr><h2 id="6-运行时：训练好之后怎么用">6 运行时：训练好之后怎么用</h2><p>训练只是出厂前的准备，真正干活靠的是运行时机制——也就是上一篇详讲的 <strong>Function Calling</strong>。每次应用调用模型时，流程是这样的：</p><ol><li>应用代码把工具 schema（工具说明书）+ 用户问题一起传给模型；</li><li>模型判断需要工具时，不直接回答，而是输出一段结构化的 JSON；</li><li>你的代码解析这段 JSON，真正执行工具，把结果塞回对话；</li><li>模型拿到结果，生成最终答案。</li></ol><p><img src="https://cdn.xiaolincoding.com//picgo/image-20260309185443446.png" alt="运行时调用流程：应用传入工具 schema 与问题、模型输出 tool_calls JSON"></p><p>运行时的核心是：<strong>模型在训练里学会的「调用能力」，落地的介质就是这一段结构化 JSON</strong>。训练决定模型会不会调、调得对不对，运行时决定代码能不能稳定地接住这个意图。</p><hr><h2 id="7-一个关键认知：模型只负责「决策」，不负责「执行」">7 一个关键认知：模型只负责「决策」，不负责「执行」</h2><p>把训练和运行串起来，最后剩下一个贯穿始终的认知：模型从头到尾只是在**「下指令」**。训练阶段，它学会的是输出规范调用请求的动作；运行阶段，它输出的还是调用请求——真正连数据库、调 API、访问网络的，始终是你的宿主代码。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776864879138-3834d7ae-e5e6-4277-86b9-22ef21d79ff4.png" alt="模型只负责决策输出 JSON、代码负责真正执行"></p><p>这个「<strong>模型决策、代码执行</strong>」的分工，是整套工具调用体系的地基：上一篇文章里的 Function Calling 机制、这篇文章的两阶段训练流程，最终都是在为这个简单的分工服务。</p><hr><h2 id="8-面试总结">8 面试总结</h2><p>回答这道题，先避开两个经典误区：</p><table><thead><tr><th>误区</th><th>正解</th></tr></thead><tbody><tr><td>参数量够大、涌现能力够强就会调工具</td><td>语言涌现是「文字接龙」，工具调用要输出结构化 JSON，是行为不是语言，必须专项训练</td></tr><tr><td>有 SFT 就够了</td><td>SFT 解决「会不会调」，RLHF 解决「该不该调」，两个阶段缺一不可</td></tr></tbody></table><p>再按这张框架组织答案：</p><table><thead><tr><th>层次</th><th>要点</th></tr></thead><tbody><tr><td><strong>SFT</strong></td><td>大量带完整调用流程的示范对话，让模型学会「怎么调」；短板是行为边界感弱，简单问题也先调工具</td></tr><tr><td><strong>RLHF</strong></td><td>生成多样回答 → 人类打分 → 训练奖励模型 → 强化学习调整主模型，学会「什么时候调」，能直接回答就不调</td></tr><tr><td><strong>运行时</strong></td><td>Function Calling：schema 传入 → 模型输出 tool_calls JSON → 代码执行回填 → 再回答</td></tr><tr><td><strong>加分项</strong></td><td>RLAIF：让 AI 打分替代人类评分，低成本可规模化</td></tr></tbody></table><p><strong>追问预案</strong>：</p><ul><li>「为什么预训练学不会工具调用？」——预训练的目标只是预测下一个 token，输出特定格式的调用动作属于行为塑造，预训练数据里没有结构化的调用示范，必须靠带标注的专项数据训练。</li><li>「SFT 的训练样本从哪来？」——通常是人工构造的对话模板 + 模型模拟工具结果自动生成，再人工抽查修正；规模化主要靠合成数据流水线。</li><li>「奖励模型是怎么训出来的？」——收集人类对同一问题多个回答的打分或排序，训练一个模型去预测分数，学的就是「人类偏好」本身。</li><li>「RLAIF 和 RLHF 有什么区别？」——打分者从人类换成更强的 AI 模型，省人力、可规模化；代价是 AI 裁判本身可能带偏见，质量上限取决于裁判模型。</li></ul><hr><h2 id="参考">参考</h2><ul><li><a href="https://xiaolinnote.com/ai/tools/2_llm_tool_learning.html">2. LLM 是如何学会调用外部工具的？ | 小林面试笔记</a></li><li><a href="https://xiaolinnote.com/ai/tools/1_function_calling.html">1. 什么是 Function Calling ？原理是什么？ | 小林面试笔记</a>（相关：运行时机制）</li></ul><blockquote><p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p></blockquote>]]></content>
+    
+    
+    <categories>
+      
+      <category>追逐繁星</category>
+      
+      <category>Agent Tool</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>AI</tag>
+      
+      <tag>Agent</tag>
+      
+      <tag>大模型</tag>
+      
+      <tag>LLM</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
+    <title>「Agent Tool」什么是 Function Calling？原理是什么？</title>
+    <link href="/2026/08/17/20260817_FunctionCalling%E6%9C%BA%E5%88%B6/"/>
+    <url>/2026/08/17/20260817_FunctionCalling%E6%9C%BA%E5%88%B6/</url>
+    
+    <content type="html"><![CDATA[<h2 id="0-前言">0 前言</h2><blockquote><p>本文内容整理自公众号「小林面试笔记」的文章 <a href="https://xiaolinnote.com/ai/tools/1_function_calling.html">1. 什么是 Function Calling？原理是什么？</a>，用于记录与总结 AI Agent 工具调用相关的核心面试知识点。</p></blockquote><p>「<strong>什么是 Function Calling？原理是什么？</strong>」，可以这样作答：</p><blockquote><p>Function Calling 是一套让大模型与外部工具协作的标准机制：开发者先用 <strong>JSON schema</strong> 把每个工具的功能、参数要求描述清楚，随对话一起传给模型；模型判断需要调用工具时，不输出自然语言，而是直接输出一段结构化的 <strong>tool_calls JSON</strong>——声明「我要调哪个函数、参数填什么」；真正执行这段 JSON 的是开发者写的宿主代码，它拿到函数名和参数去调 API、查数据库，再把结果以 <code>role: &quot;tool&quot;</code> 的消息回填到对话；模型看到结果后，生成最终答案。</p><p>整个流程的本质是「<strong>两轮对话 + 中间执行</strong>」：第一轮，模型说「我需要工具帮忙」；中间，代码替它执行；第二轮，模型拿到执行结果给出答案。模型通过 <code>finish_reason</code> 为 <code>tool_calls</code> 明确表达「需要工具帮助」，这是宿主代码决定是否执行的开关。</p><p>这套机制最核心的设计原则只有一句话：<strong>模型全程只做决策，执行一律由宿主代码完成</strong>。模型负责判断「该不该调、调哪个、参数填什么」，代码负责真正跑起来——职责分得清清楚楚。</p></blockquote><p>现在几乎所有主流大模型产品都是这套机制的落地应用：ChatGPT 网页版的「联网搜索」「画图」按钮，Cursor 的 Agent 帮你读文件、跑测试，Claude Code 的命令行工具调用……用户看到的是「模型在干活」，本质上都是「模型输出结构化的调用意图 → 宿主程序执行 → 结果回填」的闭环。</p><hr><h2 id="1-背景：Function-Calling-解决了什么问题">1 背景：Function Calling 解决了什么问题</h2><p>先回答一个问题：为什么需要 Function Calling？直接让模型说一句「帮我查一下北京的天气」、代码自己解析意图，不行吗？</p><p>早期的方法正是这个思路：模型用自然语言表达意图，开发者写一堆 if/else 去解析。问题在于自然语言<strong>没有固定格式</strong>——「帮我查一下北京的天气」「北京现在多少度」「查查北京天气」说的是同一件事，写法却千变万化，if/else 稍微没覆盖到就失配；就算匹配上了，参数也很难可靠地抽取出来。这种方案又脆弱又难维护，换个说法就挂，根本无法标准化。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1772110696965-86ba8349-1109-4dca-a481-35ba1b5b8367.png" alt="Function Calling 前后对比：自然语言解析 vs 结构化 JSON 输出"></p><p>Function Calling 的关键改进只有一点：<strong>让模型直接输出结构化的 JSON，而不是自然语言</strong>。模型判断需要工具时，输出「函数名 + 参数」这种一眼就能解析的结构，代码按固定格式提取即可——准确率更高、格式统一，工具调用第一次有了标准答案。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776863691463-8f5c0591-aaf4-4d98-aa57-e2a12fe95fc9.png" alt="Function Calling 基本工作流程：模型输出调用指令、宿主代码执行"></p><p>这个机制由 OpenAI 于 2023 年推出，如今 Claude、Gemini、Qwen 等主流模型均已原生支持，成了大模型产品的事实标准。</p><hr><h2 id="2-三个角色：把-Function-Calling-理解成一场任务委托">2 三个角色：把 Function Calling 理解成一场任务委托</h2><p>Function Calling 看起来复杂，把它理解成公司里的一场「任务委托」就清晰了——整个过程有三个角色：</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776863825095-2d5698cc-940c-4f77-b2ea-70dd270b8707.png" alt="任务委托模型：开发者是 HR、模型是经理、代码是员工"></p><ul><li><strong>开发者 = HR（招聘专员）</strong>：为每个工具写一份「职位说明书」——JSON schema，说清楚工具是干什么的、需要什么参数。模型怎么认识工具？全靠这份说明书，它从不「见过」你的代码；</li><li><strong>模型 = 经理（决策者）</strong>：读完全部职位说明书，结合用户问题判断「该派谁去干」，决定调哪个工具、参数填什么，然后下达指令；</li><li><strong>代码 = 员工（执行者）</strong>：真正动手干活的人——调用函数、访问网络、查询数据库，然后把结果汇报回来。</li></ul><p>这里藏着最常见的误区：很多人以为模型能「自己」访问网络、执行代码。<strong>模型面前没有浏览器，也没有代码执行器</strong>——它无权直接访问任何外部资源，所有实际动作都是宿主代码替它完成的。这也是整个机制最重要的一句话：</p><p><strong>模型只做决策，执行交给代码。</strong></p><hr><h2 id="3-工具定义：JSON-schema-的每个字段都有含义">3 工具定义：JSON schema 的每个字段都有含义</h2><p>工具在模型眼里长什么样？看一个标准的工具定义（以天气查询为例）：</p><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-punctuation">&#123;</span><br>  <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;function&quot;</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;function&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>    <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;get_weather&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-attr">&quot;description&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;查询指定城市的实时天气，包含气温、天气状况、风向风速，仅支持中国大陆城市&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-attr">&quot;parameters&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>      <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;object&quot;</span><span class="hljs-punctuation">,</span><br>      <span class="hljs-attr">&quot;properties&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>        <span class="hljs-attr">&quot;city&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>          <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;string&quot;</span><span class="hljs-punctuation">,</span><br>          <span class="hljs-attr">&quot;description&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;城市名，例如：北京&quot;</span><span class="hljs-punctuation">,</span><br>          <span class="hljs-attr">&quot;enum&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;北京&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-string">&quot;上海&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-string">&quot;广州&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-string">&quot;深圳&quot;</span><span class="hljs-punctuation">]</span><br>        <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;unit&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>          <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;string&quot;</span><span class="hljs-punctuation">,</span><br>          <span class="hljs-attr">&quot;description&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;温度单位&quot;</span><span class="hljs-punctuation">,</span><br>          <span class="hljs-attr">&quot;enum&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;celsius&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-string">&quot;fahrenheit&quot;</span><span class="hljs-punctuation">]</span><br>        <span class="hljs-punctuation">&#125;</span><br>      <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>      <span class="hljs-attr">&quot;required&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;city&quot;</span><span class="hljs-punctuation">]</span><br>    <span class="hljs-punctuation">&#125;</span><br>  <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure><p>每个字段都有讲究：</p><ul><li><strong><code>name</code>（工具的名字）</strong>：唯一标识，模型在 <code>tool_calls</code> 里就是靠它点名要哪个工具；</li><li><strong><code>description</code>（工具的说明）</strong>：模型判断「该不该用、怎么用」的核心依据，也是这道题的常考点，下文展开；</li><li><strong><code>parameters</code>（参数结构）</strong>：用 <code>type</code> / <code>properties</code> 描述每个参数，<code>required</code> 声明必填项，<code>enum</code> 限定可选值；参数自己的 <code>description</code> 也要写清格式、示例值和限制条件。</li></ul><p><strong>模型判断的依据，全靠 description。</strong> 如果描述写得含糊，比如只写「获取天气」，模型就可能在不合适的场景硬调用——用户问「广州适合穿什么衣服」，它可能直接拿 <code>get_weather</code> 的天气数据当答案；写清楚一点，声明「查询指定城市的实时天气，包含气温、天气状况、风向风速，仅支持中国大陆城市」，模型才知道工具的边界在哪里、什么情况该用、什么情况不该用。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776864343500-856d21bc-0902-4c7e-b247-e2ff72f84527.png" alt="工具定义 JSON schema 与 description 字段说明示意"></p><p>一句话记住：<strong>工具描述写得越清楚，模型越不会「瞎猜」</strong>。description 是写给模型看的「说明书」，不是写给同事看的注释，值得花心思打磨。</p><hr><h2 id="4-完整调用流程：两轮对话-中间执行">4 完整调用流程：两轮对话 + 中间执行</h2><p>把前面的角色和定义串起来，一次完整的工具调用就是「<strong>两轮对话 + 中间执行</strong>」的闭环：</p><p><img src="https://cdn.xiaolincoding.com//picgo/image-20260306140017160.png" alt="两轮对话 + 中间执行的闭环流程图"></p><p><strong>第一轮：模型「申请调工具」。</strong> 宿主代码把工具列表（tools）和用户问题一起发给模型。模型判断需要工具时，不回答你的问题，而是输出一个特殊响应：<code>finish_reason: &quot;tool_calls&quot;</code>，并在 <code>tool_calls</code> 里给出要调的函数名和参数。<code>finish_reason</code> 就是模型递给代码的信号——「我要工具帮忙，请执行」。注意，这一轮模型是说了话但没给答案，答案要等执行完才有。</p><p><strong>中间执行：代码干活。</strong> 宿主代码解析 <code>tool_calls</code>，拿到函数名和参数，执行对应的函数。这一步模型完全不参与，纯粹是你的程序在跑——这就是「模型决策、代码执行」的落地点。</p><p><strong>第二轮：结果回填，模型给答案。</strong> 代码把执行结果以 <code>role: &quot;tool&quot;</code> 的消息塞回对话历史，并带上 <code>tool_call_id</code> 与第一轮的调用一一对应；然后再次调用模型，模型结合工具结果，最终给出自然语言答案。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776863915097-1b4550ed-01f5-4788-ad20-29b3506c06ff.png" alt="两轮对话时序图：第一轮 tool_calls 请求、代码执行、第二轮结果回填"></p><p>配套的 Python 示例（OpenAI SDK 的经典写法）：</p><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> json<br><span class="hljs-keyword">from</span> openai <span class="hljs-keyword">import</span> OpenAI<br><br>client = OpenAI()<br><br>messages = [<br>    &#123;<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;system&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;你是一个天气助手，需要实时天气时使用工具获取。&quot;</span>&#125;,<br>    &#123;<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;北京今天天气怎么样？&quot;</span>&#125;,<br>]<br><br><span class="hljs-comment"># 第一轮：把用户问题和工具列表一起发给模型</span><br>response = client.chat.completions.create(<br>    model=<span class="hljs-string">&quot;gpt-4o&quot;</span>,<br>    messages=messages,<br>    tools=tools,          <span class="hljs-comment"># 上文的 JSON schema 列表</span><br>    tool_choice=<span class="hljs-string">&quot;auto&quot;</span>,   <span class="hljs-comment"># 是否调工具由模型自己决定</span><br>)<br>message = response.choices[<span class="hljs-number">0</span>].message<br><br><span class="hljs-comment"># finish_reason 是明确信号：模型需要调用工具</span><br><span class="hljs-keyword">if</span> response.choices[<span class="hljs-number">0</span>].finish_reason != <span class="hljs-string">&quot;tool_calls&quot;</span>:<br>    <span class="hljs-built_in">print</span>(message.content)                      <span class="hljs-comment"># 没调工具，直接回答</span><br><span class="hljs-keyword">else</span>:<br>    tool_call = message.tool_calls[<span class="hljs-number">0</span>]<br>    fn_name = tool_call.function.name<br>    args = json.loads(tool_call.function.arguments)   <span class="hljs-comment"># 解析参数 JSON</span><br><br>    <span class="hljs-comment"># 中间执行：由宿主代码真正调用函数</span><br>    result = get_weather(city=args[<span class="hljs-string">&quot;city&quot;</span>])<br><br>    <span class="hljs-comment"># 第二轮：执行结果以 role=&quot;tool&quot; 回填，tool_call_id 与调用一一对应</span><br>    messages.append(message)<br>    messages.append(&#123;<br>        <span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;tool&quot;</span>,<br>        <span class="hljs-string">&quot;tool_call_id&quot;</span>: tool_call.<span class="hljs-built_in">id</span>,<br>        <span class="hljs-string">&quot;content&quot;</span>: json.dumps(result, ensure_ascii=<span class="hljs-literal">False</span>),<br>    &#125;)<br>    answer = client.chat.completions.create(model=<span class="hljs-string">&quot;gpt-4o&quot;</span>, messages=messages)<br>    <span class="hljs-built_in">print</span>(answer.choices[<span class="hljs-number">0</span>].message.content)<br>    <span class="hljs-comment"># 输出：北京今天天气晴朗，气温 15°C，东北风 3 级，适合外出。</span><br></code></pre></td></tr></table></figure><p>如果某个环节出错——比如工具执行时报错，把错误信息同样以 <code>role: &quot;tool&quot;</code> 回填，模型就能「看到」错误、调整参数重试，或在回答里如实说明。这是工程上最通用的容错手法。</p><hr><h2 id="5-并行工具调用：一次响应，多个工具">5 并行工具调用：一次响应，多个工具</h2><p>上面的例子一次只调一个工具，但现实问题常常要同时拿好几份信息：「北京和上海今天的天气分别怎么样？」每个城市都要调一次 <code>get_weather</code>。</p><p>Function Calling 对此有原生支持：<strong>一个响应里可以返回多个 <code>tool_calls</code></strong>。模型一次性输出北京、上海两个城市的调用请求，宿主代码并行执行两个函数，再把两份结果一次性回填，模型生成最终答案。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776864007592-4ffc3703-9e60-4f6a-ac4f-baaf04138b1b.png" alt="并行工具调用示意图：一次响应返回多个 tool_calls"></p><p>收益很直观：如果串行处理，每调一个工具就要经历「发消息 → 等模型 → 执行」一整轮，两个工具要两轮对话；并行把多轮压缩成<strong>一轮对话 + 并行执行</strong>，工具越多节省越明显。实现上不过是拿到多个 <code>tool_calls</code> 后用 <code>asyncio.gather</code> 或线程池同时跑，再统一回填。</p><p>但<strong>并行不是无条件成立的</strong>——有依赖关系的工具必须串行。典型例子：「先查订单号，再根据订单号查物流」。第二步的输入依赖第一步的输出，模型没法同时输出两个调用，它会分两轮：第一轮先调「查订单」的工具，拿到订单号后，第二轮再输出「查物流」的调用。</p><p><img src="https://cdn.xiaolincoding.com//picgo/1776864094005-778c8685-e95d-4fa8-ae9e-770a5f505a24.png" alt="串行 vs 并行调用对比：有依赖的工具必须串行"></p><p>一句话：<strong>无依赖的工具大胆并行，有依赖的乖乖排队</strong>。模型会自己判断什么时候能并行、什么时候必须分轮。</p><hr><h2 id="6-面试总结">6 面试总结</h2><p>回答「什么是 Function Calling」这道题，先避开两个经典误区：</p><table><thead><tr><th>误区</th><th>正解</th></tr></thead><tbody><tr><td>模型能「自己」访问网络、执行代码</td><td>模型只输出结构化的调用请求，从不亲自执行；执行者永远是宿主代码</td></tr><tr><td>Function Calling 与解析自然语言的土办法是一回事</td><td>关键区别在于模型直接输出结构化 JSON，工具调用因此有了统一标准</td></tr></tbody></table><p>再按这四点组织答案，基本就稳了：</p><ol><li><strong>工具定义用 JSON schema</strong>，其中 <code>description</code> 是模型判断「该不该调、怎么调」的核心依据，写清楚才不会瞎猜；</li><li><strong>运行时是「两轮对话 + 中间执行」的闭环</strong>：第一轮模型输出 <code>tool_calls</code>，宿主代码执行，第二轮 <code>role: &quot;tool&quot;</code> 回填后模型给出答案；</li><li><strong><code>finish_reason</code> 为 <code>tool_calls</code></strong> 是模型明确表达「需要工具帮助」的信号；</li><li><strong>一次可返回多个 <code>tool_calls</code></strong>，无依赖的工具并行执行，有依赖的分轮串行。</li></ol><p>再背熟那句分工原则——<strong>「模型只做决策、代码负责执行」</strong>，把职责边界讲清楚，是最能体现对机制理解深度的加分项。</p><p><strong>追问预案</strong>：</p><ul><li>「<code>tool_choice</code> 的取值有什么区别？」——<code>auto</code> 让模型自由判断；<code>none</code> 禁止调用工具；<code>required</code> 强制本次必须调工具；指定某个函数名则强制调用那个工具。</li><li>「Function Calling 和 ReAct 是什么关系？」——ReAct 是「思考 → 行动 → 观察」的循环范式，Function Calling 恰好是「行动」环节的标准实现：模型思考后输出结构化的调用请求（行动），执行结果回填（观察）。这也是为什么说<strong>工具调用是 Agent 的「手」</strong>——没有它，Agent 只会想、不会做。</li><li>「工具执行出错怎么办？」——把错误信息以 <code>role: &quot;tool&quot;</code> 回填，模型能看到报错、调整参数重试或如实说明，不要直接中断流程。</li></ul><hr><h2 id="参考">参考</h2><ul><li><a href="https://xiaolinnote.com/ai/tools/1_function_calling.html">1. 什么是 Function Calling ？原理是什么？ | 小林面试笔记</a></li><li><a href="https://xiaolinnote.com/ai/agent/6_three_patterns.html">6. ReAct、Plan-and-Execute、Reflection 三种范式有什么核心区别？ | 小林面试笔记</a>（相关：工具调用与 ReAct 的关系）</li></ul><blockquote><p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p></blockquote>]]></content>
+    
+    
+    <categories>
+      
+      <category>追逐繁星</category>
+      
+      <category>Agent Tool</category>
+      
+    </categories>
+    
+    
+    <tags>
+      
+      <tag>AI</tag>
+      
+      <tag>Agent</tag>
+      
+      <tag>大模型</tag>
+      
+      <tag>LLM</tag>
+      
+    </tags>
+    
+  </entry>
+  
+  
+  
+  <entry>
     <title>「RAG」RAG 知识库如何实现动态与持续更新？</title>
     <link href="/2026/08/17/20260817_RAG%E7%9F%A5%E8%AF%86%E5%BA%93%E5%8A%A8%E6%80%81%E6%9B%B4%E6%96%B0/"/>
     <url>/2026/08/17/20260817_RAG%E7%9F%A5%E8%AF%86%E5%BA%93%E5%8A%A8%E6%80%81%E6%9B%B4%E6%96%B0/</url>
@@ -1096,9 +1162,9 @@
     
     <tags>
       
-      <tag>多线程</tag>
-      
       <tag>Linux</tag>
+      
+      <tag>多线程</tag>
       
     </tags>
     
@@ -1125,9 +1191,9 @@
     
     <tags>
       
-      <tag>多线程</tag>
-      
       <tag>Linux</tag>
+      
+      <tag>多线程</tag>
       
     </tags>
     
@@ -1154,9 +1220,9 @@
     
     <tags>
       
-      <tag>多线程</tag>
-      
       <tag>Linux</tag>
+      
+      <tag>多线程</tag>
       
     </tags>
     
@@ -1183,9 +1249,9 @@
     
     <tags>
       
-      <tag>多线程</tag>
-      
       <tag>Linux</tag>
+      
+      <tag>多线程</tag>
       
     </tags>
     
@@ -2564,9 +2630,9 @@
       
       <tag>std::mutex</tag>
       
-      <tag>std::condition_variable</tag>
-      
       <tag>std::future</tag>
+      
+      <tag>std::condition_variable</tag>
       
     </tags>
     
@@ -3486,13 +3552,13 @@
       
       <tag>C++</tag>
       
-      <tag>多线程</tag>
-      
       <tag>Ubuntu</tag>
       
       <tag>Linux</tag>
       
       <tag>VS Code</tag>
+      
+      <tag>多线程</tag>
       
     </tags>
     

@@ -19,27 +19,27 @@
   <meta name="author" content="MarisaMagic">
   <meta name="keywords" content="">
   
-    <meta name="description" content="文档与向量库是一对多、变文档等于重切块（先删后增）；内容 hash + 修改时间粗筛检测变更；chunk ID 带文档 ID 前缀&#x2F;存 metadata 建立关联；轮询 vs 消息队列&#x2F;Webhook 事件驱动；全量重建只在文档少或结构大改时用；灰度更新（version 标签 + 检索过滤切换）类比蓝绿部署；核心认知&quot;生产推荐事件驱动 + hash 检测 + 先删后增&quot;。">
+    <meta name="description" content="工具调用能力不是参数规模涌现出来的，而是专项训练出来的；两阶段训练——SFT 教「怎么调」（海量示范对话让模型模仿整套流程：System 说明书 → User 提问 → Assistant 输出 tool_calls → Tool 回填 → 最终回答），RLHF 教「什么时候调」（生成多样回答 → 人类打分 → 训练奖励模型当裁判 → 强化学习调整主模型，学会「能直接回答就不调工具」）；SFT 的">
 <meta property="og:type" content="article">
-<meta property="og:title" content="「RAG」RAG 知识库如何实现动态与持续更新？">
-<meta property="og:url" content="https://marisamagic.github.io/2026/08/17/20260817_RAG%E7%9F%A5%E8%AF%86%E5%BA%93%E5%8A%A8%E6%80%81%E6%9B%B4%E6%96%B0/index.html">
+<meta property="og:title" content="「Agent Tool」LLM 如何学会调用外部工具？">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/17/20260817_LLM%E5%AD%A6%E4%BC%9A%E8%B0%83%E7%94%A8%E5%A4%96%E9%83%A8%E5%B7%A5%E5%85%B7/index.html">
 <meta property="og:site_name" content="MarisaMagic&#39;s Blog">
-<meta property="og:description" content="文档与向量库是一对多、变文档等于重切块（先删后增）；内容 hash + 修改时间粗筛检测变更；chunk ID 带文档 ID 前缀&#x2F;存 metadata 建立关联；轮询 vs 消息队列&#x2F;Webhook 事件驱动；全量重建只在文档少或结构大改时用；灰度更新（version 标签 + 检索过滤切换）类比蓝绿部署；核心认知&quot;生产推荐事件驱动 + hash 检测 + 先删后增&quot;。">
+<meta property="og:description" content="工具调用能力不是参数规模涌现出来的，而是专项训练出来的；两阶段训练——SFT 教「怎么调」（海量示范对话让模型模仿整套流程：System 说明书 → User 提问 → Assistant 输出 tool_calls → Tool 回填 → 最终回答），RLHF 教「什么时候调」（生成多样回答 → 人类打分 → 训练奖励模型当裁判 → 强化学习调整主模型，学会「能直接回答就不调工具」）；SFT 的">
 <meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg">
-<meta property="article:published_time" content="2026-08-17T04:45:11.070Z">
-<meta property="article:modified_time" content="2026-08-17T04:45:11.073Z">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/17/lho.jpg">
+<meta property="article:published_time" content="2026-08-17T07:32:42.578Z">
+<meta property="article:modified_time" content="2026-08-17T07:35:52.760Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent">
 <meta property="article:tag" content="大模型">
 <meta property="article:tag" content="LLM">
-<meta property="article:tag" content="RAG">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/08/17/lho.jpg">
   
   
   
-  <title>「RAG」RAG 知识库如何实现动态与持续更新？ - MarisaMagic&#39;s Blog</title>
+  <title>「Agent Tool」LLM 如何学会调用外部工具？ - MarisaMagic&#39;s Blog</title>
 
   <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
 
@@ -222,13 +222,13 @@
   
 
 <div id="banner" class="banner" parallax=true
-     style="background: url('https://sukicdn.com/wyx/i/2026/08/12/4kii.jpg') no-repeat center center; background-size: cover;">
+     style="background: url('https://sukicdn.com/wyx/i/2026/08/17/lho.jpg') no-repeat center center; background-size: cover;">
   <div class="full-bg-img">
     <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
       <div class="banner-text text-center fade-in-up">
         <div class="h2">
           
-            <span id="subtitle" data-typed-text="「RAG」RAG 知识库如何实现动态与持续更新？"></span>
+            <span id="subtitle" data-typed-text="「Agent Tool」LLM 如何学会调用外部工具？"></span>
           
         </div>
 
@@ -244,7 +244,7 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2026-08-17 12:45" pubdate>
+        <time datetime="2026-08-17 15:32" pubdate>
           2026年8月17日 下午
         </time>
       </span>
@@ -308,127 +308,146 @@
       <div class="container nopadding-x-md" id="board-ctn">
         <div id="board">
           <article class="post-content mx-auto">
-            <h1 id="seo-header">「RAG」RAG 知识库如何实现动态与持续更新？</h1>
+            <h1 id="seo-header">「Agent Tool」LLM 如何学会调用外部工具？</h1>
             
             
               <div class="markdown-body">
                 
                 <h2 id="0-前言">0 前言</h2>
 <blockquote>
-<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/19_dynamic_update.html">19. RAG 知识库如何实现动态与持续更新？</a>，用于记录与总结 RAG 相关的核心面试知识点。</p>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/2_llm_tool_learning.html">2. LLM 是如何学会调用外部工具的？</a>，用于记录与总结 AI Agent 工具调用相关的核心面试知识点。</p>
 </blockquote>
-<p>「<strong>RAG 知识库如何实现动态与持续更新？</strong>」，可以这样作答：</p>
+<p>「<strong>LLM 是如何学会调用外部工具的？</strong>」，可以这样作答：</p>
 <blockquote>
-<p>核心挑战在于：<strong>文档一变，对应的 chunk 和向量都要跟着变</strong>，而且必须做到增量处理，不能每次全量重建。通用方案是<strong>给每篇文档算一个内容 hash</strong>，通过轮询或监听数据源变更来检测新增、修改、删除，一旦发现变化，<strong>先删掉旧的向量，再重新切割入库</strong>（先删后增）。</p>
-<p>细节上还有几个补充：检测变更前先用<strong>最后修改时间</strong>做粗筛，再对有变化的文档算 hash，能过滤掉绝大部分不动的内容；删除时靠 <strong>chunk ID 的文档 ID 前缀</strong>或 <strong>metadata 里的文档 ID 字段</strong>准确定位该文档的所有 chunk；对实时性要求高的场景，用 <strong>Kafka 等消息队列做事件驱动</strong>，实现秒级入库；生产环境推荐组合是「<strong>事件驱动 + hash 检测 + 先删后增</strong>」，实在不放心再叠一层灰度更新，新旧版本并行、验证后切换。</p>
+<p>模型会调用工具不是天生的，而是<strong>训练出来的</strong>。这道题分两块答：先讲训练阶段模型怎么学会，再讲训练好之后运行时是怎么工作的。</p>
+<p>训练靠两个阶段配合：<strong>SFT（监督微调）</strong> 负责「怎么调」——喂海量带完整工具调用流程的示范对话（工具说明书 → 提问 → 输出 <code>tool_calls</code> → 模拟返回结果 → 最终回答），让模型靠模仿学会整套流程；<strong>RLHF（基于人类反馈的强化学习）</strong> 负责「什么时候调」——收集人类对回答质量的好坏判断，训练一个奖励模型当裁判，再用强化学习反复调整主模型，让它学会「能直接回答就不调工具」的边界感。</p>
+<p>运行时就是我们上一篇讲的 <strong>Function Calling</strong> 机制：应用代码把工具 schema 传给模型，模型判断需要工具时输出结构化的 <code>tool_calls</code> JSON，代码真正执行后把结果回填，模型再生成最终答案。核心认知始终只有一句话——模型全程只是「下指令」，真正执行工具的是宿主代码，<strong>模型决策、代码执行</strong>。</p>
 </blockquote>
+<p>ChatGPT 网页版的联网搜索、Cursor 的 Agent 帮你跑命令、Claude Code 的各类工具调用，能稳定工作而不是「乱调一气」，靠的就是模型在出厂前被这样训过：先学会怎么调（SFT），再学会什么时候不该调（RLHF）。你眼里每一个靠谱的工具调用，背后都站着一个被「教过技能、练过分寸」的模型。</p>
 <hr>
-<h2 id="1-为什么更新-RAG-知识库比更新普通数据库麻烦？">1 为什么更新 RAG 知识库比更新普通数据库麻烦？</h2>
-<p>先想想普通数据库为什么简单：每条记录是独立的，改一条 UPDATE 一条，目标明确、互不影响。</p>
-<p>RAG 知识库完全不是这个逻辑。<strong>一篇文档和向量库是&quot;一对多&quot;的关系</strong>——一篇几十上百页的文档会被切成一堆 chunk，每个 chunk 再各自 Embedding 变成向量存进向量库。麻烦就麻烦在：<strong>文档内容一变，切割结果就可能完全不同</strong>——chunk 的数量变了、边界变了、每块的内容也变了。</p>
-<p>所以工程上最可靠的更新逻辑不是&quot;局部修补&quot;，而是**「先删后增」**：先删掉这篇旧文档对应的所有 chunk，再把新文档重新切割、Embedding、写入。为什么不推荐局部更新？因为局部更新的前提是 Chunking 策略完全稳定（比如固定按 token 窗口切割），而这种假设在真实业务里往往不成立——今天改一个段落，明天换一次算法，切割边界就漂移了，<strong>旧 chunk 和新内容根本不&quot;对位&quot;</strong>。与其在这种不确定性上博弈，不如直接走「先删后增」，简单可靠：</p>
-<p><img src="https://cdn.xiaolincoding.com//picgo/1776850537192-af6e0006-6cc7-48b5-9cb5-c23fda5f3700.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="先删后增的更新流程：先删除旧文档的全部 chunk，再重新切割入库"></p>
-<p>抽象来看，知识库的变更只有三种操作类型：</p>
+<h2 id="1-原始-LLM-的世界：为什么不会调工具">1 原始 LLM 的世界：为什么不会调工具</h2>
+<p>先看模型出厂、还没被「特训」时的状态。预训练完成的基础模型只活在文字世界里：它的全部训练目标就是预测下一个 token，它的全部本事是「文字接龙」。你问它「北京今天天气怎么样」，它能接出像模像样的文字，但它不知道世界上存在一个能真的查到天气的函数——它从没见过工具，更不知道怎么调用。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/image-20260306140403734.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="预训练模型只会续写文字、从没见过工具调用"></p>
+<p>这里藏着一个经典误区：有人觉得模型参数量够大、涌现能力够强，工具调用自然就会了。<strong>语言涌现和工具调用是两回事</strong>——预训练学的是「文字之间的关系」，工具调用要求模型输出特定格式的结构化 JSON，这属于「行为」而不是「语言」，预训练数据里根本没有这种示范，模型再大也学不出来。金句版：<strong>会写诗不等于会上网查天气，会接话不等于会干活</strong>。</p>
+<p>所以模型要出厂干活，还得补课——补两门课，一门教技能，一门教分寸。</p>
+<hr>
+<h2 id="2-一前一后，两个训练阶段">2 一前一后，两个训练阶段</h2>
+<p>补课方案是业界标准的两阶段训练：</p>
 <ul>
-<li><strong>新增</strong>：最简单，完整走「切割 → Embedding → 写入」一套流程，没有历史包袱；</li>
-<li><strong>修改</strong>：最易踩坑。切割边界一变，原来第 3 个 chunk 里的内容可能被拆到新版本的第 3、4 个 chunk 里——<strong>局部打补丁彻底行不通，必须推倒重来</strong>。这就像装修拆了一面墙，原来的插座位置全对不上了，只能重新布线；</li>
-<li><strong>删除</strong>：最直接，文档下线了，把它对应的所有 chunk 从向量库里清干净，<strong>不能留&quot;僵尸 chunk&quot;</strong>——否则检索还是会命中文档已不存在的过期内容：</li>
+<li><strong>第一阶段：SFT</strong>，解决「<strong>怎么调</strong>」——让模型见过、模仿一整套工具调用流程，学会输出规范的调用请求；</li>
+<li><strong>第二阶段：RLHF</strong>，解决「<strong>什么时候调</strong>」——让模型建立分寸感，分清哪些问题该调工具、哪些问题直接回答。</li>
 </ul>
-<p><img src="https://cdn.xiaolincoding.com//picgo/ce5317b029029d03ee11ad9d7d94fb95.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="知识库变更的三种操作：新增、修改、删除，修改需要先删后增，删除要清掉全部 chunk"></p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776864293645-da1f7644-7230-4f14-8dfd-4923ed531d42.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="两阶段训练总览：SFT 教怎么调、RLHF 教什么时候调"></p>
+<p>顺序不能反：得先会调，才谈得上什么时候该调。就像教新员工，先让他学会走流程，再教他什么流程不用走。</p>
 <hr>
-<h2 id="2-如何知道文档是否发生了变化？">2 如何知道文档是否发生了变化？</h2>
-<p>先删后增解决了&quot;怎么更&quot;，下一个问题就是&quot;<strong>怎么知道该更了</strong>&quot;。系统怎么感知到一篇文档&quot;变没变&quot;？</p>
-<p>最常用的方案是<strong>内容 hash</strong>：入库时给每篇文档算一个摘要（<strong>MD5 或 SHA256</strong>），和文档 ID、它对应的 chunk ID 列表一起存起来（放 Redis 或数据库都行）。下次同步时重新算一遍，对比一下：<strong>hash 相同说明没变，跳过；hash 不同说明内容动了，触发重新处理</strong>。</p>
-<p><img src="https://cdn.xiaolincoding.com//picgo/1776850585738-1505b92d-2257-4d28-b049-3572308ea4f1.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="内容 hash 检测文档变化：入库时记录摘要，重算对比，相同跳过、不同触发重切入库"></p>
-<p>这个方案有三个明显优点：hash 算得<strong>极快</strong>；哪怕只改了一个标点符号 hash 也会变，<strong>不漏任何变更</strong>；检测成本低到可以反复跑。</p>
-<p>还有个工程优化值得提：直接全量算 hash 对百万篇文档来说仍是开销，所以可以<strong>先用&quot;最后修改时间&quot;做轻量粗筛</strong>——只对时间戳变化过的文档算 hash。比如每晚同步一次，百万篇里真正改了的可能就几千篇，这一层粗筛就能<strong>过滤掉 99% 的文档</strong>，开销再降一个量级。</p>
+<h2 id="3-第一阶段：SFT——让模型「见过」工具调用">3 第一阶段：SFT——让模型「见过」工具调用</h2>
+<p>SFT 的思路非常朴素：给模型看海量「标准答案」——人工构造或收集的、带完整工具调用流程的对话样本，让模型照着模仿。一条样本长这样，一共五段消息：</p>
+<ul>
+<li><strong>System</strong>：工具说明书（JSON schema），告诉模型有哪些工具、怎么用；</li>
+<li><strong>User</strong>：用户提问，比如「北京今天天气怎么样？」；</li>
+<li><strong>Assistant</strong>：不直接回答，而是输出结构化调用请求：<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-punctuation">&#123;</span><br>    <span class="hljs-attr">&quot;tool_calls&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-punctuation">&#123;</span><br>        <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;get_weather&quot;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;arguments&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><span class="hljs-attr">&quot;city&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;北京&quot;</span><span class="hljs-punctuation">&#125;</span><br>    <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">]</span><br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+</li>
+<li><strong>Tool</strong>：模拟工具返回的结果（真实的天气数据）；</li>
+<li><strong>Assistant</strong>：基于工具结果，给出最终回答「北京今天天气晴朗，气温 15°C……」。</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776864555021-ea4eef67-832c-43d2-955c-f11f72d083c4.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="SFT 训练样本结构：说明书、提问、调用请求、回填、最终回答"></p>
+<p>几十万上百万条这样的样本，反复训练下来，模型就学会了整套流程：<strong>看到工具描述 → 判断要不要调 → 输出规范的 JSON 请求 → 接住工具结果组织回答</strong>。这就像新员工进公司，师傅丢给他一摞历史工单，看多了，接单、处理、汇报的规矩自然就明白了——SFT 就是让模型看工单。</p>
 <hr>
-<h2 id="3-文档-ID-和-chunk-ID-的设计">3 文档 ID 和 chunk ID 的设计</h2>
-<p>「先删后增」里有个隐藏前提：<strong>说删就能删得干净</strong>。删除一篇文档的所有 chunk 前，你得先能&quot;按文档找到它的所有 chunk&quot;。这要求从一开始就把文档和 chunk 的关联关系设计好，两种常见做法：</p>
-<p><strong>做法一：chunk ID 带文档 ID 前缀。</strong> 比如文档 ID 是 <code>product_manual_v3</code>，它的 chunk 就叫 <code>product_manual_v3_chunk_001</code>、<code>product_manual_v3_chunk_002</code>……删除时按前缀批量查找、批量删除，一条命令搞定。</p>
-<p><strong>做法二：chunk 的 metadata 里存文档 ID 字段。</strong> 每个 chunk 写入时打上 <code>source_doc_id: &quot;product_manual_v3&quot;</code> 这样的标签，向量库大多支持按 metadata 字段过滤，删除时筛出所有 <code>source_doc_id = 文档ID</code> 的 chunk 批量清除。</p>
-<p>两条路都行，共同点是<strong>关联关系要在入库设计时就定好</strong>——别等真要删了，才发现翻遍库都找不齐这篇文档的 chunk。</p>
+<h2 id="4-SFT-的短板：会了，但不知道「该不该调」">4 SFT 的短板：会了，但不知道「该不该调」</h2>
+<p>只看了工单的模型有个明显毛病：<strong>没有分寸感</strong>。它把「调用工具」当成了万能解题套路——你问它「1+1 等于几」，它也要先调一次 <code>get_weather</code> 再回答。因为在它见过的样本里，处处都是工具调用，它学会了「调」，却没学会「什么时候不该调」。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776864574204-50622124-0e9f-4879-966d-76f105346a2f.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="SFT 的短板：连 1+1 都要先调工具、行为边界感很弱"></p>
+<p>一句话概括：<strong>SFT 练出来的是肌肉记忆，而肌肉记忆没有分寸感</strong>。这个问题，就要交给第二阶段的 RLHF 解决。</p>
 <hr>
-<h2 id="4-两种主流的变更感知方式">4 两种主流的变更感知方式</h2>
-<p>系统通过什么方式&quot;定期&quot;知道文档变了？有两种主流方案，各有适用场景：</p>
-<p><strong>第一种：定时轮询（Polling）。</strong> 按固定间隔（比如每天凌晨两点、或者每小时）扫描一遍，对粗筛后的文档重算 hash 对比。优点：实现最简单，不依赖任何外部系统，一个定时任务就搞定。缺点也明显：<strong>有延迟</strong>——文档改了，要等到下一个轮询周期才生效；文档量大的时候，全量扫描本身也是一笔开销。</p>
-<p><strong>第二种：事件驱动（Event-Driven）。</strong> 数据源一有变更就发消息（Kafka、RabbitMQ 或者直接 Webhook），收到消息立刻处理，<strong>秒级生效</strong>。适合对实时性要求高的场景：客服知识库里的退款政策改了要马上生效，新闻资讯类内容要第一时间入库。代价是要数据源支持发消息，架构也更复杂一些。</p>
-<p><img src="https://cdn.xiaolincoding.com//picgo/1776850625161-7f6c92be-b7d4-4ccc-a60a-4100ef447d0d.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="两种变更感知方式对比：定时轮询有延迟，事件驱动（消息队列/Webhook）秒级生效"></p>
-<p>有个细节值得点一下：不一定非要上大而全的消息队列。<strong>Confluence、Notion、语雀这些协作平台本身就支持 Webhook</strong>——文档一保存就主动推一个 HTTP 请求给你，订阅一下就能实现秒级更新，架构轻量很多。</p>
-<p>选择思路一句话：<strong>更新频率低、实时性要求不高就用轮询；更新频繁、要求秒级生效就用事件驱动。</strong></p>
-<hr>
-<h2 id="5-全量重建是最后的手段">5 全量重建是最后的手段</h2>
-<p>事件驱动、增量更新都是&quot;精细活&quot;，还有一种省事到底的方案——<strong>全量重建</strong>：不搞增量逻辑，直接把整个知识库重新处理一遍。</p>
-<p>它的优点恰好是增量方案的痛点：<strong>逻辑最简单</strong>——不用维护文档和 chunk 的对应关系，不用做 hash 检测，也不用担心旧 chunk 漏删，反正全推倒重来。</p>
-<p>但缺点同样绕不开：文档量大时，<strong>耗时间、耗 Embedding 的 API 费用</strong>；重建期间知识库要么不可用，要么一直在用旧数据。</p>
-<p>所以全量重建只适合两种场合：</p>
+<h2 id="5-第二阶段：RLHF——用反馈建立边界感">5 第二阶段：RLHF——用反馈建立边界感</h2>
+<p>RLHF 的思路是引入「好坏标准」，让模型从反馈里学会判断。流程分四步：</p>
 <ol>
-<li><strong>规模真的小</strong>——几十篇文档，几分钟重跑完事，增量逻辑的复杂度反而不划算；</li>
-<li><strong>知识库结构大改</strong>——换了 Embedding 模型、改了 Chunking 策略，新旧向量根本不兼容，增量更新无从谈起，只能推倒重来。</li>
+<li><strong>生成多样回答</strong>：同一个问题，让模型生成多种回答——有先调工具的，有直接回答的；</li>
+<li><strong>人类打分</strong>：让人类判断哪些回答更符合预期——问「1+1」直接回答的受好评，先调工具再算的受差评；</li>
+<li><strong>训练奖励模型</strong>：把人类的打分喂给一个专门的模型进行训练，让它学会预测「哪种回答更受欢迎」——奖励模型就是那个「会打分的裁判」；</li>
+<li><strong>强化学习调整主模型</strong>：用奖励模型给出的分数当反馈，通过强化学习反复调整主模型，让高分回答越来越多、低分回答越来越少。</li>
 </ol>
-<p>一句话：<strong>全量重建不是不能用，是只能用在&quot;小&quot;或&quot;改&quot;的场景，常态更新别指望它。</strong></p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/image-20260309184728652.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="RLHF 四步流程：生成多样回答、人类打分、训练奖励模型、强化学习调整"></p>
+<p>这四步可以用公司场景类比：员工（主模型）干活 → 老板（人类）评价干得好不好 → 人事部门（奖励模型）把评价固化成一套打分标准 → 员工按标准调整自己的工作方式。标准越来越清晰，员工的判断也越来越有边界感。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776864764242-0e83c4fc-dc57-41c9-9ae2-63ae7e3389a8.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="奖励模型打分闭环：奖励模型打分、强化学习不断调整主模型"></p>
+<p>经过这个过程，模型逐渐学会了更微妙的判断：需要实时信息（天气、股价、订单状态）才调工具，能靠自身知识直接回答的就不调。这就是「<strong>该不该调</strong>」的边界感。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776864737286-b5b02d43-5ac7-4168-ba1b-6c22e42021a2.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="RLHF 训练整体闭环示意"></p>
+<p>顺带一提：RLHF 需要大量人类打分，成本不低，于是出现了 <strong>RLAIF（基于 AI 反馈的强化学习）</strong>——让更强的 AI 模型来当代打分员，替代人类评分。成本低、可规模化，是面试里的加分项。</p>
 <hr>
-<h2 id="6-灰度更新：稳妥地切换新版本">6 灰度更新：稳妥地切换新版本</h2>
-<p>生产环境的核心知识库，直接&quot;删旧写新&quot;风险不小——万一新版本有问题，想回滚却发现旧 chunk 已经删光了。稳妥的做法是把<strong>灰度更新</strong>加进来：</p>
+<h2 id="6-运行时：训练好之后怎么用">6 运行时：训练好之后怎么用</h2>
+<p>训练只是出厂前的准备，真正干活靠的是运行时机制——也就是上一篇详讲的 <strong>Function Calling</strong>。每次应用调用模型时，流程是这样的：</p>
 <ol>
-<li><strong>并行写入</strong>：新版本 chunk 带上 <code>version=new</code> 标签入库，旧的 <code>version=old</code> 保留不动；</li>
-<li><strong>验证比较</strong>：拿一批真实问题跑新旧两版，对比答案质量；</li>
-<li><strong>切换</strong>：验证通过后，把检索时的版本过滤条件从 <code>old</code> 切到 <code>new</code>——这一刻起线上命中的全是新版本；</li>
-<li><strong>清理</strong>：最终清掉旧版 chunk，完成更新。</li>
+<li>应用代码把工具 schema（工具说明书）+ 用户问题一起传给模型；</li>
+<li>模型判断需要工具时，不直接回答，而是输出一段结构化的 JSON；</li>
+<li>你的代码解析这段 JSON，真正执行工具，把结果塞回对话；</li>
+<li>模型拿到结果，生成最终答案。</li>
 </ol>
-<p><img src="https://cdn.xiaolincoding.com//picgo/1776850658577-890c41d5-cda3-4c36-acef-850b62366f7a.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="灰度更新：新旧版本并行、验证后切换检索过滤条件，类似蓝绿部署"></p>
-<p>这个方案很像软件发布里的<strong>蓝绿部署</strong>：新旧两套并存，切换即时生效，<strong>出了任何问题都能秒级切回去</strong>，而且切换不涉及重新入库。对知识库质量要求很高的场景（金融、医疗领域的问答系统），这种谨慎的更新策略非常有必要。</p>
-<p>把几种更新方案的特点放在一起对比，实际选型时对照着看：</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/image-20260309185443446.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="运行时调用流程：应用传入工具 schema 与问题、模型输出 tool_calls JSON"></p>
+<p>运行时的核心是：<strong>模型在训练里学会的「调用能力」，落地的介质就是这一段结构化 JSON</strong>。训练决定模型会不会调、调得对不对，运行时决定代码能不能稳定地接住这个意图。</p>
+<hr>
+<h2 id="7-一个关键认知：模型只负责「决策」，不负责「执行」">7 一个关键认知：模型只负责「决策」，不负责「执行」</h2>
+<p>把训练和运行串起来，最后剩下一个贯穿始终的认知：模型从头到尾只是在**「下指令」**。训练阶段，它学会的是输出规范调用请求的动作；运行阶段，它输出的还是调用请求——真正连数据库、调 API、访问网络的，始终是你的宿主代码。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776864879138-3834d7ae-e5e6-4277-86b9-22ef21d79ff4.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="模型只负责决策输出 JSON、代码负责真正执行"></p>
+<p>这个「<strong>模型决策、代码执行</strong>」的分工，是整套工具调用体系的地基：上一篇文章里的 Function Calling 机制、这篇文章的两阶段训练流程，最终都是在为这个简单的分工服务。</p>
+<hr>
+<h2 id="8-面试总结">8 面试总结</h2>
+<p>回答这道题，先避开两个经典误区：</p>
 <table>
 <thead>
 <tr>
-<th>方案</th>
-<th>延迟</th>
-<th>实现复杂度</th>
-<th>适用场景</th>
+<th>误区</th>
+<th>正解</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>定时轮询</td>
-<td>分钟~小时级</td>
-<td>低</td>
-<td>文档更新频率低、实时性要求不高</td>
+<td>参数量够大、涌现能力够强就会调工具</td>
+<td>语言涌现是「文字接龙」，工具调用要输出结构化 JSON，是行为不是语言，必须专项训练</td>
 </tr>
 <tr>
-<td>Webhook 触发</td>
-<td>秒级</td>
-<td>中</td>
-<td>数据源支持 Webhook（Confluence、Notion、语雀）</td>
-</tr>
-<tr>
-<td>消息队列</td>
-<td>秒级</td>
-<td>中高</td>
-<td>大规模、高并发更新，生产环境首选</td>
-</tr>
-<tr>
-<td>全量重建</td>
-<td>分钟~小时级</td>
-<td>低</td>
-<td>文档量小，或知识库结构大改，不推荐常规使用</td>
+<td>有 SFT 就够了</td>
+<td>SFT 解决「会不会调」，RLHF 解决「该不该调」，两个阶段缺一不可</td>
 </tr>
 </tbody>
 </table>
-<hr>
-<h2 id="7-面试总结">7 面试总结</h2>
-<p>这道题考察的是<strong>工程思维的完整性</strong>，答题的核心是把&quot;更新&quot;这件事拆成一个闭环：<strong>先删后增的正确姿势（一对多、切割边界会变）→ 怎么感知变化（内容 hash + 修改时间粗筛）→ 怎么删得干净（chunk 与文档的关联设计）→ 按实时性选感知方式（轮询 / 事件驱动）→ 稳妥切换（灰度、蓝绿部署）</strong>。</p>
-<p>几个容易被追问的细节提前准备：</p>
+<p>再按这张框架组织答案：</p>
+<table>
+<thead>
+<tr>
+<th>层次</th>
+<th>要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>SFT</strong></td>
+<td>大量带完整调用流程的示范对话，让模型学会「怎么调」；短板是行为边界感弱，简单问题也先调工具</td>
+</tr>
+<tr>
+<td><strong>RLHF</strong></td>
+<td>生成多样回答 → 人类打分 → 训练奖励模型 → 强化学习调整主模型，学会「什么时候调」，能直接回答就不调</td>
+</tr>
+<tr>
+<td><strong>运行时</strong></td>
+<td>Function Calling：schema 传入 → 模型输出 tool_calls JSON → 代码执行回填 → 再回答</td>
+</tr>
+<tr>
+<td><strong>加分项</strong></td>
+<td>RLAIF：让 AI 打分替代人类评分，低成本可规模化</td>
+</tr>
+</tbody>
+</table>
+<p><strong>追问预案</strong>：</p>
 <ul>
-<li><strong>为什么不能只更新&quot;变了的那个 chunk&quot;？</strong> 因为切割边界会变化，新版本里&quot;对应&quot;的 chunk 根本不存在，内容和旧 chunk 对不上位，局部补丁没有意义；</li>
-<li><strong>hash 存在哪？</strong> Redis 或数据库，和文档 ID、chunk ID 列表一起存；</li>
-<li><strong>轮询间隔怎么定？</strong> 从业务能容忍的更新延迟倒推，等不起就换事件驱动。</li>
+<li>「为什么预训练学不会工具调用？」——预训练的目标只是预测下一个 token，输出特定格式的调用动作属于行为塑造，预训练数据里没有结构化的调用示范，必须靠带标注的专项数据训练。</li>
+<li>「SFT 的训练样本从哪来？」——通常是人工构造的对话模板 + 模型模拟工具结果自动生成，再人工抽查修正；规模化主要靠合成数据流水线。</li>
+<li>「奖励模型是怎么训出来的？」——收集人类对同一问题多个回答的打分或排序，训练一个模型去预测分数，学的就是「人类偏好」本身。</li>
+<li>「RLAIF 和 RLHF 有什么区别？」——打分者从人类换成更强的 AI 模型，省人力、可规模化；代价是 AI 裁判本身可能带偏见，质量上限取决于裁判模型。</li>
 </ul>
-<p>最后记住两句话：<strong>更新知识库，先想清楚怎么删</strong>（先删后增、关联设计是地基）；生产落地推荐「<strong>事件驱动 + hash 检测 + 先删后增</strong>」的组合，要求再高就叠加灰度更新，宁可多花一次入库的功夫，也不要删了才发现回不去。</p>
 <hr>
 <h2 id="参考">参考</h2>
 <ul>
-<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/rag/19_dynamic_update.html">19. RAG 知识库如何实现动态与持续更新？ | 小林面试笔记</a></li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/2_llm_tool_learning.html">2. LLM 是如何学会调用外部工具的？ | 小林面试笔记</a></li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/1_function_calling.html">1. 什么是 Function Calling ？原理是什么？ | 小林面试笔记</a>（相关：运行时机制）</li>
 </ul>
 <blockquote>
 <p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
@@ -456,7 +475,7 @@
   
     <span>></span>
     
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/RAG/" class="category-chain-item">RAG</a>
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Agent-Tool/" class="category-chain-item">Agent Tool</a>
   
   
 
@@ -475,11 +494,11 @@
       
         <a href="/tags/AI/" class="print-no-link">#AI</a>
       
+        <a href="/tags/Agent/" class="print-no-link">#Agent</a>
+      
         <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
       
         <a href="/tags/LLM/" class="print-no-link">#LLM</a>
-      
-        <a href="/tags/RAG/" class="print-no-link">#RAG</a>
       
     </div>
   
@@ -491,8 +510,8 @@
 
   <div class="license-box my-3">
     <div class="license-title">
-      <div>「RAG」RAG 知识库如何实现动态与持续更新？</div>
-      <div>https://marisamagic.github.io/2026/08/17/20260817_RAG知识库动态更新/</div>
+      <div>「Agent Tool」LLM 如何学会调用外部工具？</div>
+      <div>https://marisamagic.github.io/2026/08/17/20260817_LLM学会调用外部工具/</div>
     </div>
     <div class="license-meta">
       
@@ -536,18 +555,12 @@
                   <article class="post-prev col-6">
                     
                     
-                      <a href="/2026/08/17/20260817_FunctionCalling%E6%9C%BA%E5%88%B6/" title="「Agent Tool」什么是 Function Calling？原理是什么？">
-                        <i class="iconfont icon-arrowleft"></i>
-                        <span class="hidden-mobile">「Agent Tool」什么是 Function Calling？原理是什么？</span>
-                        <span class="visible-mobile">上一篇</span>
-                      </a>
-                    
                   </article>
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2026/08/17/20260817_RAG%E8%AF%84%E4%BC%B0/" title="「RAG」怎么量化你的 RAG 效果？">
-                        <span class="hidden-mobile">「RAG」怎么量化你的 RAG 效果？</span>
+                      <a href="/2026/08/17/20260817_FunctionCalling%E6%9C%BA%E5%88%B6/" title="「Agent Tool」什么是 Function Calling？原理是什么？">
+                        <span class="hidden-mobile">「Agent Tool」什么是 Function Calling？原理是什么？</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>

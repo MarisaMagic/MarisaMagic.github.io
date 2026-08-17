@@ -1,0 +1,813 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Function Calling 机制定义（JSON schema 描述工具传入模型，模型输出结构化 tool_calls JSON，宿主代码执行，结果以 role:&quot;tool&quot; 回填，模型再生成答案；本质「两轮对话 + 中间执行」）；核心分工「模型只决策、代码只执行」；背景（if&#x2F;else 解析自然语言脆弱非标，FC 输出结构化 JSON 建立统一标准，OpenAI 2023 年提出）；三个角色">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Agent Tool」什么是 Function Calling？原理是什么？">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/17/20260817_FunctionCalling%E6%9C%BA%E5%88%B6/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="Function Calling 机制定义（JSON schema 描述工具传入模型，模型输出结构化 tool_calls JSON，宿主代码执行，结果以 role:&quot;tool&quot; 回填，模型再生成答案；本质「两轮对话 + 中间执行」）；核心分工「模型只决策、代码只执行」；背景（if&#x2F;else 解析自然语言脆弱非标，FC 输出结构化 JSON 建立统一标准，OpenAI 2023 年提出）；三个角色">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/17/lho.jpg">
+<meta property="article:published_time" content="2026-08-17T06:36:01.827Z">
+<meta property="article:modified_time" content="2026-08-17T06:50:42.363Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/08/17/lho.jpg">
+  
+  
+  
+  <title>「Agent Tool」什么是 Function Calling？原理是什么？ - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/08/17/lho.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Agent Tool」什么是 Function Calling？原理是什么？"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-17 14:36" pubdate>
+          2026年8月17日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          27 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Agent Tool」什么是 Function Calling？原理是什么？</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<blockquote>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/1_function_calling.html">1. 什么是 Function Calling？原理是什么？</a>，用于记录与总结 AI Agent 工具调用相关的核心面试知识点。</p>
+</blockquote>
+<p>「<strong>什么是 Function Calling？原理是什么？</strong>」，可以这样作答：</p>
+<blockquote>
+<p>Function Calling 是一套让大模型与外部工具协作的标准机制：开发者先用 <strong>JSON schema</strong> 把每个工具的功能、参数要求描述清楚，随对话一起传给模型；模型判断需要调用工具时，不输出自然语言，而是直接输出一段结构化的 <strong>tool_calls JSON</strong>——声明「我要调哪个函数、参数填什么」；真正执行这段 JSON 的是开发者写的宿主代码，它拿到函数名和参数去调 API、查数据库，再把结果以 <code>role: &quot;tool&quot;</code> 的消息回填到对话；模型看到结果后，生成最终答案。</p>
+<p>整个流程的本质是「<strong>两轮对话 + 中间执行</strong>」：第一轮，模型说「我需要工具帮忙」；中间，代码替它执行；第二轮，模型拿到执行结果给出答案。模型通过 <code>finish_reason</code> 为 <code>tool_calls</code> 明确表达「需要工具帮助」，这是宿主代码决定是否执行的开关。</p>
+<p>这套机制最核心的设计原则只有一句话：<strong>模型全程只做决策，执行一律由宿主代码完成</strong>。模型负责判断「该不该调、调哪个、参数填什么」，代码负责真正跑起来——职责分得清清楚楚。</p>
+</blockquote>
+<p>现在几乎所有主流大模型产品都是这套机制的落地应用：ChatGPT 网页版的「联网搜索」「画图」按钮，Cursor 的 Agent 帮你读文件、跑测试，Claude Code 的命令行工具调用……用户看到的是「模型在干活」，本质上都是「模型输出结构化的调用意图 → 宿主程序执行 → 结果回填」的闭环。</p>
+<hr>
+<h2 id="1-背景：Function-Calling-解决了什么问题">1 背景：Function Calling 解决了什么问题</h2>
+<p>先回答一个问题：为什么需要 Function Calling？直接让模型说一句「帮我查一下北京的天气」、代码自己解析意图，不行吗？</p>
+<p>早期的方法正是这个思路：模型用自然语言表达意图，开发者写一堆 if/else 去解析。问题在于自然语言<strong>没有固定格式</strong>——「帮我查一下北京的天气」「北京现在多少度」「查查北京天气」说的是同一件事，写法却千变万化，if/else 稍微没覆盖到就失配；就算匹配上了，参数也很难可靠地抽取出来。这种方案又脆弱又难维护，换个说法就挂，根本无法标准化。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1772110696965-86ba8349-1109-4dca-a481-35ba1b5b8367.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Function Calling 前后对比：自然语言解析 vs 结构化 JSON 输出"></p>
+<p>Function Calling 的关键改进只有一点：<strong>让模型直接输出结构化的 JSON，而不是自然语言</strong>。模型判断需要工具时，输出「函数名 + 参数」这种一眼就能解析的结构，代码按固定格式提取即可——准确率更高、格式统一，工具调用第一次有了标准答案。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776863691463-8f5c0591-aaf4-4d98-aa57-e2a12fe95fc9.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Function Calling 基本工作流程：模型输出调用指令、宿主代码执行"></p>
+<p>这个机制由 OpenAI 于 2023 年推出，如今 Claude、Gemini、Qwen 等主流模型均已原生支持，成了大模型产品的事实标准。</p>
+<hr>
+<h2 id="2-三个角色：把-Function-Calling-理解成一场任务委托">2 三个角色：把 Function Calling 理解成一场任务委托</h2>
+<p>Function Calling 看起来复杂，把它理解成公司里的一场「任务委托」就清晰了——整个过程有三个角色：</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776863825095-2d5698cc-940c-4f77-b2ea-70dd270b8707.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="任务委托模型：开发者是 HR、模型是经理、代码是员工"></p>
+<ul>
+<li><strong>开发者 = HR（招聘专员）</strong>：为每个工具写一份「职位说明书」——JSON schema，说清楚工具是干什么的、需要什么参数。模型怎么认识工具？全靠这份说明书，它从不「见过」你的代码；</li>
+<li><strong>模型 = 经理（决策者）</strong>：读完全部职位说明书，结合用户问题判断「该派谁去干」，决定调哪个工具、参数填什么，然后下达指令；</li>
+<li><strong>代码 = 员工（执行者）</strong>：真正动手干活的人——调用函数、访问网络、查询数据库，然后把结果汇报回来。</li>
+</ul>
+<p>这里藏着最常见的误区：很多人以为模型能「自己」访问网络、执行代码。<strong>模型面前没有浏览器，也没有代码执行器</strong>——它无权直接访问任何外部资源，所有实际动作都是宿主代码替它完成的。这也是整个机制最重要的一句话：</p>
+<p><strong>模型只做决策，执行交给代码。</strong></p>
+<hr>
+<h2 id="3-工具定义：JSON-schema-的每个字段都有含义">3 工具定义：JSON schema 的每个字段都有含义</h2>
+<p>工具在模型眼里长什么样？看一个标准的工具定义（以天气查询为例）：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-punctuation">&#123;</span><br>  <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;function&quot;</span><span class="hljs-punctuation">,</span><br>  <span class="hljs-attr">&quot;function&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>    <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;get_weather&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-attr">&quot;description&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;查询指定城市的实时天气，包含气温、天气状况、风向风速，仅支持中国大陆城市&quot;</span><span class="hljs-punctuation">,</span><br>    <span class="hljs-attr">&quot;parameters&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>      <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;object&quot;</span><span class="hljs-punctuation">,</span><br>      <span class="hljs-attr">&quot;properties&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>        <span class="hljs-attr">&quot;city&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>          <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;string&quot;</span><span class="hljs-punctuation">,</span><br>          <span class="hljs-attr">&quot;description&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;城市名，例如：北京&quot;</span><span class="hljs-punctuation">,</span><br>          <span class="hljs-attr">&quot;enum&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;北京&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-string">&quot;上海&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-string">&quot;广州&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-string">&quot;深圳&quot;</span><span class="hljs-punctuation">]</span><br>        <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>        <span class="hljs-attr">&quot;unit&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>          <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;string&quot;</span><span class="hljs-punctuation">,</span><br>          <span class="hljs-attr">&quot;description&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;温度单位&quot;</span><span class="hljs-punctuation">,</span><br>          <span class="hljs-attr">&quot;enum&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;celsius&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-string">&quot;fahrenheit&quot;</span><span class="hljs-punctuation">]</span><br>        <span class="hljs-punctuation">&#125;</span><br>      <span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">,</span><br>      <span class="hljs-attr">&quot;required&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;city&quot;</span><span class="hljs-punctuation">]</span><br>    <span class="hljs-punctuation">&#125;</span><br>  <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+<p>每个字段都有讲究：</p>
+<ul>
+<li><strong><code>name</code>（工具的名字）</strong>：唯一标识，模型在 <code>tool_calls</code> 里就是靠它点名要哪个工具；</li>
+<li><strong><code>description</code>（工具的说明）</strong>：模型判断「该不该用、怎么用」的核心依据，也是这道题的常考点，下文展开；</li>
+<li><strong><code>parameters</code>（参数结构）</strong>：用 <code>type</code> / <code>properties</code> 描述每个参数，<code>required</code> 声明必填项，<code>enum</code> 限定可选值；参数自己的 <code>description</code> 也要写清格式、示例值和限制条件。</li>
+</ul>
+<p><strong>模型判断的依据，全靠 description。</strong> 如果描述写得含糊，比如只写「获取天气」，模型就可能在不合适的场景硬调用——用户问「广州适合穿什么衣服」，它可能直接拿 <code>get_weather</code> 的天气数据当答案；写清楚一点，声明「查询指定城市的实时天气，包含气温、天气状况、风向风速，仅支持中国大陆城市」，模型才知道工具的边界在哪里、什么情况该用、什么情况不该用。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776864343500-856d21bc-0902-4c7e-b247-e2ff72f84527.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="工具定义 JSON schema 与 description 字段说明示意"></p>
+<p>一句话记住：<strong>工具描述写得越清楚，模型越不会「瞎猜」</strong>。description 是写给模型看的「说明书」，不是写给同事看的注释，值得花心思打磨。</p>
+<hr>
+<h2 id="4-完整调用流程：两轮对话-中间执行">4 完整调用流程：两轮对话 + 中间执行</h2>
+<p>把前面的角色和定义串起来，一次完整的工具调用就是「<strong>两轮对话 + 中间执行</strong>」的闭环：</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/image-20260306140017160.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="两轮对话 + 中间执行的闭环流程图"></p>
+<p><strong>第一轮：模型「申请调工具」。</strong> 宿主代码把工具列表（tools）和用户问题一起发给模型。模型判断需要工具时，不回答你的问题，而是输出一个特殊响应：<code>finish_reason: &quot;tool_calls&quot;</code>，并在 <code>tool_calls</code> 里给出要调的函数名和参数。<code>finish_reason</code> 就是模型递给代码的信号——「我要工具帮忙，请执行」。注意，这一轮模型是说了话但没给答案，答案要等执行完才有。</p>
+<p><strong>中间执行：代码干活。</strong> 宿主代码解析 <code>tool_calls</code>，拿到函数名和参数，执行对应的函数。这一步模型完全不参与，纯粹是你的程序在跑——这就是「模型决策、代码执行」的落地点。</p>
+<p><strong>第二轮：结果回填，模型给答案。</strong> 代码把执行结果以 <code>role: &quot;tool&quot;</code> 的消息塞回对话历史，并带上 <code>tool_call_id</code> 与第一轮的调用一一对应；然后再次调用模型，模型结合工具结果，最终给出自然语言答案。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776863915097-1b4550ed-01f5-4788-ad20-29b3506c06ff.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="两轮对话时序图：第一轮 tool_calls 请求、代码执行、第二轮结果回填"></p>
+<p>配套的 Python 示例（OpenAI SDK 的经典写法）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">import</span> json<br><span class="hljs-keyword">from</span> openai <span class="hljs-keyword">import</span> OpenAI<br><br>client = OpenAI()<br><br>messages = [<br>    &#123;<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;system&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;你是一个天气助手，需要实时天气时使用工具获取。&quot;</span>&#125;,<br>    &#123;<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;北京今天天气怎么样？&quot;</span>&#125;,<br>]<br><br><span class="hljs-comment"># 第一轮：把用户问题和工具列表一起发给模型</span><br>response = client.chat.completions.create(<br>    model=<span class="hljs-string">&quot;gpt-4o&quot;</span>,<br>    messages=messages,<br>    tools=tools,          <span class="hljs-comment"># 上文的 JSON schema 列表</span><br>    tool_choice=<span class="hljs-string">&quot;auto&quot;</span>,   <span class="hljs-comment"># 是否调工具由模型自己决定</span><br>)<br>message = response.choices[<span class="hljs-number">0</span>].message<br><br><span class="hljs-comment"># finish_reason 是明确信号：模型需要调用工具</span><br><span class="hljs-keyword">if</span> response.choices[<span class="hljs-number">0</span>].finish_reason != <span class="hljs-string">&quot;tool_calls&quot;</span>:<br>    <span class="hljs-built_in">print</span>(message.content)                      <span class="hljs-comment"># 没调工具，直接回答</span><br><span class="hljs-keyword">else</span>:<br>    tool_call = message.tool_calls[<span class="hljs-number">0</span>]<br>    fn_name = tool_call.function.name<br>    args = json.loads(tool_call.function.arguments)   <span class="hljs-comment"># 解析参数 JSON</span><br><br>    <span class="hljs-comment"># 中间执行：由宿主代码真正调用函数</span><br>    result = get_weather(city=args[<span class="hljs-string">&quot;city&quot;</span>])<br><br>    <span class="hljs-comment"># 第二轮：执行结果以 role=&quot;tool&quot; 回填，tool_call_id 与调用一一对应</span><br>    messages.append(message)<br>    messages.append(&#123;<br>        <span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;tool&quot;</span>,<br>        <span class="hljs-string">&quot;tool_call_id&quot;</span>: tool_call.<span class="hljs-built_in">id</span>,<br>        <span class="hljs-string">&quot;content&quot;</span>: json.dumps(result, ensure_ascii=<span class="hljs-literal">False</span>),<br>    &#125;)<br>    answer = client.chat.completions.create(model=<span class="hljs-string">&quot;gpt-4o&quot;</span>, messages=messages)<br>    <span class="hljs-built_in">print</span>(answer.choices[<span class="hljs-number">0</span>].message.content)<br>    <span class="hljs-comment"># 输出：北京今天天气晴朗，气温 15°C，东北风 3 级，适合外出。</span><br></code></pre></td></tr></table></figure>
+<p>如果某个环节出错——比如工具执行时报错，把错误信息同样以 <code>role: &quot;tool&quot;</code> 回填，模型就能「看到」错误、调整参数重试，或在回答里如实说明。这是工程上最通用的容错手法。</p>
+<hr>
+<h2 id="5-并行工具调用：一次响应，多个工具">5 并行工具调用：一次响应，多个工具</h2>
+<p>上面的例子一次只调一个工具，但现实问题常常要同时拿好几份信息：「北京和上海今天的天气分别怎么样？」每个城市都要调一次 <code>get_weather</code>。</p>
+<p>Function Calling 对此有原生支持：<strong>一个响应里可以返回多个 <code>tool_calls</code></strong>。模型一次性输出北京、上海两个城市的调用请求，宿主代码并行执行两个函数，再把两份结果一次性回填，模型生成最终答案。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776864007592-4ffc3703-9e60-4f6a-ac4f-baaf04138b1b.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="并行工具调用示意图：一次响应返回多个 tool_calls"></p>
+<p>收益很直观：如果串行处理，每调一个工具就要经历「发消息 → 等模型 → 执行」一整轮，两个工具要两轮对话；并行把多轮压缩成<strong>一轮对话 + 并行执行</strong>，工具越多节省越明显。实现上不过是拿到多个 <code>tool_calls</code> 后用 <code>asyncio.gather</code> 或线程池同时跑，再统一回填。</p>
+<p>但<strong>并行不是无条件成立的</strong>——有依赖关系的工具必须串行。典型例子：「先查订单号，再根据订单号查物流」。第二步的输入依赖第一步的输出，模型没法同时输出两个调用，它会分两轮：第一轮先调「查订单」的工具，拿到订单号后，第二轮再输出「查物流」的调用。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776864094005-778c8685-e95d-4fa8-ae9e-770a5f505a24.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="串行 vs 并行调用对比：有依赖的工具必须串行"></p>
+<p>一句话：<strong>无依赖的工具大胆并行，有依赖的乖乖排队</strong>。模型会自己判断什么时候能并行、什么时候必须分轮。</p>
+<hr>
+<h2 id="6-面试总结">6 面试总结</h2>
+<p>回答「什么是 Function Calling」这道题，先避开两个经典误区：</p>
+<table>
+<thead>
+<tr>
+<th>误区</th>
+<th>正解</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>模型能「自己」访问网络、执行代码</td>
+<td>模型只输出结构化的调用请求，从不亲自执行；执行者永远是宿主代码</td>
+</tr>
+<tr>
+<td>Function Calling 与解析自然语言的土办法是一回事</td>
+<td>关键区别在于模型直接输出结构化 JSON，工具调用因此有了统一标准</td>
+</tr>
+</tbody>
+</table>
+<p>再按这四点组织答案，基本就稳了：</p>
+<ol>
+<li><strong>工具定义用 JSON schema</strong>，其中 <code>description</code> 是模型判断「该不该调、怎么调」的核心依据，写清楚才不会瞎猜；</li>
+<li><strong>运行时是「两轮对话 + 中间执行」的闭环</strong>：第一轮模型输出 <code>tool_calls</code>，宿主代码执行，第二轮 <code>role: &quot;tool&quot;</code> 回填后模型给出答案；</li>
+<li><strong><code>finish_reason</code> 为 <code>tool_calls</code></strong> 是模型明确表达「需要工具帮助」的信号；</li>
+<li><strong>一次可返回多个 <code>tool_calls</code></strong>，无依赖的工具并行执行，有依赖的分轮串行。</li>
+</ol>
+<p>再背熟那句分工原则——<strong>「模型只做决策、代码负责执行」</strong>，把职责边界讲清楚，是最能体现对机制理解深度的加分项。</p>
+<p><strong>追问预案</strong>：</p>
+<ul>
+<li>「<code>tool_choice</code> 的取值有什么区别？」——<code>auto</code> 让模型自由判断；<code>none</code> 禁止调用工具；<code>required</code> 强制本次必须调工具；指定某个函数名则强制调用那个工具。</li>
+<li>「Function Calling 和 ReAct 是什么关系？」——ReAct 是「思考 → 行动 → 观察」的循环范式，Function Calling 恰好是「行动」环节的标准实现：模型思考后输出结构化的调用请求（行动），执行结果回填（观察）。这也是为什么说<strong>工具调用是 Agent 的「手」</strong>——没有它，Agent 只会想、不会做。</li>
+<li>「工具执行出错怎么办？」——把错误信息以 <code>role: &quot;tool&quot;</code> 回填，模型能看到报错、调整参数重试或如实说明，不要直接中断流程。</li>
+</ul>
+<hr>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/1_function_calling.html">1. 什么是 Function Calling ？原理是什么？ | 小林面试笔记</a></li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/agent/6_three_patterns.html">6. ReAct、Plan-and-Execute、Reflection 三种范式有什么核心区别？ | 小林面试笔记</a>（相关：工具调用与 ReAct 的关系）</li>
+</ul>
+<blockquote>
+<p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Agent-Tool/" class="category-chain-item">Agent Tool</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Agent/" class="print-no-link">#Agent</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Agent Tool」什么是 Function Calling？原理是什么？</div>
+      <div>https://marisamagic.github.io/2026/08/17/20260817_FunctionCalling机制/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月17日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/08/17/20260817_LLM%E5%AD%A6%E4%BC%9A%E8%B0%83%E7%94%A8%E5%A4%96%E9%83%A8%E5%B7%A5%E5%85%B7/" title="「Agent Tool」LLM 如何学会调用外部工具？">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「Agent Tool」LLM 如何学会调用外部工具？</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/17/20260817_RAG%E7%9F%A5%E8%AF%86%E5%BA%93%E5%8A%A8%E6%80%81%E6%9B%B4%E6%96%B0/" title="「RAG」RAG 知识库如何实现动态与持续更新？">
+                        <span class="hidden-mobile">「RAG」RAG 知识库如何实现动态与持续更新？</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
