@@ -1,0 +1,841 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="MCP 定义（Anthropic 2024 年底推的开放协议，解决工具接入碎片化：一次实现到处复用，USB 类比）；三层组成——角色层（Host 是 AI 应用本身、Client 是 Host 内负责通信的模块、Server 是工具实现进程，一个 Host 连多个 Server）、能力层（Tools 有副作用需授权 &#x2F; Resources 只读 &#x2F; Prompts 提示词模板，金句「Tools 改">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Agent Tool」什么是 MCP？它由哪几部分组成？">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/18/20260818_MCP%E5%AE%9A%E4%B9%89%E4%B8%8E%E6%A0%B8%E5%BF%83%E7%BB%84%E6%88%90/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="MCP 定义（Anthropic 2024 年底推的开放协议，解决工具接入碎片化：一次实现到处复用，USB 类比）；三层组成——角色层（Host 是 AI 应用本身、Client 是 Host 内负责通信的模块、Server 是工具实现进程，一个 Host 连多个 Server）、能力层（Tools 有副作用需授权 &#x2F; Resources 只读 &#x2F; Prompts 提示词模板，金句「Tools 改">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/17/lho.jpg">
+<meta property="article:published_time" content="2026-08-18T15:00:02.572Z">
+<meta property="article:modified_time" content="2026-08-18T15:01:26.446Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/08/17/lho.jpg">
+  
+  
+  
+  <title>「Agent Tool」什么是 MCP？它由哪几部分组成？ - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/08/17/lho.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Agent Tool」什么是 MCP？它由哪几部分组成？"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-18 23:00" pubdate>
+          2026年8月18日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          21 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Agent Tool」什么是 MCP？它由哪几部分组成？</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<blockquote>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/4_what_is_mcp.html">4. 什么是 MCP（模型上下文协议）？讲讲它的核心内容？</a> 和 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/5_mcp_components.html">5. MCP 由哪几部分组成？</a>，用于记录与总结 AI Agent 工具调用相关的核心面试知识点。</p>
+</blockquote>
+<p>「<strong>什么是 MCP？它由哪几部分组成？</strong>」，可以这样作答：</p>
+<blockquote>
+<p>MCP（Model Context Protocol，模型上下文协议）是 Anthropic 在 2024 年底推出的<strong>开放协议</strong>，解决的核心问题是「模型接工具太碎片化」——在它出现之前，每接一个新工具都要单独写集成代码、处理认证、适配格式，而且这套代码和具体模型强绑定，换个模型就得重写。MCP 的思路是给「AI 接工具」定一套行业标准：工具方按协议实现一个 Server，任何支持 MCP 的 AI 客户端直接接入，<strong>一次实现、到处复用</strong>。</p>
+<p>MCP 由三层组成：<strong>角色层</strong>——Host 是 AI 应用本身，Client 是 Host 内负责与 Server 通信的模块，Server 是工具提供方实现的独立进程，一个 Host 可以同时连多个 Server；<strong>能力层</strong>——Server 能暴露三类东西：Tools（有副作用的操作）、Resources（只读数据）、Prompts（提示词模板）；<strong>协议层</strong>——消息格式统一用 JSON-RPC 2.0，传输方式支持 stdio（本地子进程）和 Streamable HTTP（远程）两种。</p>
+<p>要注意它和我们第 1 篇讲的 Function Calling 不是一个层面的东西：Function Calling 解决「模型怎么输出结构化的调用请求」，MCP 解决「工具怎么标准化接入」——一个管模型的「嘴」，一个管工具的「插座」，两者互补。</p>
+</blockquote>
+<p>如今 Claude Desktop、Cursor、Windsurf 等主流 AI 客户端都内置了 MCP 支持，GitHub、Slack、PostgreSQL、Google Maps 等头部工具均提供官方或社区的 MCP Server——在配置文件里加几行 JSON、重启，客户端就能自动发现并使用这些工具，基本零代码接入。这也是 MCP 生态能在短时间内快速铺开的原因。</p>
+<hr>
+<h2 id="1-为什么需要-MCP：接工具有多麻烦">1 为什么需要 MCP：接工具有多麻烦</h2>
+<p>先看没有 MCP 的日子里，给模型接一个工具是什么体验。想让它操作 GitHub，你得手写 GitHub API 的调用、处理认证、转换数据格式；想接 PostgreSQL，再来一套；模型升级、接口变了，对接代码跟着改；从 Claude Desktop 换到 Cursor，之前的对接代码全部重写。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1772114354922-0796d37a-4925-4146-a221-2b2606644e83.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="MCP 出现前工具接入碎片化：每个工具与模型像孤岛、逐个手写对接"></p>
+<p>接十个工具就是十套互不相通的对接代码，每个工具、每个模型都像一座孤岛。这套方案的毛病可以用三个词概括：<strong>碎片化</strong>（一套接一套不通用）、<strong>难复用</strong>（换个客户端就作废）、<strong>强绑定</strong>（和具体模型/客户端绑死）。</p>
+<hr>
+<h2 id="2-MCP-的核心思路：给「AI-接工具」定行业标准">2 MCP 的核心思路：给「AI 接工具」定行业标准</h2>
+<p>MCP 的思路一句话就能说清：<strong>把「接工具」这件事标准化</strong>。</p>
+<p>最贴切的类比是 USB。USB 出现前，每台外设都有自己的接口和驱动，插什么设备都要专门适配；USB 定义了统一接口后，任何设备「插上就能用」。MCP 对 AI 生态做的正是同一件事——工具提供方（比如 GitHub）按 MCP 规范实现一个 <strong>Server</strong>，把它能做的事声明出来；任何支持 MCP 的 AI 客户端（Claude Desktop、Cursor、各种 Agent 框架）都能直接连上这个 Server，自动发现它提供的能力。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1776865581325-6f27789d-c506-4089-91ca-78a2711e89da.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="USB 类比：MCP 为 AI 接工具定统一标准、一次实现到处复用"></p>
+<p>工具方实现一次，处处复用；客户端接入一次，处处可用。这就是 MCP 的核心价值。</p>
+<hr>
+<h2 id="3-先建立整体感：从三层看-MCP">3 先建立整体感：从三层看 MCP</h2>
+<p>MCP 的完整组成，站在三个层次看就清楚了：<strong>角色层</strong>回答「谁和谁通信」，<strong>能力层</strong>回答「Server 能暴露什么」，<strong>协议层</strong>回答「消息怎么传」。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/dee057939986ef96e8e4eb70c9729ec9.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="MCP 三层整体架构：角色层 / 能力层 / 协议层"></p>
+<p>下面逐层拆开。</p>
+<hr>
+<h2 id="4-第一层：角色架构-Host-Client-Server">4 第一层：角色架构 Host / Client / Server</h2>
+<p>角色层有三个角色，注意其中两个容易被忽略的那个：</p>
+<ul>
+<li><strong>Host（宿主）</strong>：AI 应用本身——Claude Desktop、Cursor 这类产品就是 Host；</li>
+<li><strong>Client（客户端模块）</strong>：Host 内部负责和 Server 通信的模块——它不是一个独立应用，而是 Host 里的一个组件；</li>
+<li><strong>Server（服务端）</strong>：工具提供方实现的独立进程——比如 GitHub 官方 Server，把「列出 PR」「创建 Issue」这些操作封装成可调用的能力。</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com//picgo/752bff50a9464fcf824e15d56acce903.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Host / Client / Server 角色关系：一个 Host 连多个 Server"></p>
+<p>三者是「宿主、司机、服务商」的关系，关键在一对多：<strong>一个 Host 可以同时连多个 Server</strong>。模型装上文件系统、GitHub、PostgreSQL 三个 Server，就同时拥有了三大类能力，工具之间还能互相配合。这也是 MCP 面试里最常见的雷区——很多人把它记成「Client + Server」二元结构，漏掉了 Host 这个「宿主应用」的角色。</p>
+<hr>
+<h2 id="5-第二层：能力类型-Tools-Resources-Prompts">5 第二层：能力类型 Tools / Resources / Prompts</h2>
+<p>Server 能暴露三类能力，这是 MCP 的核心抽象：</p>
+<ul>
+<li><strong>Tools（工具）</strong>：<strong>有副作用</strong>的操作——创建文件、提交代码、发 Slack 消息、调第三方 API。它会改变外部状态，所以通常需要用户授权才能调用；</li>
+<li><strong>Resources（资源）</strong>：<strong>只读</strong>数据——读日志、查数据库、取文档内容。没有副作用，像「工具的资料室」，可以相对宽松地暴露；</li>
+<li><strong>Prompts（提示词模板）</strong>：带参数占位符的<strong>预定义模板</strong>——比如一份「代码审查标准 prompt」接收「编程语言」「代码内容」两个参数，团队成员可以直接复用。</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com//picgo/image-20260310165427634.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Server 可暴露的三类能力：Tools / Resources / Prompts"></p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/7468938efafaaa259ef4d7a49b7972b0.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="三类能力本质区别对比"></p>
+<p>区分三者的核心判据是<strong>有没有副作用</strong>，一句话记住：<strong>Tools 改变世界，Resources 观察世界，Prompts 结构化表达</strong>。</p>
+<hr>
+<h2 id="6-第三层：协议层-JSON-RPC-2-0-传输方式">6 第三层：协议层 JSON-RPC 2.0 + 传输方式</h2>
+<p>角色和能力都有了，Server 和 Client 之间消息怎么传？协议层分两个独立部件：<strong>消息格式</strong>和<strong>传输方式</strong>。</p>
+<p><strong>消息格式用 JSON-RPC 2.0</strong>——一个轻量的远程调用协议，用 JSON 表达「调用」，易读易调、语言无关。Client 想了解 Server 有什么工具，发一条 <code>tools/list</code>；想调用某个工具，发一条 <code>tools/call</code>：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-comment">// Client 向 Server 查询工具列表</span><br><span class="hljs-punctuation">&#123;</span><span class="hljs-attr">&quot;jsonrpc&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;2.0&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;method&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;tools/list&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;params&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">&#125;</span><br><span class="hljs-comment">// Server 返回工具列表</span><br><span class="hljs-punctuation">&#123;</span><span class="hljs-attr">&quot;jsonrpc&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;2.0&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;result&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><span class="hljs-attr">&quot;tools&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-punctuation">&#123;</span><span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;read_file&quot;</span><span class="hljs-punctuation">,</span> ...<span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">]</span><span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">&#125;</span><br><span class="hljs-comment">// Client 请求调用某个工具</span><br><span class="hljs-punctuation">&#123;</span><span class="hljs-attr">&quot;jsonrpc&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;2.0&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;id&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">2</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;method&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;tools/call&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;params&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;read_file&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;arguments&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><span class="hljs-attr">&quot;path&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;/tmp/log.txt&quot;</span><span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">&#125;</span><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+<p><strong>传输方式两种</strong>：</p>
+<ul>
+<li><strong>stdio</strong>：本地子进程通信，通过 stdin/stdout 传消息，低延迟——Claude Desktop 在本地接入 Server 就用它；</li>
+<li><strong>Streamable HTTP</strong>：远程 HTTP 连接，Server 部署在服务器上，多个客户端可以共享。</li>
+</ul>
+<p>值得一提的演进：早期规范的 HTTP+SSE <strong>双端点</strong>方案，在 2025 年 3 月的规范更新里被标记为 deprecated，合并成<strong>单端点 <code>/mcp</code></strong> 的 Streamable HTTP——短请求返回普通 JSON，长请求升级为 SSE 流。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/99f2c64f85bd810e9fe3c877045994d3.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="stdio 与 Streamable HTTP 两种传输方式"></p>
+<p>把这两部分分开看才是协议层的精髓——<strong>消息格式和传输方式是解耦的</strong>：JSON-RPC 2.0 定义了消息长什么样，stdio / Streamable HTTP 定义了消息怎么传，两者互不依赖。想加一种新的传输方式，消息格式完全不用动，这也是 MCP 灵活性的来源。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/57ab5ced30bdc07b37a02d1088459a72.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="消息格式与传输方式解耦设计"></p>
+<hr>
+<h2 id="7-面试总结">7 面试总结</h2>
+<p>回答 MCP 相关面试题，先避开三个经典误区：</p>
+<table>
+<thead>
+<tr>
+<th>误区</th>
+<th>正解</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MCP 和 Function Calling 是一回事</td>
+<td>FC 管「模型怎么输出结构化调用请求」，MCP 管「工具怎么标准化接入」，不同层面、互补关系</td>
+</tr>
+<tr>
+<td>MCP 是 Anthropic 专属的</td>
+<td>它是开放协议，任何支持 MCP 的客户端都能接入</td>
+</tr>
+<tr>
+<td>MCP = Client + Server 二元结构、Server 的能力全是 Tools</td>
+<td>三层结构要讲全，Host 角色不能漏；能力分 Tools / Resources / Prompts，判据是有无副作用</td>
+</tr>
+</tbody>
+</table>
+<p>再按这张框架组织答案：</p>
+<table>
+<thead>
+<tr>
+<th>层次</th>
+<th>要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>定义</strong></td>
+<td>Anthropic 2024 年底推出的开放协议，解决工具接入碎片化，一次实现到处复用（USB 类比）</td>
+</tr>
+<tr>
+<td><strong>角色层</strong></td>
+<td>Host（应用本身）/ Client（通信模块）/ Server（工具实现），一个 Host 连多个 Server</td>
+</tr>
+<tr>
+<td><strong>能力层</strong></td>
+<td>Tools 有副作用需授权 / Resources 只读 / Prompts 模板，「改变世界、观察世界、结构化表达」</td>
+</tr>
+<tr>
+<td><strong>协议层</strong></td>
+<td>JSON-RPC 2.0 统一消息格式 + stdio / Streamable HTTP 两种传输，格式与传输解耦</td>
+</tr>
+<tr>
+<td><strong>加分项</strong></td>
+<td>生态快的原因：实现门槛极低 + 头部工具第一时间跟进，形成正向循环</td>
+</tr>
+</tbody>
+</table>
+<p><strong>追问预案</strong>：</p>
+<ul>
+<li>「MCP 和 Function Calling 是什么关系？」——不同层面：Function Calling 是模型侧的输出契约（输出结构化的 tool_calls JSON），MCP 是工具侧的接入标准；两者互补——MCP Server 暴露的能力，最终也是以「工具」的形式被模型调用（详见第 1 篇）。</li>
+<li>「Host 和 Client 怎么区分？」——Host 是应用本身，Client 是 Host 里负责和 Server 通信的模块；一个 Host 内可以跑多个 Client、连多个 Server，这是一对多的核心设计。</li>
+<li>「Tools 和 Resources 的本质差异？」——有没有副作用：Tools 改变外部状态、需要授权；Resources 只读、可以宽松暴露。</li>
+<li>「为什么 Streamable HTTP 取代了双端点方案？」——一个端点更简单，短请求返回普通 JSON、长请求升级 SSE 流，两种模式一个端点点搞定。</li>
+<li>「MCP 生态为什么发展这么快？」——实现门槛极低（开源规范 + Python/TypeScript SDK，最简 Server 不到 30 行代码）+ GitHub、Slack 等头部工具第一时间跟进，配置几行 JSON 就能用，形成正向循环。</li>
+</ul>
+<hr>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/4_what_is_mcp.html">4. 什么是 MCP（模型上下文协议）？讲讲它的核心内容？ | 小林面试笔记</a></li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/5_mcp_components.html">5. MCP 由哪几部分组成？ | 小林面试笔记</a></li>
+</ul>
+<blockquote>
+<p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Agent-Tool/" class="category-chain-item">Agent Tool</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Agent/" class="print-no-link">#Agent</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Agent Tool」什么是 MCP？它由哪几部分组成？</div>
+      <div>https://marisamagic.github.io/2026/08/18/20260818_MCP定义与核心组成/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月18日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/08/18/20260818_MCP%E4%B8%8EFunctionCalling%E5%8C%BA%E5%88%AB/" title="「Agent Tool」MCP 和 Function Calling 有什么区别？有没有实际跑过 MCP？">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「Agent Tool」MCP 和 Function Calling 有什么区别？有没有实际跑过 MCP？</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/17/20260817_LLM%E5%AD%A6%E4%BC%9A%E8%B0%83%E7%94%A8%E5%A4%96%E9%83%A8%E5%B7%A5%E5%85%B7/" title="「Agent Tool」LLM 如何学会调用外部工具？">
+                        <span class="hidden-mobile">「Agent Tool」LLM 如何学会调用外部工具？</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
