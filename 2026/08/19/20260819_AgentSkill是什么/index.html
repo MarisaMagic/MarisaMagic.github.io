@@ -1,0 +1,834 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Agent Skill 是把「指令、脚本、模板」一体化打包成可复用能力包的机制，关键在于 Agent 能自动发现、按需加载、需要时调用；一个 Skill 是一个文件夹，核心是 SKILL.md（frontmatter 声明 name&#x2F;description + Markdown 正文指令），可选 scripts&#x2F;references&#x2F;assets 资源；渐进式加载（Progressive Disc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Agent Tool」Skill 是什么？">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/19/20260819_AgentSkill%E6%98%AF%E4%BB%80%E4%B9%88/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="Agent Skill 是把「指令、脚本、模板」一体化打包成可复用能力包的机制，关键在于 Agent 能自动发现、按需加载、需要时调用；一个 Skill 是一个文件夹，核心是 SKILL.md（frontmatter 声明 name&#x2F;description + Markdown 正文指令），可选 scripts&#x2F;references&#x2F;assets 资源；渐进式加载（Progressive Disc">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/17/lho.jpg">
+<meta property="article:published_time" content="2026-08-19T05:52:51.360Z">
+<meta property="article:modified_time" content="2026-08-19T05:52:51.360Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/08/17/lho.jpg">
+  
+  
+  
+  <title>「Agent Tool」Skill 是什么？ - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/08/17/lho.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Agent Tool」Skill 是什么？"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-19 13:52" pubdate>
+          2026年8月19日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          28 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Agent Tool」Skill 是什么？</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<blockquote>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/9_skill.html">9. Skill 是什么？</a>，用于记录与总结 AI Agent 工具调用相关的核心面试知识点。</p>
+</blockquote>
+<p>「<strong>Skill 是什么？</strong>」，可以这样作答：</p>
+<blockquote>
+<p>Agent Skill 是把「<strong>指令、脚本、模板</strong>」一体化打包成可复用能力包的机制，关键在于三件事：<strong>Agent 能自动发现它、按需加载它、在需要时调用里面的脚本和资源</strong>。它不只是「存 prompt」，而是一份 Agent 能自己翻阅的「操作手册 + 工具箱」。每个 Skill 是一个文件夹，里面最核心的是一份 <code>SKILL.md</code> 指令文件，还可以带上脚本、模板、参考文档这些资源。</p>
+<p>它和普通 prompt 最大的区别是：Skill 能被 Agent <strong>自动发现和按需加载</strong>，不用你每次手动输入；和 MCP 工具的区别是：MCP 给 Agent 提供外部工具和数据的<strong>访问能力</strong>，而 Skill 教 Agent 拿到这些工具和数据之后<strong>该怎么用</strong>。</p>
+<p>Anthropic 在 2025 年 10 月推出了 Agent Skills，同年 12 月把规范作为<strong>开放标准</strong>发布出来，允许其他 Agent 平台按照这套格式来兼容 Skills 生态。</p>
+</blockquote>
+<p>如今 Claude Code、Claude API、<a target="_blank" rel="noopener" href="http://claude.ai">claude.ai</a> 三个入口都原生支持 Agent Skills——在代码仓库里放一个文件夹、写一份 <code>SKILL.md</code>，Agent 就能自动发现并按需调用；GitHub、Slack 等上游流程，以及社区里其他 Agent 平台的兼容实现，也都在向这套格式靠拢。这种「把反复使用的流程沉淀成 Agent 能自己执行的能力」的做法，正在成为 Agent 工程里的标配。</p>
+<hr>
+<h2 id="1-为什么需要-Skill：从「重复贴-prompt」的痛点说起">1 为什么需要 Skill：从「重复贴 prompt」的痛点说起</h2>
+<p>你一定遇到过这种情况：每次让 AI 帮你做代码审查，都要贴一大段指令，告诉它「检查这几类问题、用这种格式输出、重点关注安全漏洞」。第一次贴还好，第二次、第三次就开始烦了——每次新对话都要从头贴一遍，漏掉某个细节，输出质量就不稳定。</p>
+<p>这还只是一个人的情况。如果是团队协作呢？十个人做代码审查，每个人贴的 prompt 都不一样：有的人关注安全，有的人关注性能，审查标准完全没法统一。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/d7f6da7796c85510de4103fac8f5fce1.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="重复贴 prompt 的痛点：个人每次新对话从头贴，团队各自标准不一"></p>
+<p>你可能会想：把 prompt 写到一个共享文档里让大家复制不就行了？但这本质上还是靠<strong>人工</strong>去维护和执行——版本一多就容易乱，文档更新了、有人还在用旧版的 prompt，质量把控根本做不到。</p>
+<p>Skill 要解决的就是这个问题：把反复在用的指令、流程、模板，打包成一个<strong>标准化的模块</strong>，Agent 自己知道什么时候该用它、怎么用它，不再依赖你手动复制粘贴。</p>
+<hr>
+<h2 id="2-Skill-的结构：一个文件夹-一份-SKILL-md">2 Skill 的结构：一个文件夹 + 一份 <a target="_blank" rel="noopener" href="http://SKILL.md">SKILL.md</a></h2>
+<p>一个 Skill 说白了就是一个文件夹，里面最核心的是一份叫 <code>SKILL.md</code> 的文件，再加上一些可选的辅助资源，结构很直观：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs text">code-review/                  # Skill 文件夹，名字就是这个 Skill 的标识<br>├── SKILL.md                  # 核心指令文件（必须有）<br>├── scripts/                  # 可选：可执行的脚本<br>│   └── check_security.py     # 比如一个安全检查脚本<br>├── references/               # 可选：参考文档<br>│   └── review_standards.md   # 比如团队的审查标准文档<br>└── assets/                   # 可选：模板、资源文件<br>    └── report_template.md    # 比如审查报告的输出模板<br></code></pre></td></tr></table></figure>
+<p><img src="https://cdn.xiaolincoding.com//picgo/ad6768a16c65066060d5e3a00794c128.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Skill 文件夹结构：SKILL.md 为核心，scripts/references/assets 为可选资源"></p>
+<p><code>SKILL.md</code> 的内容分两部分：顶部是一段 YAML 格式的元数据（frontmatter），声明这个 Skill 的名字和一句话描述；下面是正文，用 Markdown 写具体的指令和步骤。看一个实际的例子：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-meta">---</span><br><span class="hljs-attr">name:</span> <span class="hljs-string">code-review</span><br><span class="hljs-attr">description:</span> <span class="hljs-string">&quot;对代码进行全面审查，检查 bug、安全漏洞和性能问题，输出结构化审查报告&quot;</span><br><span class="hljs-meta">---</span><br><span class="hljs-comment"># 代码审查 Skill</span><br><span class="hljs-comment">## 指令</span><br><span class="hljs-comment">### 第一步：理解代码上下文</span><br><span class="hljs-string">阅读提交的代码，理解它的功能和所属模块，确认修改范围。</span><br><span class="hljs-comment">### 第二步：逐项检查</span><br><span class="hljs-string">按以下维度逐一检查：</span><br><span class="hljs-number">1</span><span class="hljs-string">.</span> <span class="hljs-string">功能正确性：逻辑是否有</span> <span class="hljs-string">bug，边界条件是否处理了</span><br><span class="hljs-number">2</span><span class="hljs-string">.</span> <span class="hljs-string">安全性：是否有注入、XSS、权限绕过等漏洞</span><br><span class="hljs-number">3</span><span class="hljs-string">.</span> <span class="hljs-string">性能：是否有</span> <span class="hljs-string">N+1</span> <span class="hljs-string">查询、不必要的循环、内存泄漏风险</span><br><span class="hljs-number">4</span><span class="hljs-string">.</span> <span class="hljs-string">可读性：命名是否清晰，关键逻辑是否有注释</span><br><span class="hljs-comment">### 第三步：输出报告</span><br><span class="hljs-string">使用</span> <span class="hljs-string">assets/report_template.md</span> <span class="hljs-string">的模板格式，输出结构化的审查报告。</span><br></code></pre></td></tr></table></figure>
+<p>你会发现，这和普通 prompt 的区别很明显：普通 prompt 只是一段文字，用完就没了；而 Skill 是一个<strong>完整的文件夹</strong>，里面的指令、脚本、模板可以持续维护、版本管理，团队里所有人用的都是同一份。</p>
+<hr>
+<h2 id="3-渐进式加载：Skill-最聪明的设计">3 渐进式加载：Skill 最聪明的设计</h2>
+<p>Skill 最让人眼前一亮的，不是「能打包」这件事本身，而是它的<strong>加载方式</strong>。</p>
+<p>你可能会想：既然 Skill 能打包那么多东西，Agent 启动时是不是要把所有 Skill 全部读进来？来算一笔账：假设你有 20 个 Skill，每个的指令加参考文档平均 2000 token，全部加载就是 4 万 token 打底。现在常见的模型上下文窗口是 20 万 token，光 Skill 就吃掉五分之一，剩下的要分给系统提示、对话历史、用户文件——留给模型真正思考的空间就紧张了。更糟的是，这 20 个 Skill 里大部分在当次任务里根本用不上，加载了也是白加载。</p>
+<p>所以 Skill 用了一套叫「<strong>渐进式加载</strong>」（Progressive Disclosure）的三层机制：</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/image-20260410193804617.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="渐进式加载三层机制：只看简历 → 按需加载指令 → 需要时再取资源"></p>
+<ul>
+<li><strong>第一层是「只看简历」</strong>。Agent 启动时只加载每个 Skill 的 <code>name</code> 和 <code>description</code> 两个字段，每个大约只占 30 到 50 个 token。就像面前摆了 20 份简历，每份只看名字和一句话介绍，几秒钟扫完，心里有数「我手上有哪些能力可以用」；</li>
+<li><strong>第二层是「翻开详细资料」</strong>。用户提了任务，Agent 判断「这个任务跟 code-review 相关」，才把它的 <code>SKILL.md</code> 正文完整加载进来，读取详细指令。不相关的 Skill 始终不会被加载，不浪费一个 token；</li>
+<li><strong>第三层是「需要时再取」</strong>。执行过程中，如果指令里提到「使用 assets/report_template.md 的模板」，Agent 才在那个时刻去读取模板文件。参考文档、脚本这些辅助资源同理，用到时才加载。</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com//picgo/36d4f2f4abc0bc8370f8109c3b1df7ff.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="入职手册类比：先扫目录，报销时再翻报销流程那章"></p>
+<p>这个设计用一个类比就很好理解：Skill 就像公司给新员工准备的<strong>入职手册</strong>。你入职第一天不会把整本手册从头看完，而是先扫一眼目录，知道里面有「报销流程」「请假制度」「代码规范」这些章节就行了；等真的要报销了，再翻开「报销流程」那一章仔细看。既不会信息过载，又确保需要的时候找得到。</p>
+<p>为什么这个设计这么重要？因为 <strong>context window 是 Agent 最宝贵的资源</strong>。如果把所有 Skill 的全部内容一股脑塞进去，真正有用的用户任务信息反而会被淹没，Agent 的注意力被分散，输出质量反而下降。渐进式加载的本质就是「<strong>让 Agent 只在需要的时候获取需要的知识</strong>」——这和人类的工作方式其实是一样的。</p>
+<hr>
+<h2 id="4-厘清关系：Skill-Tool-Prompt-Slash-Command">4 厘清关系：Skill / Tool / Prompt / Slash Command</h2>
+<p>Skill 经常和几个概念混淆，但它们处于完全不同的层次。最重要的区分是 <strong>Tool（含 MCP 工具）和 Skill 的区别</strong>：</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/image-20260410194032993.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Tool / Skill / Prompt 三者关系：Tool 提供能力，Skill 提供知识与流程，Prompt 是一次性指令"></p>
+<p>你可以把 Tool（包括 MCP 工具）想象成公司给员工配的<strong>电脑、软件和数据库访问权限</strong>。有了 Tool，Agent 就能「做事」——查数据库、调 API、读写文件。但光有工具不够：你给新人配了电脑和全部系统权限，他也不知道该按什么流程做代码审查，不知道先查什么、后查什么、用什么格式输出报告。</p>
+<p>Skill 就是那份「<strong>操作手册</strong>」和「<strong>SOP 流程</strong>」：教 Agent 拿到工具之后，该按什么步骤、什么标准、什么格式完成一个具体的工作流。所以 Tool 和 Skill 是<strong>互补</strong>关系——Tool 提供能力，Skill 提供知识和流程。</p>
+<p>那 Prompt 呢？Prompt 就像你口头跟员工说的一句指令：「帮我看看这段代码有没有问题」。这句话说完就没了，下次还得再说一遍。<strong>Prompt 是一次性的、临时的，Skill 是持久化的、可复用的</strong>。</p>
+<p>还有一个容易搞混的是 Slash Command（斜杠命令）：</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/8df9a218955f003ffac5168bc9b657b5.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Skill vs Slash Command：一个自动发现，一个手动触发"></p>
+<p>Slash Command 也是把指令保存下来复用，但它必须由你<strong>手动触发</strong>——比如输入 <code>/code-review</code> 才能调用。而 Skill 可以被 Agent <strong>自动发现和调用</strong>：Agent 看到任务后自己判断「这个任务需要用 code-review Skill」，然后主动加载、执行，不需要你告诉它该用哪个。这个「自动发现」的能力，就是 Skill 比 Slash Command 更进一步的地方。</p>
+<hr>
+<h2 id="5-从-Anthropic-走向开放标准">5 从 Anthropic 走向开放标准</h2>
+<p>Agent Skills 最早是 Anthropic 在 <strong>2025 年 10 月</strong>推出的，一开始只在 Claude 自家生态里用，覆盖 Claude Code、Claude API、<a target="_blank" rel="noopener" href="http://claude.ai">claude.ai</a> 三个入口。推出两个月后，Anthropic 做了一个很聪明的决定：在 <strong>2025 年 12 月</strong>把 Agent Skills 的规范作为<strong>开放标准</strong>发布出来，任何想做 Agent 平台的团队都可以按这个规范实现自己的 Skills 支持。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/4b79a24877f1313227013c4e92204e2f.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Agent Skills 发展：2025 年 10 月推出，12 月发布为开放标准"></p>
+<p>为什么敢开放？核心原因是 Skills 的<strong>设计足够简单</strong>：一个 Skill 就是一个文件夹加一份 Markdown 文件，不需要安装特殊的运行时、不需要学新的编程语言，任何支持文件系统的 Agent 平台理论上都能实现这套格式。这种「零门槛」的设计，让它有希望成为跨平台的通用约定。</p>
+<p>开放成标准有什么好处？好处是<strong>你写一份 Skill，未来有机会在不同 Agent 平台之间复用</strong>，而不是被某一家产品绑死。这就像 USB 接口：买一根 USB-C 数据线，手机能用、电脑也能用，不用每个设备买一根专用线。Anthropic 想做的就是让 Agent Skills 朝这个方向发展——虽然现在主要还是 Claude 生态在用，但社区已有项目开始探索在其他 Agent 平台上兼容这个格式，后续能走多远还要看行业的采纳情况。</p>
+<hr>
+<h2 id="6-面试总结">6 面试总结</h2>
+<p>回答这道题，最常见的误区就是<strong>把 Skill 等同于「保存好的 prompt」</strong>。先避开几个雷：</p>
+<table>
+<thead>
+<tr>
+<th>误区</th>
+<th>正解</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Skill 就是「保存 prompt」、复制粘贴升级版</td>
+<td>Skill 是包含指令、脚本、模板的可复用能力模块，Agent 能自动发现、按需加载、需要时调用</td>
+</tr>
+<tr>
+<td>Skill 和 MCP 工具是一回事</td>
+<td>Tool/MCP 提供外部工具和数据访问能力，Skill 提供用这些工具完成任务的知识和流程，两者互补</td>
+</tr>
+<tr>
+<td>Skill 就是 Slash Command</td>
+<td>Slash Command 要手动触发，Skill 能被 Agent 自动发现并主动加载执行</td>
+</tr>
+<tr>
+<td>Skill 越多越好、全量加载</td>
+<td>有渐进式加载：默认只读 name/description，相关时才读全文，不浪费 context</td>
+</tr>
+</tbody>
+</table>
+<p>再按这张框架组织答案：</p>
+<table>
+<thead>
+<tr>
+<th>框架</th>
+<th>要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>本质</strong></td>
+<td>「指令 + 脚本 + 模板」打包成可复用能力模块；一个文件夹 + 一份 <code>SKILL.md</code>（frontmatter 声明 name/description + Markdown 正文指令），可选 scripts/references/assets</td>
+</tr>
+<tr>
+<td><strong>渐进式加载</strong></td>
+<td>三层机制：只看简历（name/description，30-50 token）→ 按需加载（任务相关才读 <a target="_blank" rel="noopener" href="http://SKILL.md">SKILL.md</a>）→ 需要时再取（用到才读模板/脚本）；入职手册类比，本质是守护 context window</td>
+</tr>
+<tr>
+<td><strong>概念区分</strong></td>
+<td>Tool/MCP 提供能力，Skill 提供知识与流程，互补；Prompt 一次性临时指令；Slash Command 手动触发 vs Skill 自动发现</td>
+</tr>
+<tr>
+<td><strong>开放标准</strong></td>
+<td>Anthropic 2025 年 10 月推出 Agent Skills，12 月开源为开放标准；零门槛设计（文件夹 + Markdown），USB 类比，目标跨平台复用</td>
+</tr>
+</tbody>
+</table>
+<p><strong>追问预案</strong>：</p>
+<ul>
+<li>「Skill 和普通 prompt 的区别？」——普通 prompt 是一段用完即弃的文字；Skill 是完整的模块（指令 + 脚本 + 模板），可持续维护、版本管理、团队共享，且能被 Agent 自动发现和按需加载。</li>
+<li>「Skill 全部加载会不会撑爆 context？」——不会。渐进式加载三层机制把每个 Skill 的常态开销压到 30-50 token（只有 name 和 description），只有任务相关时才加载 <code>SKILL.md</code> 全文、用到时才取模板和脚本（加载机制的类比：入职手册先扫目录、用的时候再翻对应章节）。</li>
+<li>「Skill 和 MCP 是什么关系？」——互补。MCP 给 Agent 外部工具与数据的访问能力（电脑和数据库权限），Skill 教 Agent 拿到能力后按什么流程、什么标准完成任务（操作手册/SOP）。</li>
+<li>「为什么 Agent Skills 能成为开放标准？」——零门槛：一个文件夹加一份 Markdown，不需要运行时和编程语言，任何支持文件系统的 Agent 平台都能实现，因此有跨平台复用的潜力（USB 类比）。</li>
+<li>「Slash Command 和 Skill 怎么区分？」——Slash Command 保存指令但必须手动输入触发；Skill 的核心是自动发现，Agent 自己判断任务匹配哪个 Skill 并主动加载执行。</li>
+</ul>
+<hr>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/9_skill.html">9. Skill 是什么？ | 小林面试笔记</a></li>
+</ul>
+<blockquote>
+<p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Agent-Tool/" class="category-chain-item">Agent Tool</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Agent/" class="print-no-link">#Agent</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Agent Tool」Skill 是什么？</div>
+      <div>https://marisamagic.github.io/2026/08/19/20260819_AgentSkill是什么/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月19日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/08/19/20260819_MCP%E4%B8%8EAgentSkill%E5%8C%BA%E5%88%AB/" title="「Agent Tool」MCP 和 Agent Skill 的区别是什么？">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「Agent Tool」MCP 和 Agent Skill 的区别是什么？</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/19/20260819_FC%E4%B8%8EMCP%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF/" title="「Agent Tool」Function Calling 也属于工具调用，请问什么场景下使用 Function Calling，什么场景下使用 MCP？">
+                        <span class="hidden-mobile">「Agent Tool」Function Calling 也属于工具调用，请问什么场景下使用 Function Calling，什么场景下使用 MCP？</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

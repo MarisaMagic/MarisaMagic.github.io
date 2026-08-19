@@ -1,0 +1,840 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="FC 与 MCP 的选型不是看单一指标（规模&#x2F;数量），而是多维判断：FC 适合「只用自己、只用一次、不需要复用」——快速原型 Demo、工具只服务单一应用、需要精细控制执行逻辑（权限校验&#x2F;链路追踪）、Serverless 等受限环境不能启动子进程；MCP 适合跨项目&#x2F;跨团队复用（同一套 GitHub 操作三处共用）、社区已有现成 Server（配置几行 JSON 即用，不重复造轮子）、工具规模上来">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Agent Tool」Function Calling 也属于工具调用，请问什么场景下使用 Function Calling，什么场景下使用 MCP？">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/19/20260819_FC%E4%B8%8EMCP%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="FC 与 MCP 的选型不是看单一指标（规模&#x2F;数量），而是多维判断：FC 适合「只用自己、只用一次、不需要复用」——快速原型 Demo、工具只服务单一应用、需要精细控制执行逻辑（权限校验&#x2F;链路追踪）、Serverless 等受限环境不能启动子进程；MCP 适合跨项目&#x2F;跨团队复用（同一套 GitHub 操作三处共用）、社区已有现成 Server（配置几行 JSON 即用，不重复造轮子）、工具规模上来">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/17/lho.jpg">
+<meta property="article:published_time" content="2026-08-19T05:46:29.404Z">
+<meta property="article:modified_time" content="2026-08-19T05:46:29.404Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/08/17/lho.jpg">
+  
+  
+  
+  <title>「Agent Tool」Function Calling 也属于工具调用，请问什么场景下使用 Function Calling，什么场景下使用 MCP？ - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/08/17/lho.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Agent Tool」Function Calling 也属于工具调用，请问什么场景下使用 Function Calling，什么场景下使用 MCP？"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-19 13:46" pubdate>
+          2026年8月19日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          28 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Agent Tool」Function Calling 也属于工具调用，请问什么场景下使用 Function Calling，什么场景下使用 MCP？</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<blockquote>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/7_fc_vs_mcp_usage.html">7. Function Calling 也属于工具调用，请问什么场景下使用 Function Calling，什么场景下使用 MCP？</a>，用于记录与总结 AI Agent 工具调用相关的核心面试知识点。</p>
+</blockquote>
+<p>「<strong>Function Calling 也属于工具调用，请问什么场景下使用 Function Calling，什么场景下使用 MCP？</strong>」，可以这样作答：</p>
+<blockquote>
+<p>场景选型不是一刀切，判断的核心问题只有一个：<strong>这个工具会不会在这个应用之外被用到？</strong> 会的话，封装成 MCP Server 是更长远的选择。</p>
+<p>Function Calling 适合「<strong>只用自己、只用一次、不需要复用</strong>」的场景，主要有四类：<strong>快速原型和 Demo</strong>（直接在代码里定义 schema，不用起进程、不用配置）；<strong>工具只为单一应用服务</strong>（比如查本公司私有数据库的内部接口，永远不会被其他地方用到）；<strong>需要对执行逻辑做精细控制</strong>（权限校验、参数二次处理、错误处理、链路追踪直接嵌在调用代码里）；<strong>部署环境受限</strong>（Serverless 等平台不允许启动子进程，stdio 模式的 MCP 没法用，只能退回 Function Calling）。</p>
+<p>MCP 适合这四类场景：<strong>跨项目或跨团队复用</strong>（同一套 GitHub 操作，Claude Desktop、同事的 Cursor、团队的 CI/CD Agent 都要用，Server 维护一次、所有客户端受益）；<strong>社区已有现成 Server</strong>（GitHub、Slack、PostgreSQL、Puppeteer、Google Maps 都有经过测试的官方或社区 Server，配置几行 JSON 即用，不用重复造轮子）；<strong>工具规模起来了</strong>（没有具体数字门槛，而是由数量、复杂度、团队规模、变更频率综合判断——schema 散落各处、改接口要连坐多处的维护泥潭）；<strong>构建 Agent 系统</strong>（工具来源多而杂，MCP 让工具按需连 Server、来源模块化，Agent 核心逻辑与工具管理解耦）。</p>
+<p>实用的判断顺序：先看社区有没有现成 Server → 再看有没有跨项目复用需求 → 综合看工具规模 → 考虑是不是正式 Agent 系统 → 最后检查部署环境。总结一句话：<strong>「只用自己、只用一次、不需要复用」才适合 Function Calling，其他情况优先考虑 MCP</strong>。两者不是竞争关系，MCP 底层本来就是靠 Function Calling 驱动的，选型取决于工程需求，而不是技术层面的优劣。</p>
+</blockquote>
+<p>如今主流 AI 客户端都内置了 MCP 支持，GitHub、Slack、PostgreSQL、Puppeteer、Google Maps 等高频工具均有官方或社区 MCP Server，配置文件加几行 JSON、重启即零代码接入；而在快速原型、内部私有工具、Serverless 函数这类轻量场景里，业界普遍还是直接写 Function Calling——两条路线在真实产品里各据主场，这正说明选型要看工程场景而非技术本身。</p>
+<hr>
+<h2 id="1-先建立一个直觉：内嵌-vs-独立">1 先建立一个直觉：内嵌 vs 独立</h2>
+<p>为什么会有「什么时候用哪个」的问题？因为 Function Calling 和 MCP 的工具在<strong>存在方式</strong>上有本质区别。</p>
+<p>Function Calling 的工具是「<strong>内嵌</strong>」在应用代码里的：工具定义（schema）和调用逻辑都直接写在你的项目代码中，工具和应用绑在一起，应用换了、代码就要跟着重写一遍。</p>
+<p>MCP 的工具是「<strong>独立</strong>」的：封装成一个独立运行的进程，对外暴露标准接口，任何支持 MCP 的 AI 客户端都能连上来直接用。工具的生命周期和应用解耦，可以独立部署、独立维护、<strong>一次实现、到处复用</strong>。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/0f122fd33a783318c748298f9162df9e.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Function Calling 工具内嵌在应用代码里，MCP 工具是独立进程、可多客户端复用"></p>
+<p>这个「内嵌 vs 独立」的本质区别，直接决定了两者各自适合的场景——内嵌的代价是换应用要重写，好处是轻；独立的代价是要起一个进程，好处是可复用、可共享。</p>
+<hr>
+<h2 id="2-Function-Calling-的适用场景：轻量、临时、不需要复用">2 Function Calling 的适用场景：轻量、临时、不需要复用</h2>
+<p>什么时候用 Function Calling 就够了？一句话：<strong>「轻量、临时、不需要复用」的场景</strong>。具体展开是四种情况。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/0129dc9c120fd15875f855c89e3f293d.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Function Calling 适用场景：快速原型、单一应用、精细控制、部署受限"></p>
+<p><strong>第一种，做快速原型和 Demo</strong>。目标是跑通一个想法或做演示，直接在代码里定义 schema 和调用逻辑就行，不需要启动任何额外进程、不需要额外配置。这种场景上 MCP 完全没必要——你花在搭 Server 上的时间，可能超过原型本身的价值。</p>
+<p><strong>第二种，工具只为这一个应用服务</strong>。假设你在做一个内部工具，里面有一个查本公司私有数据库的接口，这个接口绝不会被任何其他地方用到，那用 Function Calling 把逻辑直接写在项目里反而更清晰——何必额外维护一个独立的 MCP Server 进程呢？</p>
+<p><strong>第三种，需要对工具的执行逻辑做精细控制</strong>。Function Calling 的调用逻辑完全在你的代码里，想加权限校验、参数二次处理、特殊错误处理、调用链路追踪，都可以直接嵌进去；MCP Server 是独立进程，这类定制逻辑要跨进程传递或约定，远不如写在调用代码里方便。</p>
+<p><strong>第四种，部署环境受限</strong>。某些受限的云环境或 Serverless 平台不允许启动子进程，stdio 模式的 MCP Server 根本没法用。这种情况只能退回 Function Calling，工具逻辑都写在主进程里反而最稳妥。</p>
+<hr>
+<h2 id="3-MCP-的适用场景：会被反复使用的工具，都值得封装">3 MCP 的适用场景：会被反复使用的工具，都值得封装</h2>
+<p>那什么时候该上 MCP？概括成一句话：<strong>只要工具不是「自己用、用一次就扔」，MCP 基本都值得考虑</strong>。具体四类场景。</p>
+<h3 id="核心场景：工具要跨项目或跨团队复用">核心场景：工具要跨项目或跨团队复用</h3>
+<p>想一个画面：同一套 GitHub 操作工具，你自己的 Claude Desktop 要用、同事的 Cursor 要用、团队的 CI/CD Agent 也要用。如果用 Function Calling，意味着三处各维护一份 schema 和调用代码，工具接口一变就要同步改三处，漏改一处就出 bug。</p>
+<p>MCP 的做法优雅得多：工具封装成独立 Server，任何人在配置文件里加几行就能接进来，维护责任集中在 Server 那一侧，<strong>所有客户端自动受益</strong>。</p>
+<h3 id="最务实的理由：社区已经有现成的-MCP-Server">最务实的理由：社区已经有现成的 MCP Server</h3>
+<p>GitHub、Slack、PostgreSQL、Puppeteer、Google Maps 这类高频工具，都有经过测试、文档完整的官方或社区 MCP Server。你不需要自己写一遍，直接配置就能用：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-comment">// 在 claude_desktop_config.json 里加几行，一行工具代码都不用写</span><br><span class="hljs-punctuation">&#123;</span><br>  <span class="hljs-attr">&quot;mcpServers&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>    <span class="hljs-attr">&quot;github&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">&#123;</span><br>      <span class="hljs-attr">&quot;command&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;npx&quot;</span><span class="hljs-punctuation">,</span><br>      <span class="hljs-attr">&quot;args&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-string">&quot;-y&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-string">&quot;@modelcontextprotocol/server-github&quot;</span><span class="hljs-punctuation">]</span><br>    <span class="hljs-punctuation">&#125;</span><br>  <span class="hljs-punctuation">&#125;</span><br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+<p><img src="https://cdn.xiaolincoding.com//picgo/99b63c9597a3204f6261a853f592084b.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="社区现成 MCP Server：配置文件加几行 JSON 即用，无需手写对接代码"></p>
+<p>这种情况下还用 Function Calling 手写 GitHub API 的调用代码，那就是<strong>重复造轮子</strong>，完全没必要。</p>
+<h3 id="工具规模起来后，管理优势就明显了">工具规模起来后，管理优势就明显了</h3>
+<p>注意，这里不想给一个绝对的数字门槛（比如「超过 3 个就要上 MCP」），实际判断要综合几个维度：<strong>工具的复杂度</strong>（每个工具的 schema 和调用逻辑是几行还是几十行）、<strong>团队规模</strong>（一个人维护还是多人协作）、<strong>变更频率</strong>（工具接口经常改还是基本稳定）。</p>
+<p>如果你的工具平均复杂度不低、团队好几个人都在碰这些代码、接口还时不时调整，那就算只有 5 个工具，也很快会把你拖进维护泥潭；反过来，两个极其简单、几乎不动的工具，没必要为它们引入一套独立 Server。</p>
+<p>为什么工具多了 Function Calling 就难维护？因为 schema 定义和调用逻辑会<strong>散落在代码各处</strong>：新加工具要改应用代码，工具有 bug 也要进应用代码改，出问题时定位链路很长。MCP 的<strong>自动发现</strong>机制正好解决这个问题：主程序不感知具体工具、只连 Server，新增工具只需在 Server 里加实现，主程序完全不用动。</p>
+<h3 id="构建-Agent-系统：MCP-几乎是必选项">构建 Agent 系统：MCP 几乎是必选项</h3>
+<p>Agent 系统的工具需求往往多样、来源复杂，可能同时需要代码执行、文件系统、数据库、外部 API 等各类工具。全靠 Function Calling 的话，工具 schema 会成为 Agent 代码里<strong>最难维护的部分</strong>。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/3bcb1e4495c495d878e6cf4e73960a03.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Agent 按需连接多个 MCP Server：工具来源模块化，核心逻辑与工具管理解耦"></p>
+<p>MCP 让 Agent 可以按需连不同的 Server，工具来源模块化，Agent 的核心逻辑和工具管理完全解耦，架构干净很多。</p>
+<hr>
+<h2 id="4-一个实用的判断方法">4 一个实用的判断方法</h2>
+<p>碰到「用 Function Calling 还是 MCP」这个选择题，其实不需要纠结太久，<strong>按几个问题依次过一遍</strong>就清楚了。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/d08bdd63e8aa878840b4d0cb786a9bd4.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="选型决策流程：社区现成 Server → 复用需求 → 工具规模 → 是否 Agent → 部署环境"></p>
+<p><strong>第一问，社区有没有现成的 MCP Server？</strong> 有的话直接用，不要重复造轮子，这是最省事的路径。</p>
+<p><strong>第二问，这个工具需不需要在多个项目或多人之间复用？</strong> 需要就选 MCP，一次封装、到处使用。</p>
+<p><strong>第三问，工具规模到了那个「感觉到散乱」的拐点了吗？</strong> 综合看数量、复杂度、团队规模和变更频率——规模上来之后，MCP 的统一管理比散落在代码各处的 Function Calling 清爽得多。</p>
+<p><strong>第四问，你是在做正式的 Agent 系统，还是 Demo 原型？</strong> 正式系统选 MCP 更利于长期维护，Demo 的话 Function Calling 上手更快。</p>
+<p><strong>第五问，部署环境允许吗？</strong> 如果平台不允许启动子进程，Function Calling 就是更稳妥的选择。</p>
+<p>五个问题过完，答案自然就出来了。</p>
+<hr>
+<h2 id="5-面试总结">5 面试总结</h2>
+<p>回答这道题，最典型的误区就是用<strong>单一维度</strong>做选型判断，比如只看项目规模、只看工具数量。面试官想听的是你能根据具体场景做出合理取舍，而不是一刀切地倾向某一个方案：</p>
+<table>
+<thead>
+<tr>
+<th>误区</th>
+<th>正解</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>小项目用 FC、大项目用 MCP</td>
+<td>规模不是唯一因素——大项目如果工具只在内部用、不需要复用，也不一定上 MCP</td>
+</tr>
+<tr>
+<td>工具少用 FC、工具多就用 MCP</td>
+<td>数量只是维度之一；社区已有现成 Server 时，哪怕只接一个工具也优先 MCP</td>
+</tr>
+<tr>
+<td>只讲「什么时候用 MCP」</td>
+<td>FC 的四种适用场景（快速原型、单一应用、精细控制、部署受限）同样要讲，展示全方位取舍</td>
+</tr>
+<tr>
+<td>项目规模大 = 一定要 MCP</td>
+<td>还要综合复用需求、社区生态、是否 Agent 系统、部署环境五个维度</td>
+</tr>
+</tbody>
+</table>
+<p>再按这张框架组织答案：</p>
+<table>
+<thead>
+<tr>
+<th>判断维度</th>
+<th>要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>本质区别</strong></td>
+<td>FC 工具「内嵌」在应用代码里、与应用绑定；MCP 工具「独立」，独立进程 + 标准接口，一次实现到处复用</td>
+</tr>
+<tr>
+<td><strong>FC 的四类场景</strong></td>
+<td>快速原型/Demo、工具只服务单一应用、需要精细控制执行逻辑、Serverless/受限部署环境不能起子进程</td>
+</tr>
+<tr>
+<td><strong>MCP 的四类场景</strong></td>
+<td>跨项目/跨团队复用、社区已有现成 Server（配置即用）、工具规模与管理复杂度上来、构建 Agent 系统</td>
+</tr>
+<tr>
+<td><strong>判断方法</strong></td>
+<td>五问决策：社区现成 Server → 复用需求 → 规模综合 → 是否 Agent → 部署环境</td>
+</tr>
+<tr>
+<td><strong>核心结论</strong></td>
+<td>「只用自己、只用一次、不需要复用」才适合 FC，其他优先 MCP；两者非竞争关系，MCP 底层由 FC 驱动</td>
+</tr>
+</tbody>
+</table>
+<p><strong>追问预案</strong>：</p>
+<ul>
+<li>「选型只看项目规模行不行？」——不行，规模只是维度之一。大项目若工具只在内部用、不需要复用，FC 反而更轻；还要看复用需求、社区生态、Agent 与否、部署环境（机制差异的完整拆解见本系列第 4 篇）。</li>
+<li>「工具数量有具体的数字门槛吗？」——没有。看四个维度的综合：工具复杂度、团队规模、变更频率、数量；5 个复杂、多人维护、接口常变的工具就很快进维护泥潭，2 个简单稳定不动的工具没必要引入独立 Server。</li>
+<li>「Serverless 环境为什么只能用 Function Calling？」——stdio 模式的 MCP 需要以子进程方式启动 Server，受限云环境和 Serverless 平台不允许，只能把工具逻辑写进主进程（也就是 FC 的调用代码里）。</li>
+<li>「为什么 Agent 系统更该选 MCP？」——Agent 工具来源多而杂，全用 FC 则 schema 散落代码各处、成为最难维护的部分；MCP 按需连 Server、工具模块化，Agent 核心逻辑与工具管理解耦，新增工具不动主程序。</li>
+<li>「社区有现成 Server 还手写 FC 对接吗？」——属于重复造轮子。官方/社区 Server 经过测试、文档完整，配置几行 JSON 即用，任何客户端受益（接 Server 的具体写法见第 4 篇的实际跑一遍）。</li>
+<li>「FC 和 MCP 是竞争关系吗？」——不是，MCP 底层本就靠 Function Calling 驱动，选型取决于工程需求而非技术优劣。</li>
+</ul>
+<hr>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/7_fc_vs_mcp_usage.html">7. Function Calling 也属于工具调用，请问什么场景下使用 Function Calling，什么场景下使用 MCP？ | 小林面试笔记</a></li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/6_mcp_vs_fc.html">6. MCP 和 Function Calling 有什么区别？有没有实际跑过 MCP？ | 小林面试笔记</a>（相关：两者机制差异的完整拆解）</li>
+</ul>
+<blockquote>
+<p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Agent-Tool/" class="category-chain-item">Agent Tool</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Agent/" class="print-no-link">#Agent</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Agent Tool」Function Calling 也属于工具调用，请问什么场景下使用 Function Calling，什么场景下使用 MCP？</div>
+      <div>https://marisamagic.github.io/2026/08/19/20260819_FC与MCP使用场景/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月19日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/08/19/20260819_AgentSkill%E6%98%AF%E4%BB%80%E4%B9%88/" title="「Agent Tool」Skill 是什么？">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「Agent Tool」Skill 是什么？</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/18/20260818_MCP%E4%B8%8EFunctionCalling%E5%8C%BA%E5%88%AB/" title="「Agent Tool」MCP 和 Function Calling 有什么区别？有没有实际跑过 MCP？">
+                        <span class="hidden-mobile">「Agent Tool」MCP 和 Function Calling 有什么区别？有没有实际跑过 MCP？</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

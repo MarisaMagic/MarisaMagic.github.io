@@ -1,0 +1,827 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="MCP 和 Agent Skill 不是同类概念、不是竞争关系而是互补：MCP 解决「Agent 怎么获得外部能力」——把数据库&#x2F;API&#x2F;文件系统标准化封装成服务，粒度是原子操作（read_file、query_database），schema 对模型可见，让 Agent 从「只会聊天」到「能真正干活」（新员工配电脑、装软件、开权限的类比）；Skill 解决「有了能力之后该怎么用」——把知识和流程">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Agent Tool」MCP 和 Agent Skill 的区别是什么？">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/19/20260819_MCP%E4%B8%8EAgentSkill%E5%8C%BA%E5%88%AB/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="MCP 和 Agent Skill 不是同类概念、不是竞争关系而是互补：MCP 解决「Agent 怎么获得外部能力」——把数据库&#x2F;API&#x2F;文件系统标准化封装成服务，粒度是原子操作（read_file、query_database），schema 对模型可见，让 Agent 从「只会聊天」到「能真正干活」（新员工配电脑、装软件、开权限的类比）；Skill 解决「有了能力之后该怎么用」——把知识和流程">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/17/lho.jpg">
+<meta property="article:published_time" content="2026-08-19T06:02:51.353Z">
+<meta property="article:modified_time" content="2026-08-19T06:02:51.353Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/08/17/lho.jpg">
+  
+  
+  
+  <title>「Agent Tool」MCP 和 Agent Skill 的区别是什么？ - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/08/17/lho.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Agent Tool」MCP 和 Agent Skill 的区别是什么？"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-19 14:02" pubdate>
+          2026年8月19日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          24 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Agent Tool」MCP 和 Agent Skill 的区别是什么？</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<blockquote>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/10_mcp_vs_skill.html">10. MCP 和 Agent Skill 的区别是什么？</a>，用于记录与总结 AI Agent 工具调用相关的核心面试知识点。</p>
+</blockquote>
+<p>「<strong>MCP 和 Agent Skill 的区别是什么？</strong>」，可以这样作答：</p>
+<blockquote>
+<p>MCP 和 Agent Skill <strong>不是同类概念，不是竞争关系，而是互补的</strong>。</p>
+<p>MCP 解决的是「<strong>Agent 怎么获得外部能力</strong>」——把数据库、API、文件系统这些外部工具标准化封装成服务，Agent 通过 MCP 就能查数据、调接口、读写文件；Skill 解决的是「<strong>Agent 拿到这些能力之后，该按什么步骤、什么标准来完成任务</strong>」——把完成某类工作的知识和流程打包成可复用的模块。</p>
+<p>简单记：<strong>MCP 是给 Agent 配的电脑和软件，Skill 是给 Agent 发的操作手册和 SOP</strong>。在实际系统里，两者经常同时工作：Skill 定义流程，流程中调用 MCP 提供的工具。</p>
+</blockquote>
+<p>如今 Claude Code、Cursor 等产品里，这两者就是同时工作的：一边挂着文件系统、GitHub 等 MCP Server 提供可执行的能力，一边放着「怎么按团队规范完成代码审查」「怎么写报告」这类 Skill 提供流程知识。业界也形成了一个直观的分工共识——<strong>能力归 MCP，流程归 Skill</strong>。</p>
+<hr>
+<h2 id="1-定位差异：一个「从无到有」，一个「有了之后怎么用」">1 定位差异：一个「从无到有」，一个「有了之后怎么用」</h2>
+<p>很多人第一次接触这两个概念，会觉得它们都跟「Agent 能做什么」有关，但仔细一想会发现，两者的目的和工作层次完全不同。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/image-20260410201659434.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="MCP 与 Skill 定位差异：一个解决能力从无到有，一个解决能力怎么用"></p>
+<p>MCP 解决的是「<strong>Agent 怎么获得外部能力</strong>」。没有 MCP 之前，Agent 就是一个只会说话的语言模型：让它查数据库查不了，让它读文件读不了，让它调 API 也调不了。MCP 把这些外部工具标准化封装成独立的服务，Agent 连上 MCP Server 就能用了——它解决的是「从无到有」的问题，让 Agent 有能力去操作外部世界。</p>
+<p>Skill 解决的是另一类问题：「<strong>Agent 有了这些能力之后，该怎么用</strong>」。Agent 现在能查数据库、能读文件、能调 API 了，但面对一个「帮我做代码审查」的任务，它该先做什么后做什么？检查哪些维度？用什么格式输出？这些「知识和流程」，就是 Skill 要提供的。</p>
+<p>用一个类比就很好理解：</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/05e1c701b5d32240546bd0fbef096732.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="新员工类比：MCP 是配电脑开权限，Skill 是发操作手册"></p>
+<p>MCP 就像给新员工配电脑、装软件、开各种系统权限——这是「能做事」的前提；但光有电脑和权限不够，你还得给他一份操作手册，告诉他做代码审查时先检查什么、后检查什么、用什么标准判断、最后用什么模板写报告。这份操作手册，就是 Skill。</p>
+<hr>
+<h2 id="2-MCP：让-Agent-有「手」">2 MCP：让 Agent 有「手」</h2>
+<p>展开看看 MCP，为什么说它是 Agent 的「手」？因为如果没有 MCP，Agent 就只会「说话」，不会「做事」。</p>
+<p>MCP Server 暴露的 Tools、Resources、Prompts（我们在第 3 篇讲过这三类能力），就是 Agent 操作外部世界的手段。模型通过 Function Calling 触发这些工具（第 4 篇讲过这条链路），工具执行完把结果喂回对话。</p>
+<p>MCP 的粒度是「<strong>原子操作</strong>」：<code>read_file(path)</code> 是一个 Tool，<code>query_database(sql)</code> 是一个 Tool，每次调用做一件明确完整的事，执行结果立刻返回。模型能看到每个 Tool 的完整 schema——叫什么名字、接受什么参数、返回什么格式。这种精确的可见性，正是模型能准确判断「这个问题该调哪个工具」的基础。</p>
+<p>简单说，MCP 让 Agent 从「只会聊天」进化成了「能真正干活」——这是一切上层能力的前提。</p>
+<hr>
+<h2 id="3-Skill：给-Agent-一份「操作手册」">3 Skill：给 Agent 一份「操作手册」</h2>
+<p>有了 MCP 之后，Agent 确实能查数据、调 API 了，但面对一个复杂任务，它怎么知道该按什么顺序用这些工具？该关注哪些维度？该用什么标准判断质量？这就是 Skill 要解决的问题。</p>
+<p>Agent Skill 是 Anthropic 在 2025 年 10 月推出的概念，同年 12 月把规范作为开放标准发布（第 6 篇完整讲过它的结构与加载机制）。每个 Skill 是一个文件夹，核心是一份 <code>SKILL.md</code>：YAML frontmatter 声明名字和描述，正文写具体的执行指令和步骤；除了指令文件，还可以带脚本（安全检查的 Python 脚本）、参考文档（团队的审查标准）、模板（报告的输出格式），打包在一起就构成一份完整的「操作手册」。</p>
+<p>Skill 和普通 prompt 最大的区别有两点，都靠「自动发现」和「渐进式加载」两个机制支撑（详见第 6 篇）：<strong>能被 Agent 自动发现</strong>（任务来了，Agent 自己判断哪个 Skill 相关、主动加载）；<strong>渐进式加载省 context</strong>（启动只读名字和一句话描述、30-50 token 一个，相关才加载指令正文，用到才取模板和资源）。</p>
+<p>所以 <strong>Skill 的粒度比 MCP 工具粗得多</strong>：</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/85e3d344474cb02cb55ee091ec7b8655.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="粒度对比：MCP 是单个函数调用，Skill 是完整工作流程"></p>
+<p>MCP 的粒度是单个函数调用——<code>read_file</code>、<code>query_database</code>；Skill 的粒度是一个完整的工作流程——「代码审查」「数据分析报告」，内部可能涉及好几个步骤、调用好几个工具。</p>
+<hr>
+<h2 id="4-两者怎么配合工作：Skill-编排，MCP-执行">4 两者怎么配合工作：Skill 编排，MCP 执行</h2>
+<p>既然 MCP 提供工具、Skill 提供流程，实际系统里它们是怎么配合的？用一个代码审查的场景走一遍就清楚了。</p>
+<p>用户对 Agent 说「帮我审查一下这次提交的代码」。Agent 收到任务后先扫描可用的 Skill 列表，发现 code-review 这个 Skill 匹配度高，于是加载它的 <code>SKILL.md</code> 正文：</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs yaml"><span class="hljs-meta">---</span><br><span class="hljs-attr">name:</span> <span class="hljs-string">code-review</span><br><span class="hljs-attr">description:</span> <span class="hljs-string">&quot;对代码进行全面审查，识别 bug、安全漏洞和性能问题&quot;</span><br><span class="hljs-meta">---</span><br><span class="hljs-meta"></span><br><span class="hljs-comment"># 代码审查</span><br><br><span class="hljs-comment">## 第一步：读取待审查的代码文件</span><br><span class="hljs-string">读取用户指定的代码文件，理解功能和修改范围。</span><br><br><span class="hljs-comment">## 第二步：执行安全检查</span><br><span class="hljs-string">运行</span> <span class="hljs-string">scripts/check_security.py</span> <span class="hljs-string">对代码做自动化安全扫描。</span><br><br><span class="hljs-comment">## 第三步：输出审查报告</span><br><span class="hljs-string">使用</span> <span class="hljs-string">assets/report_template.md</span> <span class="hljs-string">的模板格式，输出结构化审查报告。</span><br></code></pre></td></tr></table></figure>
+<p><code>SKILL.md</code> 的作用就是告诉 Agent「做什么、按什么顺序做」——它只是一份操作手册，真正「动手」的时候还是得靠 MCP。执行第一步「读取代码文件」，需要调用文件系统 MCP Server 的工具：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># Skill 第一步说：读取待审查的代码文件</span><br><span class="hljs-comment"># Agent 发现 MCP 有 read_file 工具，于是调用它</span><br>code = mcp_client.call_tool(<span class="hljs-string">&quot;read_file&quot;</span>, &#123;<br>    <span class="hljs-string">&quot;path&quot;</span>: <span class="hljs-string">&quot;src/auth.py&quot;</span>    <span class="hljs-comment"># 要审查的文件路径</span><br>&#125;)<br></code></pre></td></tr></table></figure>
+<p>执行第二步「安全检查」时，Agent 加载 Skill 自带的 <code>scripts/check_security.py</code> 并执行——这就是 Skill 比普通 prompt 强的地方：它不只有文字指令，还能带<strong>可执行的脚本</strong>。执行第三步「输出报告」时，Agent 再加载 <code>assets/report_template.md</code> 模板，按里面定义的格式输出结构化报告。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/f19af5071867131d0a98c3601df1c861.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="分工图：Skill 扮演编排者定义流程，MCP 扮演执行者提供工具"></p>
+<p>整个流程的分工非常清晰：<strong>Skill 扮演「编排者」</strong>——定义做什么、按什么顺序做、用什么标准做；<strong>MCP 扮演「执行者」</strong>——提供每一步需要调用的具体工具。两者配合起来，Agent 才既知道「该怎么做」，又有能力「真正去做」。</p>
+<p>再看一个稍微复杂的场景，更能感觉到这种分工的威力。假设 Skill 定义的流程里有一句「如果改动涉及数据库表结构，额外执行权限合规检查」——这就是条件分支。Agent 读到这条指令时，会先调一个 MCP Tool 扫描这次提交有没有改数据库 schema，拿到结果（布尔值）后再决定要不要走那条分支；要走的话，就再调另一个 MCP Tool（比如 <code>query_permission_policy</code>）查合规规则，最后根据结果决定审查报告里是否要加一条严重级警告。</p>
+<p>整个过程里，Skill 像项目经理，拿着流程图和判断标准指挥执行；MCP 提供的每个 Tool 像专业工人，各自只管做好一件小事。两者的关系可以用一句话概括：</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/c5d4e026cb0aa4a0cc580782d067abd6.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="二者互补：缺了 Skill 不会用工具，缺了 MCP 流程纸上谈兵"></p>
+<p><strong>缺了 Skill，Agent 拿着一堆工具不知道该什么时候用；缺了 MCP，Skill 再详细的流程也只是纸上谈兵。</strong></p>
+<hr>
+<h2 id="5-面试总结">5 面试总结</h2>
+<p>回答这道题，最大的误区就是把 MCP 和 Skill 当成同类概念来对比。先避开三个雷：</p>
+<table>
+<thead>
+<tr>
+<th>误区</th>
+<th>正解</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MCP 和 Skill 都是给 Agent 加能力的，换格式而已</td>
+<td>层次完全不同：MCP 提供工具和数据访问能力（手），Skill 提供完成任务的知识和流程（操作手册），互补而非同类</td>
+</tr>
+<tr>
+<td>Skill 是更高级的 prompt 模板</td>
+<td>Skill 是完整文件夹（指令 + 脚本 + 模板 + 参考文档），能被自动发现和按需加载</td>
+</tr>
+<tr>
+<td>MCP 和 Skill 是竞争关系、二选一</td>
+<td>实际系统两者同时工作：Skill 编排流程，流程中调用 MCP 工具</td>
+</tr>
+</tbody>
+</table>
+<p>再按这张框架组织答案：</p>
+<table>
+<thead>
+<tr>
+<th>框架</th>
+<th>要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>定位差异</strong></td>
+<td>MCP 解决「怎么获得外部能力」（从无到有），Skill 解决「有了能力后怎么做」（知识与流程）；电脑软件 vs 操作手册的类比</td>
+</tr>
+<tr>
+<td><strong>粒度差异</strong></td>
+<td>MCP 是原子操作（单次调用做一件明确的事，schema 对模型可见）；Skill 是完整工作流（多步骤、多工具，还可带脚本模板）</td>
+</tr>
+<tr>
+<td><strong>配合方式</strong></td>
+<td>Skill 编排者（定义做什么、按什么顺序、什么标准），MCP 执行者（提供每一步的具体工具）；代码审查场景串起三者</td>
+</tr>
+<tr>
+<td><strong>缺一不可</strong></td>
+<td>缺 Skill：拿着工具不知道何时用；缺 MCP：再详细的流程也执行不了</td>
+</tr>
+<tr>
+<td><strong>加分项</strong></td>
+<td>能讲出条件分支这种 Skill 指挥 MCP 的协作细节，说明真的理解了两者在系统里怎么工作</td>
+</tr>
+</tbody>
+</table>
+<p><strong>追问预案</strong>：</p>
+<ul>
+<li>「MCP 和 Agent Skill 是同类概念吗？」——不是。MCP 是能力层（外部工具和数据访问，让 Agent 有「手」），Skill 是知识流程层（告诉 Agent 拿到能力后按什么步骤、什么标准做事）——一个解决「怎么做事」，一个解决「该怎么做事」。</li>
+<li>「两者的粒度差异在哪里？」——MCP 的粒度是原子操作，每次调用做一件明确的事、schema 完全可见；Skill 的粒度是完整工作流程，可能串联多个步骤、调用多个工具（具体结构与加载机制见第 6 篇）。</li>
+<li>「实际系统里它们怎么配合？」——Skill 编排、MCP 执行：<code>SKILL.md</code> 定义「读文件 → 跑安全脚本 → 输出报告」的流程，每一步由对应 MCP Tool（<code>read_file</code> 等）实际执行，条件分支也由 Skill 指令驱动 MCP Tool 查询后决定。</li>
+<li>「为什么说两者缺一不可？」——缺 Skill，Agent 有一堆工具却不知道该什么时候用；缺 MCP，Skill 的流程写得再详细也没有工具可执行，只是纸上谈兵。</li>
+<li>「一部成熟的 Agent 系统里它们怎么分工？」——工具类能力（GitHub、数据库、文件系统）走 MCP 标准化接入，团队沉淀的流程经验（代码审查、报告写作）走 Skill 打包复用，一个管「能做什么」，一个管「怎么做好」。</li>
+</ul>
+<hr>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/10_mcp_vs_skill.html">10. MCP 和 Agent Skill 的区别是什么？ | 小林面试笔记</a></li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/9_skill.html">9. Skill 是什么？ | 小林面试笔记</a>（相关：Skill 的结构与渐进式加载机制）</li>
+</ul>
+<blockquote>
+<p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Agent-Tool/" class="category-chain-item">Agent Tool</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Agent/" class="print-no-link">#Agent</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Agent Tool」MCP 和 Agent Skill 的区别是什么？</div>
+      <div>https://marisamagic.github.io/2026/08/19/20260819_MCP与AgentSkill区别/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月19日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/08/19/20260819_MCP%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F/" title="「Agent Tool」MCP 协议通常采用什么通信方式？">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「Agent Tool」MCP 协议通常采用什么通信方式？</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/19/20260819_AgentSkill%E6%98%AF%E4%BB%80%E4%B9%88/" title="「Agent Tool」Skill 是什么？">
+                        <span class="hidden-mobile">「Agent Tool」Skill 是什么？</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
