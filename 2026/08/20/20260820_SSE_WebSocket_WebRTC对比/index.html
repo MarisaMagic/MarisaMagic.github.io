@@ -1,0 +1,982 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="LLM 对话里的通信协议按数据流分两类选型。文字流方面——SSE 是 HTTP 原生单向长连接，客户端以 Accept 头声明 text&#x2F;event-stream、服务端沿连接持续推送 data 文本流、EventSource 免手写解析，适合流式输出与多轮对话（ChatGPT、OpenAI API 皆如此），局限是单向双通道复杂、HTTP&#x2F;1.1 同域 6 连接上限、只能传文本（Base64 膨">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Agent Tool」LLM 通信协议怎么选：SSE、WebSocket 与 WebRTC">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/20/20260820_SSE_WebSocket_WebRTC%E5%AF%B9%E6%AF%94/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="LLM 对话里的通信协议按数据流分两类选型。文字流方面——SSE 是 HTTP 原生单向长连接，客户端以 Accept 头声明 text&#x2F;event-stream、服务端沿连接持续推送 data 文本流、EventSource 免手写解析，适合流式输出与多轮对话（ChatGPT、OpenAI API 皆如此），局限是单向双通道复杂、HTTP&#x2F;1.1 同域 6 连接上限、只能传文本（Base64 膨">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/17/lho.jpg">
+<meta property="article:published_time" content="2026-08-20T04:25:06.548Z">
+<meta property="article:modified_time" content="2026-08-20T04:25:06.548Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/08/17/lho.jpg">
+  
+  
+  
+  <title>「Agent Tool」LLM 通信协议怎么选：SSE、WebSocket 与 WebRTC - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/08/17/lho.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Agent Tool」LLM 通信协议怎么选：SSE、WebSocket 与 WebRTC"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-20 12:25" pubdate>
+          2026年8月20日 中午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          32 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Agent Tool」LLM 通信协议怎么选：SSE、WebSocket 与 WebRTC</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<blockquote>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/14_sse_vs_websocket.html">14. 说说 WebSocket 和 SSE 通信的区别及局限性？</a> 和 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/15_webrtc_vs_ws.html">15. 为什么要用 WebRTC 协议？它和 WebSocket（WS）在 AI 对话流中的核心差异是什么？</a>，用于记录与总结 AI Agent 工具调用相关的核心面试知识点。</p>
+</blockquote>
+<p>「<strong>WebSocket 和 SSE 通信有什么区别？为什么实时的 AI 语音对话要用 WebRTC 而不是 WebSocket？</strong>」，可以这样作答：</p>
+<blockquote>
+<p>这是两道连在一起考的题，本质在问「LLM 对话里通信协议怎么选」。<strong>通信方向不同</strong>是 SSE 与 WebSocket 的本质差异：SSE 是 HTTP 原生特性，服务端沿一条长连接单向推送，适合 LLM 流式输出文字；WebSocket 是独立协议，一条连接全双工，适合需要中途双向交互的场景（打断、协同编辑）。两者各有明确局限，选型看场景——单向推送用 SSE，真正双向才上 WebSocket。</p>
+<p>实时语音是另一套需求：<strong>语音容忍丢包、绝不容忍延迟</strong>。WebSocket 走 TCP，丢包强制重传会让延迟堆积、实时体验崩溃；WebRTC 建在 UDP 之上，丢包用插值填补（丢包隐藏）而不是等待重传，把延迟稳定压在 50-150ms，还内置回声消除、噪声抑制、自适应码率等音频处理能力。OpenAI Realtime API 等实时语音产品选 WebRTC，正是因为 TCP 系方案在丢包时延迟不可控。</p>
+<p>一句话选型：<strong>文字对话用 SSE 或 WebSocket，实时语音用 WebRTC</strong>——三者不是替代关系，实时语音产品里往往还要用 WebSocket 做信令通道、用 WebRTC 传音频。</p>
+</blockquote>
+<p>如今 ChatGPT、Claude 网页端打字机式的流式输出，底层走的就是 SSE——打开开发者工具，能看到连接里一条条 <code>data: &#123;...&#125;</code> 的数据流；而 OpenAI Realtime API 这类实时语音对话走的是 WebRTC，音频在 UDP 通道上低延迟流动。有意思的是两者可以在一个产品里共存：浏览器里用 SSE 推文字、用 WebRTC 传语音。MCP 的远程传输里也藏着一个 SSE——Server 向 Client 流式推送时底层用的就是它，这套传输设计的来龙去脉我们第 8 篇详细讲过。这篇把三种协议放到一起，说清楚各自的取舍与适用场景。</p>
+<hr>
+<h2 id="1-先看清需求：LLM-对话里其实有两条数据流">1 先看清需求：LLM 对话里其实有两条数据流</h2>
+<p>选型之前先想清楚一个问题：LLM 对话（聊天、语音）为什么不能像普通网页那样「请求一次、返回一次」？</p>
+<ul>
+<li><strong>HTTP 天然是「一问一答」</strong>：客户端发请求、服务端回响应，一次交互就结束，服务端不能主动往客户端推数据。而大模型生成内容要好几秒，用户看到的是「逐字蹦出来」的效果——模型生成一点就要推一点，连接必须一直保持打开。</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com//picgo/931df16789fe81bed7f2058fb3f708e8.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="HTTP 请求-响应的一问一答模式示意"></p>
+<ul>
+<li><strong>文字和语音对网络的要求完全不同</strong>：
+<ul>
+<li><strong>文字</strong>：要求准确、有序、完整，TCP 的可靠传输是刚需；</li>
+<li><strong>语音</strong>：人脑对时序极度敏感，超过 200ms 就感到卡顿，超过 400ms 会「说话串线」；丢掉 20ms 的音频人耳几乎感知不到，但为了等它重传、把后续音频全部堵住，体验直接崩溃。</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com//picgo/1d1a979097e323fdfd91fefd8355aa14.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="文字流与语音流对网络的需求差异对比"></p>
+<p>结论一句话：<strong>文字传输要求「可靠」，语音传输要求「及时」——语音容忍丢包，绝不容忍延迟</strong>。后面所有选型的合理性都从这里来。</p>
+<hr>
+<h2 id="2-文字流的第一种选择：SSE——用普通-HTTP-撑开一条单向水管">2 文字流的第一种选择：SSE——用普通 HTTP 撑开一条单向水管</h2>
+<p>SSE（Server-Sent Events）不是新协议，它是 HTTP/1.1 原生特性的「巧用」：</p>
+<ul>
+<li>客户端发请求时带上 <code>Accept: text/event-stream</code>，声明「我要一条事件流」；</li>
+<li>服务端收到后<strong>不关连接</strong>，把响应体当成一条持续开放的通道，按约定的文本格式一条条往下写。</li>
+</ul>
+<p>消息就是纯文本，每行以 <code>data:</code> 开头、以两个换行结尾——你在 ChatGPT 的开发者工具里看到的流式返回 <code>data: &#123;&quot;token&quot;: &quot;你&quot;&#125;</code> 就是这个格式；浏览器 <code>EventSource</code> API 一行代码接上、<code>onmessage</code> 回调直接收，连解析都省了：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">data: &#123;&quot;token&quot;: &quot;你&quot;&#125;<br><br>data: &#123;&quot;token&quot;: &quot;好&quot;&#125;<br><br>data: &#123;&quot;token&quot;: &quot;，&quot;&#125;<br></code></pre></td></tr></table></figure>
+<p><img src="https://cdn.xiaolincoding.com//picgo/cf20b66851b03090514e201877fd6788.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="SSE 用 HTTP 长连接单向推送数据流示意"></p>
+<p>「撑开通道、持续推数据」是 HTTP 协议本来就允许的能力，不需要新协议、不需要像 WebSocket 那样做握手升级，任何 HTTP 代理都能透传，运维成本最低；它的问题在于单向——用户中途想打断模型输出，只能<strong>断开当前流、重新发一个带停止指令的请求</strong>，链路是割裂的。这个短板在讲完 WebSocket 后对比更明显。</p>
+<hr>
+<h2 id="3-文字流的第二种选择：WebSocket——从-HTTP-升级成真正的双向信道">3 文字流的第二种选择：WebSocket——从 HTTP 升级成真正的双向信道</h2>
+<p>WebSocket 和 SSE 最大的区别不在「能力大小」，而在<strong>通信方向</strong>：</p>
+<ul>
+<li>握手时客户端发一个带 <code>Upgrade</code> 声明的 HTTP 请求，服务端回 <code>101 Switching Protocols</code>，之后这条 TCP 连接升级为<strong>全双工</strong>信道——从「对讲机」变成「电话」：任何一方随时可以说话，不用等对方说完；</li>
+<li>同一个例子看差异：打断模型输出时，WebSocket 里客户端在<strong>同一条连接内</strong>直接发一条停止指令对方就能收到，交互流畅、状态连贯，没有 SSE 那种「断流 + 重发」的割裂感。</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com//picgo/c58713d66fb6927716a2dc8cb49a6585.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="WebSocket 从 HTTP 升级为全双工信道示意"></p>
+<p>所以记住本质差异是<strong>通信方向</strong>（SSE 服务端单向推、WebSocket 全双工），而不是「WebSocket 更强所以更好」——WebSocket 复杂度更高，必须有真实需求（打断、协同、双向往来）才值得上。</p>
+<hr>
+<h2 id="4-各自的局限：SSE-的三坑与-WebSocket-的三坑">4 各自的局限：SSE 的三坑与 WebSocket 的三坑</h2>
+<p>选型不能只看优点。两边都有明确的短板，面试官追问时往往就挖在这里。</p>
+<p>SSE 的三个局限：</p>
+<ul>
+<li><strong>单向性带来「双通道尴尬」</strong>：用户消息走 POST、模型回复走 SSE，两条通道要靠 conversation ID 关联，状态管理复杂；</li>
+<li><strong>HTTP/1.1 下同域名最多 6 条并发连接</strong>：第 7 个页面就得排队等待，体验「卡死」（HTTP/2 多路复用可解，但引入了新要求）；</li>
+<li><strong>只能传文本</strong>：传语音、图像得先 Base64 编码，体积膨胀约 33%——实时语音对话对这个膨胀完全不能接受，这也为后面「实时语音得换协议」埋下伏笔。</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com//picgo/fb9df12374922b65a63d883e96a4fe0b.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="SSE 单向性带来的双通道复杂度示意"></p>
+<p>WebSocket 的三个局限：</p>
+<ul>
+<li><strong>有状态</strong>：连接建在哪台服务器，会话状态就存在哪台——横向扩容要么做会话保持，要么把状态外移到 Redis 发布订阅，都更复杂、多一跳网络；</li>
+<li><strong>代理/防火墙穿透难</strong>：握手的 <code>Upgrade</code> 请求不是普通 HTTP GET/POST，企业 HTTP 代理、老 CDN 不识别会直接拒绝；SSE 始终是普通 HTTP，任何代理都能透传——这正是早期 MCP 远程传输选 SSE 而不是 WebSocket 的原因（演进细节见第 8 篇）；</li>
+<li><strong>没有内置请求-响应配对</strong>：WS 是双向消息，谁回谁靠自己加请求 ID、维护映射表，重试逻辑也要自己设计。</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com//picgo/ee79d84cd35b9a6d74b813b7e7b1db73.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="WebSocket 有状态导致横向扩展麻烦示意"></p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/6df48a1e06758ef3c366a45772a19ecf.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="WebSocket 升级握手被代理拦截示意"></p>
+<hr>
+<h2 id="5-实时语音场景：为什么是-WebRTC-而不是-WebSocket">5 实时语音场景：为什么是 WebRTC 而不是 WebSocket</h2>
+<p>把语音放进 WebSocket（TCP 通道），最大的问题是<strong>丢包时的策略</strong>：</p>
+<ul>
+<li>TCP 看见丢包就<strong>重传</strong>——为了 20ms 的音频片段，后续所有音频都得排队等它，延迟像滚雪球一样堆积，「实时」彻底泡汤；</li>
+<li>语音里延迟重过丢包：丢 20ms 人耳无感，卡顿 200ms 用户就想挂电话。</li>
+</ul>
+<p>WebRTC 的方案是<strong>主动放弃可靠性</strong>：底层换成 UDP，丢包就丢包、不重传不等待；缺失的音频片段用**丢包隐藏（Packet Loss Concealment，PLC）**技术，拿前后帧插值填补——用偶尔的轻微音质损失，换稳定在 50-150ms 的低延迟。实时音频场景里，这笔账划算。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/b8f5039f5df2b6e0e2c549db1de88b83.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="WebRTC 基于 UDP 的丢包隐藏策略示意"></p>
+<p>这里有个反直觉的点：UDP 的「不可靠」不是偷懒，而是<strong>刻意的设计选择</strong>——在实时音频里，可靠性让位于时延，是协议层一开始就定好的取舍。</p>
+<hr>
+<h2 id="6-WebRTC-不是单一协议：协议栈、SDP-信令与-NAT-穿透">6 WebRTC 不是单一协议：协议栈、SDP 信令与 NAT 穿透</h2>
+<p>面试的加分点在于：WebRTC 不是「UDP 传音频」这么简单，它是一整套协议组合：</p>
+<ul>
+<li><strong>UDP</strong>：低延迟传输的地基；</li>
+<li><strong>DTLS</strong>：UDP 版 TLS，负责密钥协商与加密——UDP 上照样要安全；</li>
+<li><strong>SRTP</strong>：加密传输媒体数据，RTP 包自带时间戳和序列号，配合 RTCP 持续监控丢包与网络质量；</li>
+<li><strong>ICE</strong>：连接建立阶段的 NAT 穿透框架。</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com//picgo/image-20260310171530007.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="WebRTC 协议栈组成：UDP、DTLS 与 SRTP"></p>
+<p>在此基础上还有两个关键机制：</p>
+<ul>
+<li><strong>SDP 信令</strong>：真正传音频之前，双方先交换一份「协商书」——支持哪些编解码格式、网络地址、加密参数。注意 WebRTC 只规定了 SDP 这个格式，<strong>不规定信令通道用什么传</strong>，WebSocket、HTTP 都行。所以实时语音产品里最常见的架构是：<strong>用 WebSocket 传信令，用 WebRTC 的 UDP 通道传音频</strong>——两者各司其职、配合而非替代。这是面试官最爱挖的一句话。</li>
+<li><strong>NAT 穿透的三级降级</strong>：同局域网直接连（延迟最低）→ 打洞失败就用 STUN 发现公网 IP:端口、尝试建立 P2P → 还不行就 TURN 中转（失去 P2P 的低延迟优势，但保证连通）。最常见的失败场景是<strong>对称 NAT</strong>——企业防火墙、运营商级 NAT 每换一个目标就换一个出口端口，STUN 探测到的端口在对端连接时早就变了。</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com//picgo/ce5065b2068cfed49b06ff0858ebb4f3.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="SDP 信令交换协商双方能力示意"></p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/7135296fab23b5e6924ca3e04c8c9b3c.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="ICE/STUN/TURN 的 NAT 穿透策略示意"></p>
+<hr>
+<h2 id="7-内置音频处理与-OpenAI-Realtime-API-的选型">7 内置音频处理与 OpenAI Realtime API 的选型</h2>
+<p>WebSocket 传语音还有一个隐性成本——<strong>音频处理全要自己造轮子</strong>。WebRTC 原生自带一套：</p>
+<ul>
+<li><strong>AEC 回声消除</strong>：扬声器的声音被麦克风采回去形成反馈循环，先消掉；</li>
+<li><strong>NS 噪声抑制</strong>：过滤环境噪声、只留人声；</li>
+<li><strong>AGC 自动增益控制</strong>：音量忽大忽小自动拉平；</li>
+<li><strong>ABR 自适应码率</strong>：RTCP 反馈网络状况，好网给高码率、差网降码率保流畅。</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com//picgo/3155c134a3c9aa14fc0d3033ea163a1f.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="WebRTC 内置回声消除等音频处理能力"></p>
+<p>OpenAI Realtime API 选 WebRTC 作为媒体传输层，理由就摆在那：它要求<strong>端到端延迟低于 300ms、双向同时说话、随时打断、回声消除</strong>——TCP 系的 WebSocket 在网络抖动丢包时达不到延迟要求，音频处理能力也得从零实现；WebRTC 天然满足全部条件。</p>
+<p><img src="https://cdn.xiaolincoding.com//picgo/dc2ab665e6a2e3c42762516c58ae2054.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="OpenAI Realtime API 选择 WebRTC 的原因"></p>
+<hr>
+<h2 id="8-三种协议横向对比与选型原则">8 三种协议横向对比与选型原则</h2>
+<p>先看场景怎么选：</p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>推荐方案</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLM 流式文字输出（ChatGPT 风格）</td>
+<td>SSE</td>
+<td>单向推送够用，HTTP 原生、轻量、运维简单</td>
+</tr>
+<tr>
+<td>多轮文字对话（用户发消息 + 模型回复）</td>
+<td>SSE + 普通 POST</td>
+<td>发消息走 POST、回复走 SSE，解耦简单</td>
+</tr>
+<tr>
+<td>需要用户中途打断模型输出</td>
+<td>WebSocket</td>
+<td>需要客户端流式中途主动发消息</td>
+</tr>
+<tr>
+<td>多人协同编辑、实时同步</td>
+<td>WebSocket</td>
+<td>频繁双向消息，SSE + POST 双通道太繁琐</td>
+</tr>
+<tr>
+<td>实时语音对话</td>
+<td>WebRTC</td>
+<td>音频流需要 UDP + 低延迟，WebSocket 的 TCP 重传是瓶颈</td>
+</tr>
+<tr>
+<td>MCP 远程 Server</td>
+<td>Streamable HTTP（内部 SSE 流式）</td>
+<td>单端点、代理穿透友好（详解见第 8 篇）</td>
+</tr>
+</tbody>
+</table>
+<p>再看 WebSocket 与 WebRTC 的核心维度差异：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>WebSocket</th>
+<th>WebRTC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>底层协议</td>
+<td>TCP</td>
+<td>UDP</td>
+</tr>
+<tr>
+<td>连接模式</td>
+<td>客户端 &lt;-&gt; 服务器</td>
+<td>P2P 直连（可降级 TURN 中转）</td>
+</tr>
+<tr>
+<td>延迟</td>
+<td>50-500ms（受 TCP 重传影响）</td>
+<td>50-150ms（UDP 不重传）</td>
+</tr>
+<tr>
+<td>丢包处理</td>
+<td>强制重传、后续数据等待</td>
+<td>丢包隐藏、插值填补、不阻塞</td>
+</tr>
+<tr>
+<td>音视频支持</td>
+<td>无，需自行实现</td>
+<td>原生：编解码、AEC、NS、AGC、ABR</td>
+</tr>
+<tr>
+<td>连接建立</td>
+<td>简单，HTTP Upgrade</td>
+<td>复杂：信令交换 + ICE NAT 穿透</td>
+</tr>
+<tr>
+<td>适合场景</td>
+<td>文字/数据实时双向通信</td>
+<td>实时音视频通话</td>
+</tr>
+<tr>
+<td>实现复杂度</td>
+<td>低</td>
+<td>高（信令服务、STUN/TURN 需自建或云服务）</td>
+</tr>
+</tbody>
+</table>
+<p>选型就三句话：<strong>单向推文字用 SSE；真双向的文字/数据交互用 WebSocket；实时语音用 WebRTC</strong>。WebRTC 运维复杂度最高，但在 AI 语音助手这类产品里，低延迟和音频质量是值得的。</p>
+<hr>
+<h2 id="9-面试总结">9 面试总结</h2>
+<p>回答这类题，最常见的误区是把三者混淆成「强 vs 弱」或「替代关系」。先避开几个雷：</p>
+<table>
+<thead>
+<tr>
+<th>误区</th>
+<th>正解</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>SSE 是 WebSocket 的简化版</td>
+<td>两者是独立的两样东西：SSE 是 HTTP 原生特性（单向），WebSocket 是独立协议（全双工），本质差异在通信方向</td>
+</tr>
+<tr>
+<td>WebSocket 功能强大所以更好</td>
+<td>复杂度高、有明确短板；单向推送场景 SSE 更轻更省——OpenAI、Anthropic 的流式输出都选 SSE</td>
+</tr>
+<tr>
+<td>WebRTC 只是「P2P、延迟低」</td>
+<td>核心差异是底层协议：WS 走 TCP（重传导致延迟不可控），WebRTC 走 UDP（丢包隐藏换稳定低延迟），外加原生音频处理能力</td>
+</tr>
+<tr>
+<td>实时语音用 WebSocket 也行 / WebRTC 会取代 WebSocket</td>
+<td>语音用 WebRTC 是需求倒逼；WebRTC 建连时常需要 WebSocket 做信令通道，两者配合而非替代</td>
+</tr>
+</tbody>
+</table>
+<p>再按这张框架组织答案：</p>
+<table>
+<thead>
+<tr>
+<th>框架</th>
+<th>要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>根本需求</strong></td>
+<td>文字要可靠（TCP 刚需）、语音要及时（&gt;200ms 卡顿、&gt;400ms 串线）；「语音容忍丢包、绝不容忍延迟」</td>
+</tr>
+<tr>
+<td><strong>本质差异</strong></td>
+<td>SSE 是 HTTP 原生单向长连接；WS 是独立协议、全双工；WS 丢包延迟不可控，WebRTC 用丢包隐藏插值换 50-150ms 稳定低延迟</td>
+</tr>
+<tr>
+<td><strong>各自局限</strong></td>
+<td>SSE：单向双通道复杂、HTTP/1.1 同域 6 连接上限、只能传文本（Base64 膨胀约 33%）；WS：有状态难扩容、代理拦截 Upgrade、无内置请求-响应配对</td>
+</tr>
+<tr>
+<td><strong>加分项</strong></td>
+<td>SDP 信令 + ICE/STUN/TURN 打通 NAT；「WebRTC 用 WebSocket 做信令、配合而非替代」；AEC/NS/AGC/ABR 原生音频处理</td>
+</tr>
+</tbody>
+</table>
+<p><strong>追问预案</strong>：</p>
+<ul>
+<li>「为什么 ChatGPT 用 SSE 而不用 WebSocket？」——流式输出是单向推送，SSE 不需要握手升级、任何代理可透传、实现运维都简单，足够满足需求。</li>
+<li>「SSE 能传二进制吗？」——不能。只能传文本，传语音、图像要 Base64 编码、体积膨胀约 33%，所以实时语音场景得换 WebRTC。</li>
+<li>「为什么 WebSocket 握手会被企业代理拒绝？」——<code>Upgrade</code> 请求不是普通 HTTP GET/POST，部分企业代理、老 CDN 不识别就拒绝；这也是早期 MCP 远程传输选 SSE 不选 WebSocket、后来升级到 Streamable HTTP 的原因之一（详见第 8 篇）。</li>
+<li>「WebRTC 建连可以用 WebSocket 吗？」——可以，而且这是常见架构：WebRTC 只规定 SDP 信令格式、不规定传输方式，用 WebSocket 传信令、UDP 传音频，两者配合而非替代。</li>
+<li>「WebRTC 丢包了怎么办？」——不重传。用丢包隐藏（PLC）拿前后帧插值填补，偶尔轻微音质损失换稳定低延迟；另外由 RTCP 反馈驱动 ABR 自适应码率，差网自动降码率保流畅。</li>
+</ul>
+<hr>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/14_sse_vs_websocket.html">14. 说说 WebSocket 和 SSE 通信的区别及局限性？ | 小林面试笔记</a></li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/15_webrtc_vs_ws.html">15. 为什么要用 WebRTC 协议？它和 WebSocket（WS）在 AI 对话流中的核心差异是什么？ | 小林面试笔记</a></li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/tools/13_mcp_transport.html">13. MCP 协议通常采用什么通信方式？ | 小林面试笔记</a>（相关：MCP 远程传输流式部分走 SSE、故未选 WebSocket）</li>
+</ul>
+<blockquote>
+<p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Agent-Tool/" class="category-chain-item">Agent Tool</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Agent/" class="print-no-link">#Agent</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Agent Tool」LLM 通信协议怎么选：SSE、WebSocket 与 WebRTC</div>
+      <div>https://marisamagic.github.io/2026/08/20/20260820_SSE_WebSocket_WebRTC对比/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月20日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/08/20/20260820_A2A%E5%8D%8F%E8%AE%AE%E4%B8%8EMCP%E5%8C%BA%E5%88%AB/" title="「Agent Tool」什么是 A2A 协议？它和 MCP 协议的区别是什么？">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「Agent Tool」什么是 A2A 协议？它和 MCP 协议的区别是什么？</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/19/20260819_MCP%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F/" title="「Agent Tool」MCP 协议通常采用什么通信方式？">
+                        <span class="hidden-mobile">「Agent Tool」MCP 协议通常采用什么通信方式？</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
