@@ -1,0 +1,917 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="构建一个能上线的 Agent 不是把模型和工具拼起来跑通一次调用，而是走完「边界 → 能力 → 约束 → 组装 → 状态 → 交互 → 验证」七步工程链路：先明确任务边界——能做什么、禁止做什么、何时停止、什么算成功（比如订单客服 Agent 可以查订单、解释物流，但退款必须等人工审批）；再选支持工具调用与结构化输出的模型，把数据库、搜索、业务 API 封装成职责单一、Schema 清晰的 Too">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「LangChain」使用 LangChain 构建 Agent 的核心步骤是什么？">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/24/20260824_LangChain%E6%9E%84%E5%BB%BAAgent/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="构建一个能上线的 Agent 不是把模型和工具拼起来跑通一次调用，而是走完「边界 → 能力 → 约束 → 组装 → 状态 → 交互 → 验证」七步工程链路：先明确任务边界——能做什么、禁止做什么、何时停止、什么算成功（比如订单客服 Agent 可以查订单、解释物流，但退款必须等人工审批）；再选支持工具调用与结构化输出的模型，把数据库、搜索、业务 API 封装成职责单一、Schema 清晰的 Too">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/24/185sw.jpg">
+<meta property="article:published_time" content="2026-08-24T15:55:00.279Z">
+<meta property="article:modified_time" content="2026-08-24T15:55:00.279Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="LangChain">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/08/24/185sw.jpg">
+  
+  
+  
+  <title>「LangChain」使用 LangChain 构建 Agent 的核心步骤是什么？ - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/08/24/185sw.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「LangChain」使用 LangChain 构建 Agent 的核心步骤是什么？"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-24 23:55" pubdate>
+          2026年8月24日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          36 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「LangChain」使用 LangChain 构建 Agent 的核心步骤是什么？</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<blockquote>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/langchain/build_agent.html">4. 使用 LangChain 构建 Agent 的核心步骤是什么？</a>，用于记录与总结 LangChain 框架相关的核心面试知识点。</p>
+</blockquote>
+<p>「<strong>使用 LangChain 构建 Agent 的核心步骤是什么？</strong>」，可以这样作答：</p>
+<blockquote>
+<p>构建一个能上线的 Agent，不是把模型和几个工具组装起来让它跑通一次调用，而是走完一条工程链路：<strong>先明确任务边界</strong>——能做什么、不能做什么、何时结束、什么结果算成功；<strong>再选支持工具调用和结构化输出的模型，把外部能力封装成职责单一、Schema 清晰的 Tools</strong>；随后用 <code>system_prompt</code> 约束角色与工具规则，用 <code>response_format</code> 定义结构化输出，<strong>通过 <code>create_agent</code> 把模型、工具、提示词和输出格式组装起来</strong>，底层由 LangGraph 在「模型判断 → 工具执行 → 结果回传」之间循环；接着补状态与安全——Checkpointer 按 <code>thread_id</code> 保存线程状态，Store 管理跨线程信息，Middleware 承担重试、摘要、权限控制和人工审批；再按场景选择同步、异步或流式调用；最后先单测 Tool，再测工具选择与调用轨迹，用 Trace 做线上监控。</p>
+</blockquote>
+<p>这道题的经典开场是：面试官问「如果让你用 LangChain 构建一个完整的 AI Agent，你会怎么做？」，回答「选个大模型、写好 Prompt、接几个工具就完成了」——那是能跑的 Demo，不是能上线的 Agent。真正的考察点不在几行初始化代码，而在你<strong>能否把 Agent 从需求定义一路做到可测试、可观测、可上线</strong>。上一篇我们拆解过 LangChain v1 的底层架构（<code>create_agent</code> 编译出的 LangGraph 循环、State/Context/Store 的数据分工），这篇就按构建顺序，把从零做一个 Agent 的完整链路讲透。</p>
+<hr>
+<h2 id="1-什么才算一个完整-Agent">1 什么才算一个完整 Agent</h2>
+<p>先和自己对齐标准：模型成功调用了一次天气工具，<strong>这算不算完整 Agent？不算——这只是「Demo 跑通」</strong>。</p>
+<p>把 Agent 放进真实业务里，要回答的问题立刻变多：它到底能做什么、不能做什么；模型选中了一个工具，参数对不对；工具失败或重复调用，会不会产生副作用；会话中断能不能恢复；最终结果能不能稳定地进入业务系统；线上出错了能不能复现。</p>
+<p>一句话：<strong>完整 Agent 不是一次模型调用，而是一条从任务设计、能力接入、运行控制走到测试监控的工程链路</strong>。下面这张图就是这条链路的七个阶段，也是本文的结构——边界、能力、约束、组装、状态、交互、验证，缺一环都不算完整：</p>
+<p><img src="https://cdn.xiaolincoding.com/xiaolinnote/ai/langchain/images/build_agent/5094f0f2_agent-build-seven-stages.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="构建 Agent 的七个阶段：明确边界、选择模型与工具、约束行为、组装 Agent、补齐状态与安全、选择调用方式、测试与监控"></p>
+<hr>
+<h2 id="2-第一步：明确任务边界">2 第一步：明确任务边界</h2>
+<p>很多人第一步就选模型，这是本末倒置。<strong>先定义任务，再选工具和模型</strong>——边界不清楚，后面所有配置都是空中楼阁。</p>
+<p>拿「订单客服 Agent」举例，边界长这样：</p>
+<ul>
+<li><strong>能做什么</strong>：查订单状态、解释物流进度；</li>
+<li><strong>不能做什么</strong>：不能自行退款（权限只到客服层）；</li>
+<li><strong>必须让位的情况</strong>：订单不存在、身份验证失败、用户要求高风险操作——一律转人工；</li>
+<li><strong>什么算成功</strong>：最终输出包含「答复 + 订单状态 + 是否转人工」三项。</li>
+</ul>
+<p>把边界说清楚，本质是做一遍「产品需求书」：先写目标与允许执行的动作，再划出禁止动作与权限边界，最后约定什么算成功、什么算失败、何时停止、哪些情况必须转人工。<strong>边界决定后面的工具设计、Prompt 措辞和测试用例</strong>——边界模糊，模型只能靠猜，事后想靠工程配置补回来基本是徒劳。</p>
+<hr>
+<h2 id="3-第二步：选择模型与封装-Tools">3 第二步：选择模型与封装 Tools</h2>
+<p>任务边界定了，才有资格谈选型。</p>
+<p><strong>模型</strong>看三条：是否支持工具调用、是否支持结构化输出、上下文长度够不够。要记住分工——<strong>模型负责判断和规划，访问数据库、搜索、发消息这些动作必须由 Tool 完成</strong>，模型本身不碰任何外部系统。</p>
+<p><strong>Tool</strong> 为什么要小而清楚？因为模型做选择时能看到的只有三样东西：工具的名称、描述、参数 Schema。一个工具同时管「查询 + 退款 + 通知」，模型很容易选错动作；参数没有类型和范围约束，运行时也拦不住错误输入。这就像银行的窗口：业务全挤在同一个柜台，柜员处理慢、还容易办错，改成「查询专窗」「汇款专窗」分工明细，客户排错队的概率就小了。</p>
+<p>这里有两层原则要分开记：</p>
+<ul>
+<li><strong>「选对」靠设计</strong>：Tool 职责单一、名称清楚、输入输出易理解——帮模型做对决策；</li>
+<li><strong>「安全」靠防线</strong>：服务端重新检查身份与权限，改外部状态的工具必须有幂等和审计——保证系统即使被误导也不出事。</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> langchain.tools <span class="hljs-keyword">import</span> tool<br><br><span class="hljs-comment"># 装饰器会把函数名、docstring 和类型注解转换成模型可读的工具说明</span><br><span class="hljs-meta">@tool</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">lookup_order</span>(<span class="hljs-params">order_id: <span class="hljs-built_in">str</span></span>) -&gt; <span class="hljs-built_in">dict</span>[<span class="hljs-built_in">str</span>, <span class="hljs-built_in">str</span>]:<br>    <span class="hljs-string">&quot;&quot;&quot;根据订单号查询订单状态，只读，不修改订单。&quot;&quot;&quot;</span><br>    <span class="hljs-comment"># 真实项目应在这里调用经过身份校验的订单服务</span><br>    <span class="hljs-keyword">return</span> &#123;<span class="hljs-string">&quot;order_id&quot;</span>: order_id, <span class="hljs-string">&quot;status&quot;</span>: <span class="hljs-string">&quot;已发货&quot;</span>&#125;<br></code></pre></td></tr></table></figure>
+<p>注意描述里的「只读」不是写给程序看的，是<strong>写给模型看的</strong>——工具描述是模型决策的信号；而真正的权限校验由业务服务负责。Prompt 里写再多的「禁止退款」，也替代不了退款接口本身的身份校验：</p>
+<p><img src="https://cdn.xiaolincoding.com/xiaolinnote/ai/langchain/images/build_agent/160af93b_focused-tools-comparison.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="职责单一的专窗式工具对比：一个工具只做一件事、Schema 清晰，模型更容易选对"></p>
+<hr>
+<h2 id="4-第三步：约束行为与输出">4 第三步：约束行为与输出</h2>
+<p>模型和工具就位，接下来是「立规矩」。</p>
+<p><code>system_prompt</code> 至少要说明五件事：<strong>角色</strong>（你是谁）、<strong>目标</strong>（你负责什么）、<strong>信息边界</strong>（哪些东西你不知道，不许猜）、<strong>工具规则</strong>（什么时候必须调工具）、<strong>失败策略</strong>（处理不了怎么办）。继续用订单客服的例子：回答订单状态前必须调用查询工具、不能猜测数据库里不存在的信息、高风险请求必须转人工——这些都是要在提示词里钉死的规则。</p>
+<p>输出策略分两种情形：</p>
+<ul>
+<li>结果<strong>只给人看</strong>——自然语言回复就够了；</li>
+<li>结果要<strong>进前端、进工单系统、进后续工作流</strong>——必须定义结构化输出。</li>
+</ul>
+<p>结构化输出可以理解为「填表单」：口头汇报随你怎么说，交到系统里的必须按表单字段填，字段类型错了程序直接报错。用 pydantic 定义 Schema，<code>response_format</code> 就会按它校验 Agent 的最终结果：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> pydantic <span class="hljs-keyword">import</span> BaseModel, Field<br><br><span class="hljs-comment"># response_format 会按这三个字段校验 Agent 的最终结果</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">SupportReply</span>(<span class="hljs-title class_ inherited__">BaseModel</span>):<br>    answer: <span class="hljs-built_in">str</span> = Field(description=<span class="hljs-string">&quot;给用户的简洁答复&quot;</span>)<br>    order_status: <span class="hljs-built_in">str</span> | <span class="hljs-literal">None</span> = Field(default=<span class="hljs-literal">None</span>, description=<span class="hljs-string">&quot;订单状态&quot;</span>)<br>    needs_human: <span class="hljs-built_in">bool</span> = Field(description=<span class="hljs-string">&quot;是否需要转人工&quot;</span>)<br></code></pre></td></tr></table></figure>
+<p>但有一句限制必须说清：<strong>结构化输出约束的是「格式」，不是「事实」</strong>。它能保证字段存在、类型正确，却保证不了业务内容正确——事实必须来自可信工具，权限必须由业务服务控制。这两条防线和上一节说的一样，不能因为加了 Schema 就放松。</p>
+<hr>
+<h2 id="5-第四步：组装-Agent">5 第四步：组装 Agent</h2>
+<p>前面积累的材料（模型、工具、提示词、输出 Schema），这一步在 <code>create_agent</code> 里汇合。先明确立场：<strong>LangChain v1 新项目从 <code>create_agent</code> 开始</strong>；旧资料里的 <code>create_tool_calling_agent</code> 和 <code>AgentExecutor</code> 只可能出现在存量项目里，网上很多示例还在这么写，那是旧版路径。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> langchain.agents <span class="hljs-keyword">import</span> create_agent<br><br><span class="hljs-comment"># 将模型、工具、行为约束和输出 Schema 组装成 Agent</span><br>agent = create_agent(<br>    model=<span class="hljs-string">&quot;openai:gpt-5.4-mini&quot;</span>,<br>    tools=[lookup_order],<br>    system_prompt=(<br>        <span class="hljs-string">&quot;你是订单客服。回答订单状态前必须调用查询工具；&quot;</span><br>        <span class="hljs-string">&quot;不得猜测，无法处理时设置转人工。&quot;</span><br>    ),<br>    response_format=SupportReply,<br>)<br><br><span class="hljs-comment"># messages 是 Agent State 的默认输入字段</span><br>result = agent.invoke(&#123;<br>    <span class="hljs-string">&quot;messages&quot;</span>: [&#123;<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;订单 A100 到哪了？&quot;</span>&#125;]<br>&#125;)<br><br><span class="hljs-comment"># 结构化结果已经通过 SupportReply 的字段校验</span><br>reply: SupportReply = result[<span class="hljs-string">&quot;structured_response&quot;</span>]<br></code></pre></td></tr></table></figure>
+<p><code>create_agent</code> 返回的不是普通函数，而是<strong>编译后的 LangGraph 图</strong>。它的执行逻辑可以用一句话讲完——模型没有工具调用就输出最终结果；模型请求调用工具，运行时执行工具并把结果写回消息状态，再让模型继续判断：</p>
+<figure class="highlight clean"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs clean">用户消息 -&gt; 模型判断<br>模型判断 -&gt; 工具调用 -&gt; ToolMessage -&gt; 模型继续判断<br>模型判断 -&gt; 最终结果（没有工具调用）<br></code></pre></td></tr></table></figure>
+<p><img src="https://cdn.xiaolincoding.com/xiaolinnote/ai/langchain/images/build_agent/bd3c7623_agent-tool-loop.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="模型判断与工具执行之间的循环：请求工具调用则执行并回传 ToolMessage，否则输出最终结果"></p>
+<p>为什么强调从 <code>create_agent</code> 开始？因为这张图的循环、路由、状态更新、暂停恢复等生产能力，LangGraph 运行时已经全部给你了——自己用裸 <code>while</code> 循环写模型调用，这些能力一个都没有（上一篇聊架构时详述过这个循环的机制，<code>tool_call_id</code> 的对应关系也在那里讲过）。</p>
+<hr>
+<h2 id="6-第五步：补齐状态与安全">6 第五步：补齐状态与安全</h2>
+<p>组件组装只是骨架，<strong>状态和权限才是生产环境的血肉</strong>。</p>
+<p><strong>短期状态</strong>存在 Agent State 里。配上 Checkpointer 并稳定传 <code>thread_id</code> 之后，同一线程能续接之前的消息与执行状态——会话中断可以恢复。可以把 Checkpointer 想成<strong>游戏存档</strong>：跑到第几步、聊到哪一句，中断后再从存盘点继续，而不是一切从头再来。</p>
+<p><strong>跨线程信息</strong>（用户偏好、长期事实）放 Store，用 namespace + key 隔离租户与用户。它更像<strong>档案室里的花名册</strong>：不是某个对话的进度，而是这个用户长期不变的档案，任何线程都能查。</p>
+<p>这里要专门辨析一句：<strong>Checkpointer 和 Store 都能落盘，但作用完全不同，不能混为一谈</strong>——一个存「这场对话进行到哪」，一个存「这个用户长期是什么样」，前者的作用域是线程，后者是跨线程。</p>
+<p><strong>Middleware</strong> 承接的是横切逻辑：重试、摘要、权限、审批这些往往同时影响多个模型/工具调用，散落在各个节点里会重复成灾难。它的典型场景：</p>
+<ul>
+<li>模型或只读工具临时失败 → 有上限的重试；</li>
+<li>上下文过长 → 模型调用前压缩历史；</li>
+<li>用户权限变化 → 动态隐藏工具；</li>
+<li>敏感动作 → 工具执行前暂停，等人工审批；</li>
+<li>模型输出后 → 补格式或安全检查。</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com/xiaolinnote/ai/langchain/images/build_agent/cf3217f9_agent-production-boundary.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Agent 的生产边界：状态持久化、权限控制与中间件拦截，共同把 Demo 变成可上线的业务系统"></p>
+<p>最后一条铁律：<strong>付款、发邮件、删除数据等工具必须具备幂等、最小权限和审计能力，自动重试绝不能导致重复扣款或重复发信</strong>——这是安全底线，不是可选项。</p>
+<hr>
+<h2 id="7-第六步：选择调用方式">7 第六步：选择调用方式</h2>
+<p>Agent 组装完成，怎么调用它？按产品形态匹配，三种方式各有适用场景：</p>
+<table>
+<thead>
+<tr>
+<th>调用方式</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>invoke</code></td>
+<td>短任务、后台任务、等待最终结果</td>
+</tr>
+<tr>
+<td>异步调用</td>
+<td>并发 I/O、异步 Web 服务</td>
+</tr>
+<tr>
+<td><code>stream</code></td>
+<td>长任务，需要展示 Token、步骤或工具进度</td>
+</tr>
+</tbody>
+</table>
+<p>一个容易踩的误区：<strong>流式输出改善的是等待体验，并不会自动缩短工具执行时间</strong>。工具真正要跑 3 秒，流式只是让用户先看到「正在查询」的进度，该等的还是要等。超时、取消、并发限制和缓存，属于另一套设计，需要单独做、单独测。</p>
+<hr>
+<h2 id="8-第七步：测试与监控">8 第七步：测试与监控</h2>
+<p>Agent 的输出是<strong>概率性</strong>的，所以测试不能只看最终文本对没对上，而要做三层递进：</p>
+<ol>
+<li><strong>第一层：单测 Tool</strong>——正常输入、非法参数、权限错误、超时、幂等性，都要覆盖。Tool 是相对确定的业务代码，是整个系统里最该先稳定下来的部分；</li>
+<li><strong>第二层：测 Agent 轨迹</strong>——有没有选对工具、参数传得对不对、有没有越权调用、结构化输出是否符合 Schema。这一步校验的不是「答得对不对」，而是<strong>过程</strong>；</li>
+<li><strong>第三层：端到端评测 + 线上监控</strong>——把典型问题、边界案例、历史故障整理成数据集，对比模型、Prompt、Tool 不同版本的表现；上线后用 Trace 观察模型调用、工具调用、延迟、Token、失败率和人工转接率，线上出问题能顺着调用链定位到具体环节。</li>
+</ol>
+<p><img src="https://cdn.xiaolincoding.com/xiaolinnote/ai/langchain/images/build_agent/3a6f1905_agent-testing-pyramid.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="三层测试金字塔：底层单测 Tool，中层验证 Agent 轨迹，顶层做端到端评测与线上 Trace 监控"></p>
+<p>这就像做质检：零件先单独质检（Tool 单测），再查装配工艺有没有装错（轨迹测试），最后整车路测加售后数据监控（端到端 + Trace）——只测最后一句话，等于整车出厂只看外观。</p>
+<hr>
+<h2 id="9-上线前检查什么">9 上线前检查什么</h2>
+<p>临门一脚，对照这张清单逐项打勾：</p>
+<ul>
+<li>✅ 任务和停止条件是否明确；</li>
+<li>✅ Tool 是否职责单一，并在服务端校验权限；</li>
+<li>✅ 有副作用的操作是否具备幂等和审批；</li>
+<li>✅ Checkpointer 与 Store 是否使用持久化实现并做好用户隔离；</li>
+<li>✅ 是否设置超时、重试上限、并发和成本预算；</li>
+<li>✅ 是否覆盖工具、轨迹和端到端三层测试；</li>
+<li>✅ 是否能追踪一次失败运行的完整调用链。</li>
+</ul>
+<p>七步走完 + 清单打勾通过，Agent 才算真正从「能跑的 Demo」变成了「能上线的系统」。</p>
+<hr>
+<h2 id="10-面试总结">10 面试总结</h2>
+<p>回答这道题，最大的雷就是<strong>把「跑通一次工具调用」当成「构建了一个 Agent」</strong>。先避开几个误区：</p>
+<table>
+<thead>
+<tr>
+<th>误区</th>
+<th>正解</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>选模型、写 Prompt、接几个工具就是完整 Agent</td>
+<td>那只是 Demo；任务边界、工具权限、状态恢复、结构化输出、测试监控全都要做</td>
+</tr>
+<tr>
+<td>第一步是选模型</td>
+<td>第一步是明确任务边界——边界决定工具、Prompt 和测试用例，边界模糊后面补不回来</td>
+</tr>
+<tr>
+<td>Prompt 里写「禁止退款」就安全了</td>
+<td>Prompt 只是行为约束，权限校验与副作用控制必须由服务端负责</td>
+</tr>
+<tr>
+<td>结构化输出保证结果正确</td>
+<td>只约束字段与类型，不保证业务事实；事实来自可信工具，权限由业务服务控制</td>
+</tr>
+<tr>
+<td>网上示例都用 AgentExecutor，照抄就行</td>
+<td>那是旧版路径；LangChain v1 新项目从 create_agent 开始</td>
+</tr>
+</tbody>
+</table>
+<p>再按这张框架组织答案：</p>
+<table>
+<thead>
+<tr>
+<th>环节</th>
+<th>要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>明确边界</strong></td>
+<td>定义目标与允许动作、禁止动作与权限边界、成功/失败/停止标准、转人工条件</td>
+</tr>
+<tr>
+<td><strong>选择能力</strong></td>
+<td>选支持工具调用与结构化输出的模型；工具职责单一、Schema 清晰，服务端做权限与幂等</td>
+</tr>
+<tr>
+<td><strong>约束行为</strong></td>
+<td>system_prompt 约束角色、信息边界、工具规则、失败策略；response_format 定义结构化输出</td>
+</tr>
+<tr>
+<td><strong>组装 Agent</strong></td>
+<td>create_agent 组合模型 + 工具 + 提示词 + 输出格式；底层 LangGraph 跑「模型判断 → 工具执行 → 结果回传」循环</td>
+</tr>
+<tr>
+<td><strong>状态与安全</strong></td>
+<td>Checkpointer 按 thread_id 保存线程状态（存档），Store 存跨线程信息（花名册），Middleware 挂重试/摘要/权限/审批</td>
+</tr>
+<tr>
+<td><strong>调用方式</strong></td>
+<td>invoke（短任务）、异步（并发）、stream（长任务进度）；超时、取消、并发、缓存单独设计</td>
+</tr>
+<tr>
+<td><strong>测试监控</strong></td>
+<td>Tool 单测 → 轨迹测试 → 端到端评测 + 线上 Trace 监控</td>
+</tr>
+</tbody>
+</table>
+<p><strong>追问预案</strong>：</p>
+<ul>
+<li>「完整 Agent 和跑通的 Demo 差在哪里？」——Demo 只证明一次调用能通；完整 Agent 还要有任务边界、工具权限、状态恢复、结构化输出与测试监控，是一条可测试、可观测、可上线的工程链路。</li>
+<li>「工具为什么必须职责单一？」——模型靠名称、描述、参数 Schema 做选择；一个工具管多件事容易选错动作，参数无类型与范围约束时运行时也拦不住错误输入。</li>
+<li>「Checkpointer 和 Store 都能持久化，怎么区分？」——作用域不同：Checkpointer 按 thread_id 保存单线程的会话与执行状态，支撑续接与中断恢复（游戏存档）；Store 保存跨线程的长期信息如用户偏好与事实，用 namespace + key 隔离租户和用户（花名册）。</li>
+<li>「Prompt 约束和权限控制是什么关系？」——Prompt 只能约束模型行为（比如「禁止退款」）；真正的权限与副作用必须由业务服务端校验，且自动重试不能导致重复扣款、重复发信。</li>
+<li>「Agent 的输出是概率性的，怎么测试？」——三层：单测 Tool（正常/非法/权限/超时/幂等）→ 轨迹测试（工具选择、参数、越权、Schema）→ 端到端数据集评测 + 线上 Trace 监控调用链。</li>
+</ul>
+<hr>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/langchain/build_agent.html">4. 使用 LangChain 构建 Agent 的核心步骤是什么？ | 小林面试笔记</a></li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/langchain/langchain_architecture.html">3. LangChain 的底层架构与实现原理是什么？ | 小林面试笔记</a>（相关：create_agent 底层的 LangGraph 循环与数据分工）</li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/langchain/chain.html">2. 请你谈谈对 LangChain 中核心概念「Chain」的理解，以及它的核心作用与设计理念。 | 小林面试笔记</a>（相关：Chain 概念与 v1 架构的演进关系）</li>
+<li><a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/python/langchain/overview">LangChain 官方文档：Overview</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/python/langchain/middleware/overview">LangChain 官方文档：Middleware</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/python/langchain/streaming/overview">LangChain 官方文档：Streaming</a></li>
+</ul>
+<blockquote>
+<p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/LangChain/" class="category-chain-item">LangChain</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/tags/LangChain/" class="print-no-link">#LangChain</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「LangChain」使用 LangChain 构建 Agent 的核心步骤是什么？</div>
+      <div>https://marisamagic.github.io/2026/08/24/20260824_LangChain构建Agent/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月24日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/24/20260824_LangChain%E5%BA%95%E5%B1%82%E6%9E%B6%E6%9E%84/" title="「LangChain」LangChain 的底层架构与实现原理是什么？">
+                        <span class="hidden-mobile">「LangChain」LangChain 的底层架构与实现原理是什么？</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
