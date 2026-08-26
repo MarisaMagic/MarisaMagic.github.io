@@ -1,0 +1,948 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="LangChain 中短期记忆和长期记忆的实现，一句话：短期记忆 &#x3D; State + thread_id + Checkpointer，长期记忆 &#x3D; namespace&#x2F;key + Store。设计记忆的第一步不是选数据库，而是定作用域——会话线程内运行位置（消息、当前步骤、中间结果）属于短期记忆，由 Agent State 保存、Checkpointer 按 thread_id 存状态快照，同一">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「LangChain」LangChain 如何实现短期记忆和长期记忆？">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/26/20260826_LangChain%E9%95%BF%E7%9F%AD%E6%9C%9F%E8%AE%B0%E5%BF%86/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="LangChain 中短期记忆和长期记忆的实现，一句话：短期记忆 &#x3D; State + thread_id + Checkpointer，长期记忆 &#x3D; namespace&#x2F;key + Store。设计记忆的第一步不是选数据库，而是定作用域——会话线程内运行位置（消息、当前步骤、中间结果）属于短期记忆，由 Agent State 保存、Checkpointer 按 thread_id 存状态快照，同一">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/24/185sw.jpg">
+<meta property="article:published_time" content="2026-08-26T07:30:58.965Z">
+<meta property="article:modified_time" content="2026-08-26T07:30:58.965Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="LangChain">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/08/24/185sw.jpg">
+  
+  
+  
+  <title>「LangChain」LangChain 如何实现短期记忆和长期记忆？ - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/08/24/185sw.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「LangChain」LangChain 如何实现短期记忆和长期记忆？"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-26 15:30" pubdate>
+          2026年8月26日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.1k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          34 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「LangChain」LangChain 如何实现短期记忆和长期记忆？</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<blockquote>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/langchain/memory.html">6. LangChain 如何实现短期记忆和长期记忆？</a>，用于记录与总结 LangChain 框架相关的核心面试知识点。</p>
+</blockquote>
+<p>面试原题是这样的：</p>
+<blockquote>
+<p>👔面试官：LangChain 中的短期记忆和长期记忆怎么实现？</p>
+<p>🙋‍♂️我：短期记忆就是把最近几轮对话放进 Prompt，长期记忆就是把全部聊天记录存进向量数据库。</p>
+<p>👔面试官：全部聊天记录都值得长期保存吗？当前线程状态由谁管理？用户换一个会话后，又如何读取以前的偏好？</p>
+<p>🙋‍♂️我：可以使用 <code>ConversationBufferMemory</code> 和 <code>ConversationSummaryMemory</code>。</p>
+<p>👔面试官：这些是旧版 Chain 时代的常见抽象。LangChain v1 新项目应该讲清 Checkpointer、Store、<code>thread_id</code> 和 namespace 的作用。</p>
+<p>🙋‍♂️我：Checkpointer 和 Store 都能把数据保存下来，项目里选择其中一个应该就够了。</p>
+<p>👔面试官：它们的作用域完全不同。Checkpointer 保存当前线程的状态，Store 才负责跨线程数据，混用后不是换会话失忆，就是发生用户数据串读。</p>
+</blockquote>
+<p>「<strong>LangChain 如何实现短期记忆和长期记忆？</strong>」，可以这样作答：</p>
+<blockquote>
+<p>记住一条主线就够：<strong>短期记忆 = State + thread_id + Checkpointer，长期记忆 = namespace/key + Store</strong>。短期记忆属于当前会话线程——Agent State 保存消息、当前步骤和中间结果，Checkpointer 按 <code>thread_id</code> 保存状态快照，同一 <code>thread_id</code> 再次调用就能恢复对话与执行状态；长期记忆不绑定线程，存进 Store——namespace 通常由租户、用户、记忆类型组成，用户新建线程后，只要可信身份相同，仍能读取自己的长期偏好。模型只负责生成任务参数，用户 ID、租户、权限等可信身份由应用运行时经 ToolRuntime 注入；工具通过 <code>runtime.state</code> 读当前线程状态、<code>runtime.store</code> 读跨线程长期数据，两个入口不能混用。长对话还要治理上下文：裁剪、删除、摘要是三种不同策略，各有风险；长期记忆不是把聊天记录全存进去，写入要讲究时机（明确被要求记住的实时写，推断出的偏好后台提炼），并且做去重、脱敏、冲突处理。生产环境要盯四件事：数据库型持久化、可信身份、记忆治理（过期/纠错/隐私）和召回评测。</p>
+</blockquote>
+<p>面试对话里藏着这道题的两个雷区：一是拿旧版 <code>ConversationBufferMemory</code>、<code>ConversationSummaryMemory</code> 作答——那是 Chain 时代的抽象，LangChain v1 新项目讲的是 Checkpointer、Store、<code>thread_id</code> 和 namespace；二是把「能落盘」当成「一个就够」——Checkpointer 和 Store 作用域完全不同。前面几篇我们讲过架构里的 State/Context/Store 数据分工、构建步骤里的「补齐状态与安全」、工具注册里的 ToolRuntime 可信参数注入，这篇就把「记忆」这一环补完整：<strong>该记住什么、短期怎么存、长期怎么存、怎么跨线程读、怎么治理</strong>。</p>
+<hr>
+<h2 id="1-先分清：该记住什么">1 先分清：该记住什么</h2>
+<p>记忆设计的第一步不是选数据库，而是<strong>定作用域</strong>——先回答「这条信息属于哪个作用域」。</p>
+<p>举个杭州旅行的例子：对话里聊到的出行日期、预算、下一步计划，属于<strong>当前线程的短期状态</strong>——这场对话结束就过时了；而「不吃辣、喜欢住地铁附近」这种一周后新开一个会话仍然成立的信息，才是<strong>长期记忆</strong>。</p>
+<p>区分标准就一句话：<strong>短期记忆回答「这场对话进行到哪」，长期记忆回答「这个用户是谁」</strong>。对话中的进度、草稿是前者，用户身上稳定的偏好、经验、规则是后者：</p>
+<p><img src="https://cdn.xiaolincoding.com/xiaolinnote/ai/langchain/images/memory/081ced68_short-vs-long-memory.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="短期记忆与长期记忆的作用域对比：线程内状态由 State 与 Checkpointer 管理，跨线程的长期信息由 Store 管理"></p>
+<p>把作用域定清楚后，两条主线就诞生了：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs angelscript">短期记忆 = State + thread_id + Checkpointer<br><br>长期记忆 = <span class="hljs-keyword">namespace</span>/<span class="hljs-symbol">key</span> + <span class="hljs-symbol">Store</span><br></code></pre></td></tr></table></figure>
+<hr>
+<h2 id="2-短期记忆如何实现">2 短期记忆如何实现</h2>
+<p><code>create_agent</code> 底层运行在 LangGraph 上，Agent State 是每次执行的核心载体：默认包含 <code>messages</code>，也可以扩展订单号、当前步骤、工具调用次数等业务字段。但要注意——<strong>State 在内存里跑，进程退出就没了</strong>。要让短期记忆跨进程、跨实例存活，需要 Checkpointer 持久化：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> langchain.agents <span class="hljs-keyword">import</span> create_agent<br><span class="hljs-keyword">from</span> langgraph.checkpoint.memory <span class="hljs-keyword">import</span> InMemorySaver<br><br><br><span class="hljs-comment"># Checkpointer 按 thread_id 保存线程内的 Agent State</span><br>agent = create_agent(<br>    model=<span class="hljs-string">&quot;openai:gpt-5.4-mini&quot;</span>,<br>    tools=[],<br>    checkpointer=InMemorySaver(),<br>)<br><br><span class="hljs-comment"># 两次调用复用同一个 thread_id，表示它们属于同一会话线程</span><br>config = &#123;<span class="hljs-string">&quot;configurable&quot;</span>: &#123;<span class="hljs-string">&quot;thread_id&quot;</span>: <span class="hljs-string">&quot;chat-1001&quot;</span>&#125;&#125;<br><br><span class="hljs-comment"># 第一轮把用户姓名写入当前线程的 messages 状态</span><br>agent.invoke(<br>    &#123;<span class="hljs-string">&quot;messages&quot;</span>: [&#123;<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;我叫小林&quot;</span>&#125;]&#125;,<br>    config=config,<br>)<br><br><span class="hljs-comment"># 第二轮会先恢复同一线程之前保存的状态</span><br>result = agent.invoke(<br>    &#123;<span class="hljs-string">&quot;messages&quot;</span>: [&#123;<span class="hljs-string">&quot;role&quot;</span>: <span class="hljs-string">&quot;user&quot;</span>, <span class="hljs-string">&quot;content&quot;</span>: <span class="hljs-string">&quot;我叫什么？&quot;</span>&#125;]&#125;,<br>    config=config,<br>)<br></code></pre></td></tr></table></figure>
+<p>两个要点：一是 <code>InMemorySaver</code> 只适合本地演示，<strong>生产环境要换数据库型持久化实现</strong>；二是 Checkpoint 保存的是图执行中各步的 State 快照，这正是「暂停恢复、人工审批、故障恢复」这些能力的地基——上一篇文章构建步骤里说过的「游戏存档」就应验在这里：同一 <code>thread_id</code> 是同一个存档位，读档就接着跑。</p>
+<hr>
+<h2 id="3-消息太多怎么办">3 消息太多怎么办</h2>
+<p>Checkpointer 能保存状态，<strong>不等于每次都要把全部历史全量喂给模型</strong>——消息越多，Token 成本、延迟和注意力干扰都越大。处理超长历史有三类策略，各有利弊：</p>
+<table>
+<thead>
+<tr>
+<th>策略</th>
+<th>作用</th>
+<th>主要风险</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>裁剪</td>
+<td>只选择部分消息进入本次模型上下文</td>
+<td>持久状态仍会继续增长</td>
+</tr>
+<tr>
+<td>删除</td>
+<td>从 State 中永久移除旧消息</td>
+<td>信息不可恢复</td>
+</tr>
+<tr>
+<td>摘要</td>
+<td>把早期历史压缩成简短语义摘要</td>
+<td>可能遗漏细节或逐轮失真</td>
+</tr>
+</tbody>
+</table>
+<p><img src="https://cdn.xiaolincoding.com/xiaolinnote/ai/langchain/images/memory/32ae09c6_trim-delete-summarize.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="上下文治理三策略：裁剪只影响本次输入，删除不可恢复，摘要可能失真"></p>
+<p>更关键的是<strong>策略要跟业务挂钩</strong>，不能按固定条数一刀切：客服 Agent 要优先保护当前工单信息和给用户的承诺，代码 Agent 要保住最新的报错和修改记录——选择哪些消息留下，要综合 Token 预算、消息角色和业务重要性来判断。</p>
+<hr>
+<h2 id="4-长期记忆如何实现">4 长期记忆如何实现</h2>
+<p>这里先澄清一个容易误解的点：<strong>新的 <code>thread_id</code> 默认不继承旧线程的 State</strong>——这是刻意的线程隔离，不是缺陷。跨线程仍然要用的信息，需要被「提炼」出来写入 Store。</p>
+<p>Store 的定位三要素：</p>
+<figure class="highlight angelscript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs angelscript"><span class="hljs-keyword">namespace</span> = (<span class="hljs-symbol">tenant_id</span>, <span class="hljs-symbol">user_id</span>, <span class="hljs-symbol">memory_type</span>)<br><br><span class="hljs-symbol">key</span>       = 某条记忆的稳定标识<br><br><span class="hljs-symbol">value</span>     = <span class="hljs-symbol">JSON</span> 数据<br></code></pre></td></tr></table></figure>
+<ul>
+<li><strong>namespace</strong>：一组层级标签，通常按「租户、用户、记忆类型」组织，天然把不同租户、不同用户的数据隔开——这是防串读的第一道墙；</li>
+<li><strong>key</strong>：某条记忆的稳定标识，比如「当前偏好」记录固定用 <code>main</code>；</li>
+<li><strong>value</strong>：记忆内容本身，JSON 格式。</li>
+</ul>
+<p>读取时，已知 key 就精确读取；想按语义查找（「我记得他说过饮食相关的事」），可以给 Store 配向量索引做语义检索。但要记住：<strong>向量检索只是召回方式，不代表所有聊天记录都要变成长期记忆</strong>。</p>
+<p>那长期记忆里通常放什么？分类设计数据结构，而不是要求「全都保存」：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>用户事实与偏好</td>
+<td>不吃辣、偏好中文、常用 Java</td>
+</tr>
+<tr>
+<td>历史经验</td>
+<td>上次如何成功处理支付超时</td>
+</tr>
+<tr>
+<td>工作规则</td>
+<td>退款前必须核验订单归属</td>
+</tr>
+</tbody>
+</table>
+<p>写入之前，还要过一遍「质检」：去重、脱敏、冲突处理、质量判断——<strong>长期记忆像写进档案室的档案，不是往流水账里记每一句话</strong>。</p>
+<hr>
+<h2 id="5-如何跨线程读取">5 如何跨线程读取</h2>
+<p>用户换一个会话（新 <code>thread_id</code>），怎么还能调出自己的偏好？答案在 <code>ToolRuntime</code>——它给工具三个入口，<strong>不能混成一个数据袋</strong>：</p>
+<ul>
+<li><code>runtime.state</code>：当前线程的短期状态；</li>
+<li><code>runtime.context</code>：可信的用户身份与权限（由应用注入，模型不可见）；</li>
+<li><code>runtime.store</code>：跨线程的长期数据。</li>
+</ul>
+<p>模型只生成任务参数（比如偏好内容），<code>user_id</code> 由已认证的应用经 Context 注入——这与「工具注册」那篇的可信参数边界一脉相承。看个完整例子：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> dataclasses <span class="hljs-keyword">import</span> dataclass<br><br><span class="hljs-keyword">from</span> langchain.tools <span class="hljs-keyword">import</span> ToolRuntime, tool<br><br><br><span class="hljs-meta">@dataclass</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">UserContext</span>:<br>    <span class="hljs-comment"># 用户身份由可信应用注入，不暴露给模型填写</span><br>    user_id: <span class="hljs-built_in">str</span><br><br><br><span class="hljs-meta">@tool</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">remember_preference</span>(<span class="hljs-params"></span><br><span class="hljs-params">    preference: <span class="hljs-built_in">str</span>,</span><br><span class="hljs-params">    runtime: ToolRuntime[UserContext],</span><br><span class="hljs-params"></span>) -&gt; <span class="hljs-built_in">str</span>:<br>    <span class="hljs-string">&quot;&quot;&quot;保存当前用户明确要求记住的偏好。&quot;&quot;&quot;</span><br>    <span class="hljs-comment"># namespace 将不同用户的长期记忆隔离开</span><br>    namespace = (runtime.context.user_id, <span class="hljs-string">&quot;preferences&quot;</span>)<br>    <span class="hljs-comment"># key 为 main，本例只维护一条当前偏好记录</span><br>    runtime.store.put(namespace, <span class="hljs-string">&quot;main&quot;</span>, &#123;<span class="hljs-string">&quot;text&quot;</span>: preference&#125;)<br>    <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;偏好已保存&quot;</span><br></code></pre></td></tr></table></figure>
+<p>这套设计的隔离逻辑是：不同 <code>thread_id</code> 的会话，只要可信 <code>user_id</code> 相同，就能访问同一份长期记忆；<strong>其他用户则由 namespace 和服务端权限隔离</strong>——谁也不能凭模型生成的身份读到别人的档案：</p>
+<p><img src="https://cdn.xiaolincoding.com/xiaolinnote/ai/langchain/images/memory/b74032b6_cross-thread-store-sharing.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="跨线程读取与用户隔离：可信身份相同即可共享长期记忆，namespace 与权限隔离其他用户"></p>
+<p>这就像医院的病历归档：护士只认病人手环上的身份码（可信身份），按手环码把病历放进对应档案格（namespace），绝不听任何人现场报名字——报名字既可能记错，也可能被人冒名。</p>
+<hr>
+<h2 id="6-什么时候写入长期记忆">6 什么时候写入长期记忆</h2>
+<p>「能记」不等于「该记」。<strong>闲聊全存只会制造噪声、冲突和隐私风险</strong>——记住每条「今天天气不错」，下次检索时真正的偏好反而被淹没。</p>
+<p>写入时机分两种：</p>
+<ul>
+<li><strong>明确要求记住的</strong>（用户说「请记住我不吃辣」）：主链路实时写入，立即生效；</li>
+<li><strong>模型推断出的偏好经验</strong>（从对话里隐隐看出的习惯）：更适合会话结束后由<strong>后台任务</strong>提炼、去重、脱敏后写入——当场写容易把试探性言论当真。</li>
+</ul>
+<p>无论哪种方式，写入的记录都应该保存<strong>来源、时间、置信度</strong>，并支持更新、纠错、删除——记忆是会错的，要给用户和管理员留出修正的通道。</p>
+<p>还有一条铁律：<strong>订单金额、账户余额、库存这类实时事实，必须去查权威业务系统</strong>，长期记忆不代替真实数据库——记忆里放的是规律与偏好，不是会变动的账本。</p>
+<hr>
+<h2 id="7-生产环境要注意什么">7 生产环境要注意什么</h2>
+<p>把记忆系统搬上线，要过四道关：</p>
+<ol>
+<li><strong>可靠保存</strong>：内存实现随进程退出而丢，线上必须用数据库型 Checkpointer 和 Store，表结构与迁移纳入部署流程；</li>
+<li><strong>这是谁的记忆</strong>：<code>thread_id</code>、<code>tenant_id</code>、<code>user_id</code> 必须来自可信身份体系，不能信模型生成的身份，也不能让客户端随意指定他人的 namespace——记得越多，越要先回答「这是谁的记忆」，否则数据库越大，跨用户泄漏的风险越大；</li>
+<li><strong>记忆会过时</strong>：去重、更新、过期淘汰是常态；用户要能查看、更正、导出、删除自己的记忆；敏感信息默认不记，确需保存则加密限权——日志与 Trace 也不能成为隐私泄漏口；</li>
+<li><strong>不是能存能查就合格</strong>：写入了多少条不是指标，要看<strong>召回链路</strong>——信息是否值得写入、相关问题能否召回、无关问题会不会误召回、注入记忆后答案是否真的变好。</li>
+</ol>
+<p><img src="https://cdn.xiaolincoding.com/xiaolinnote/ai/langchain/images/memory/573794ad_memory-write-pipeline.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="记忆写入流水线：从判断是否值得写入、去重脱敏，到检索召回与使用效果的评测闭环"></p>
+<p>只有「写入、召回、使用」三步都有效，记忆系统才不是另一个不断膨胀的数据库。</p>
+<hr>
+<h2 id="8-旧-Memory-还能用吗">8 旧 Memory 还能用吗</h2>
+<p><code>ConversationBufferMemory</code>、<code>ConversationSummaryMemory</code> 这类名字，是 Chain 时代（LLMChain 那个时代）的常见抽象，如今主要位于 <code>langchain-classic</code>，适合维护存量项目——但它不再是 v1 新项目的主路径。</p>
+<p>v1 新项目的推荐组合：</p>
+<figure class="highlight xl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs xl">A<span class="hljs-function"><span class="hljs-title">gentState</span> + Checkpointer -&gt;</span> 管理线程内状态<br><br>S<span class="hljs-function"><span class="hljs-title">tore</span> + namespace/key -&gt;</span> 管理跨线程长期记忆<br><br>M<span class="hljs-function"><span class="hljs-title">iddleware</span> 或图节点 -&gt;</span> 管理裁剪、摘要和写入策略<br></code></pre></td></tr></table></figure>
+<p>对比旧版，这套组合把三件事拆得更清楚：<strong>状态作用域</strong>（线程内 vs 跨线程）、<strong>持久化机制</strong>（Checkpointer vs Store）、<strong>记忆治理</strong>（裁剪/摘要/写入策略交给 Middleware 或图节点）。对于有工具调用、暂停恢复、多用户隔离要求的 Agent，这种拆分几乎每一项都是刚需。</p>
+<hr>
+<h2 id="9-面试总结">9 面试总结</h2>
+<p>回答这道题，最大的雷就是<strong>拿旧版 Memory 类名作答，或者把 Checkpointer 与 Store 混为一谈</strong>。先避开几个误区：</p>
+<table>
+<thead>
+<tr>
+<th>误区</th>
+<th>正解</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>短期记忆 = 最近几轮对话塞进 Prompt，长期记忆 = 全部聊天记录存向量库</td>
+<td>短期记忆是线程级 State + Checkpointer（thread_id），长期记忆是跨线程 Store（namespace/key）；不是所有聊天都值得长期保存</td>
+</tr>
+<tr>
+<td>用 ConversationBufferMemory / ConversonSummaryMemory 作答</td>
+<td>旧版 Chain 时代抽象，在 langchain-classic；v1 讲 Checkpointer、Store、thread_id、namespace</td>
+</tr>
+<tr>
+<td>Checkpointer 和 Store 都是持久化，选一个就够</td>
+<td>作用域完全不同：Checkpointer 管当前线程状态，Store 管跨线程数据；混用不是换会话失忆，就是用户数据串读</td>
+</tr>
+<tr>
+<td>上下文太长就固定裁剪最后 N 条</td>
+<td>策略要按 Token 预算、消息角色、业务重要性定制——客服保工单与承诺，代码 Agent 保报错与修改记录</td>
+</tr>
+<tr>
+<td>记忆系统能写能查就合格</td>
+<td>当代系统像针对存档的档案室：写入要质检（去重、脱敏、质量判断），读取要隔离（namespace、可信身份），还要支持纠错、过期删除、隐私保护与召回评测</td>
+</tr>
+</tbody>
+</table>
+<p>再按这张框架组织答案（短期与长期对照，不容易乱）：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>短期记忆</th>
+<th>长期记忆</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>作用域</td>
+<td>当前线程（会话）</td>
+<td>跨线程</td>
+</tr>
+<tr>
+<td>载体</td>
+<td>Agent State + Checkpointer</td>
+<td>Store（namespace/key/value）</td>
+</tr>
+<tr>
+<td>关键标识</td>
+<td>thread_id</td>
+<td>namespace=(tenant_id, user_id, memory_type) + key</td>
+</tr>
+<tr>
+<td>内容</td>
+<td>消息、当前步骤、中间结果</td>
+<td>用户偏好、历史经验、工作规则</td>
+</tr>
+<tr>
+<td>读取入口</td>
+<td>runtime.state</td>
+<td>runtime.store（语义检索可配向量索引）</td>
+</tr>
+<tr>
+<td>恢复能力</td>
+<td>同 thread_id 续接，支持暂停恢复与人工审批</td>
+<td>换线程后仍可读，namespace 隔离防串读</td>
+</tr>
+<tr>
+<td>治理手段</td>
+<td>裁剪、删除、摘要（按业务定制）</td>
+<td>去重、更新、过期淘汰、隐私保护、召回评测</td>
+</tr>
+</tbody>
+</table>
+<p><strong>追问预案</strong>：</p>
+<ul>
+<li>「怎么判断一条信息该短期记还是长期记？」——按作用域：这场对话内还要用的（进度、草稿、中间结果）是短期；换一个会话仍然成立的（口味偏好、工作规则、处理经验）才是长期。等价表述：短期回答「对话进行到哪」，长期回答「用户是谁」。</li>
+<li>「Checkpointer 和 Store 都能落盘，为什么不能二选一？」——作用域问题：Checkpointer 按 thread_id 保存当前线程的状态快照，新线程不继承；Store 按 namespace/key 保存跨线程长期数据。混用要么换会话就失忆（拿 Store 当线程存档），要么用户数据串读（拿线程状态当长期档案）。</li>
+<li>「上下文太长怎么处理？」——三策略各有代价：裁剪只减本次模型输入、持久状态继续增长；删除不可恢复；摘要可能逐轮失真。要结合 Token 预算、消息角色与业务重要性定制，不能固定条数。</li>
+<li>「长期记忆什么时候写、写什么？」——被明确要求记住的实时写入；推断出的偏好由后台任务提炼、去重、脱敏后写。写来源、时间、置信度，支持更新纠错删除；订单金额、余额这类实时事实查权威系统，不存进记忆。</li>
+<li>「怎么防止模型读到别人的记忆？」——身份可信化 + 空间隔离：user_id 由应用经 ToolRuntime context 注入（模型不可见），namespace 按租户/用户隔离，服务端再做权限校验；模型生成的身份一个都不能信。</li>
+</ul>
+<hr>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/langchain/memory.html">6. LangChain 如何实现短期记忆和长期记忆？ | 小林面试笔记</a></li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/langchain/tool_registration.html">5. 在 LangChain 中，如何为 Agent 注册工具？ | 小林面试笔记</a>（相关：ToolRuntime 三个入口与可信参数注入）</li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/langchain/build_agent.html">4. 使用 LangChain 构建 Agent 的核心步骤是什么？ | 小林面试笔记</a>（相关：七步构建中的「补齐状态与安全」）</li>
+<li><a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/python/concepts/memory">LangChain 官方文档：Memory 概览</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/python/langchain/short-term-memory">LangChain 官方文档：Short-term Memory</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/python/langchain/long-term-memory">LangChain 官方文档：Long-term Memory</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/python/langgraph/persistence">LangGraph 官方文档：Persistence</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/python/langgraph/add-memory">LangGraph 官方文档：Memory</a></li>
+<li><a target="_blank" rel="noopener" href="https://reference.langchain.com/python/langchain-classic">LangChain API：langchain-classic</a></li>
+</ul>
+<blockquote>
+<p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/LangChain/" class="category-chain-item">LangChain</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/tags/LangChain/" class="print-no-link">#LangChain</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「LangChain」LangChain 如何实现短期记忆和长期记忆？</div>
+      <div>https://marisamagic.github.io/2026/08/26/20260826_LangChain长短期记忆/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月26日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/08/26/20260826_LangChain%E4%B8%8ELangGraph%E5%8C%BA%E5%88%AB/" title="「LangChain」请你详细说说 LangChain 和 LangGraph 的核心区别是什么？">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「LangChain」请你详细说说 LangChain 和 LangGraph 的核心区别是什么？</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/26/20260826_LangChain%E5%B7%A5%E5%85%B7%E6%B3%A8%E5%86%8C/" title="「LangChain」在 LangChain 中，如何为 Agent 注册工具？">
+                        <span class="hidden-mobile">「LangChain」在 LangChain 中，如何为 Agent 注册工具？</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
