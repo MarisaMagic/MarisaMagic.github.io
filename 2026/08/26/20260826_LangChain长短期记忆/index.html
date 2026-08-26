@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/24/185sw.jpg">
 <meta property="article:published_time" content="2026-08-26T07:30:58.965Z">
-<meta property="article:modified_time" content="2026-08-26T14:54:52.160Z">
+<meta property="article:modified_time" content="2026-08-26T16:30:23.265Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="大模型">
@@ -256,7 +256,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          4.1k 字
+          3.8k 字
         
       </span>
     
@@ -267,7 +267,7 @@
         
         
         
-          34 分钟
+          32 分钟
         
       </span>
     
@@ -316,16 +316,6 @@
                 <h2 id="0-前言">0 前言</h2>
 <blockquote>
 <p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/langchain/memory.html">6. LangChain 如何实现短期记忆和长期记忆？</a>，用于记录与总结 LangChain 框架相关的核心面试知识点。</p>
-</blockquote>
-<p>面试原题是这样的：</p>
-<blockquote>
-<p>👔面试官：LangChain 中的短期记忆和长期记忆怎么实现？</p>
-<p>🙋‍♂️我：短期记忆就是把最近几轮对话放进 Prompt，长期记忆就是把全部聊天记录存进向量数据库。</p>
-<p>👔面试官：全部聊天记录都值得长期保存吗？当前线程状态由谁管理？用户换一个会话后，又如何读取以前的偏好？</p>
-<p>🙋‍♂️我：可以使用 <code>ConversationBufferMemory</code> 和 <code>ConversationSummaryMemory</code>。</p>
-<p>👔面试官：这些是旧版 Chain 时代的常见抽象。LangChain v1 新项目应该讲清 Checkpointer、Store、<code>thread_id</code> 和 namespace 的作用。</p>
-<p>🙋‍♂️我：Checkpointer 和 Store 都能把数据保存下来，项目里选择其中一个应该就够了。</p>
-<p>👔面试官：它们的作用域完全不同。Checkpointer 保存当前线程的状态，Store 才负责跨线程数据，混用后不是换会话失忆，就是发生用户数据串读。</p>
 </blockquote>
 <p>「<strong>LangChain 如何实现短期记忆和长期记忆？</strong>」，可以这样作答：</p>
 <blockquote>

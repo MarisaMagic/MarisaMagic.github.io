@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/24/185sw.jpg">
 <meta property="article:published_time" content="2026-08-26T12:29:30.936Z">
-<meta property="article:modified_time" content="2026-08-26T14:54:21.529Z">
+<meta property="article:modified_time" content="2026-08-26T16:30:29.734Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="大模型">
@@ -256,7 +256,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          5.4k 字
+          5.2k 字
         
       </span>
     
@@ -267,7 +267,7 @@
         
         
         
-          46 分钟
+          43 分钟
         
       </span>
     
@@ -316,16 +316,6 @@
                 <h2 id="0-前言">0 前言</h2>
 <blockquote>
 <p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/langchain/langchain_vs_langgraph.html">9. 请你详细说说 LangChain 和 LangGraph 的核心区别是什么？</a>，用于记录与总结 LangChain 框架相关的核心面试知识点。</p>
-</blockquote>
-<p>面试原题是这样的：</p>
-<blockquote>
-<p>👔面试官：你说说 LangChain 和 LangGraph 有什么区别？</p>
-<p>🙋‍♂️我：LangChain 只能把步骤线性串起来，LangGraph 才能做分支和循环。</p>
-<p>👔面试官：这句话早就不准确了。LCEL 有分支和并行能力，LangChain v1 的 <code>create_agent</code> 本身也是带条件和循环的图。你把「能不能分支」当成两者的边界，说明你还停留在旧版教程里。</p>
-<p>🙋‍♂️我：那 LangChain 负责开发，LangGraph 负责部署——需要持久化、流式输出和人工审批时，再把项目迁移到 LangGraph。</p>
-<p>👔面试官：也不对。现在 LangChain Agent 就运行在 LangGraph 上，检查点、流式输出和人工审批中间件都能直接用，并不是用了 LangChain 就没有这些能力。</p>
-<p>🙋‍♂️我：明白了，它们其实是一套东西，只是 LangGraph 换了一种图写法，选哪个都差不多。</p>
-<p>👔面试官：又走到另一个极端了。底层运行时可以相同，但抽象层级、控制权和开发成本完全不同。标准工具调用 Agent 和跨多个业务阶段的长流程，当然不能用同一个粒度去设计。</p>
 </blockquote>
 <p>「<strong>请你详细说说 LangChain 和 LangGraph 的核心区别是什么？</strong>」，可以这样作答：</p>
 <blockquote>
