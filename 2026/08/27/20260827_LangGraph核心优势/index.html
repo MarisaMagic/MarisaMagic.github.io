@@ -1,0 +1,1050 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="回答「LangGraph 相比于 LangChain 的核心优势」，先纠正前提：两者不是互斥的两套 Agent 框架——LangChain v1 的高层 Agent API（create_agent）本身就运行在 LangGraph 之上，LangGraph 是更底层的编排框架与运行时。真正的优势不是「LangChain 没有这些能力」，而是控制粒度：显式的 State、节点、边让确定性规则与模型">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「LangChain」LangGraph 的核心优势？更适配哪些 Agent 场景？">
+<meta property="og:url" content="https://marisamagic.github.io/2026/08/27/20260827_LangGraph%E6%A0%B8%E5%BF%83%E4%BC%98%E5%8A%BF/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="回答「LangGraph 相比于 LangChain 的核心优势」，先纠正前提：两者不是互斥的两套 Agent 框架——LangChain v1 的高层 Agent API（create_agent）本身就运行在 LangGraph 之上，LangGraph 是更底层的编排框架与运行时。真正的优势不是「LangChain 没有这些能力」，而是控制粒度：显式的 State、节点、边让确定性规则与模型">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/08/24/185sw.jpg">
+<meta property="article:published_time" content="2026-08-27T12:33:50.515Z">
+<meta property="article:modified_time" content="2026-08-27T12:38:09.171Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="LangChain">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/08/24/185sw.jpg">
+  
+  
+  
+  <title>「LangChain」LangGraph 的核心优势？更适配哪些 Agent 场景？ - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/08/24/185sw.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「LangChain」LangGraph 的核心优势？更适配哪些 Agent 场景？"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-08-27 20:33" pubdate>
+          2026年8月27日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          59 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「LangChain」LangGraph 的核心优势？更适配哪些 Agent 场景？</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<blockquote>
+<p>本文内容整理自公众号「小林面试笔记」的文章 <a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/langchain/langgraph_advantages.html">10. LangGraph 相比于 LangChain 有哪些核心优势？更适配哪些 Agent 场景？</a>，用于记录与总结 LangChain 框架相关的核心面试知识点。</p>
+</blockquote>
+<p>「<strong>LangGraph 相比于 LangChain 有哪些核心优势？更适配哪些 Agent 场景？</strong>」，可以这样作答：</p>
+<blockquote>
+<p>先说前提：两者不是互斥的两套 Agent 框架。LangChain v1 提供模型、工具、中间件和预构建的 Agent loop，<code>create_agent</code> 本身就运行在 LangGraph 之上；LangGraph 是更底层的<strong>编排框架与运行时</strong>，让开发者直接控制状态、节点、边、路由、并行、子图、中断与恢复。所谓核心优势，不是「LangChain 没有这些能力」，而是把复杂 Agent 运行变成<strong>显式、可持久化、可观察、可恢复的状态机</strong>：确定性规则与模型决策在同一个执行拓扑里各就各位；Checkpointer 按 <code>thread_id</code> 保存检查点、Store 保存跨线程知识，任务可在服务重启后从保存状态继续；<code>interrupt()</code> 让外部系统在节点内任意位置介入；Retry/Timeout/Error Handler 三层容错、只重试失败分支、Time Travel 回放，让失败不必整段重跑。因此更适配<strong>长任务、人工审批、故障恢复、并行研究、多 Agent 协作</strong>这类场景；简单循环优先 <code>create_agent</code>，复杂业务拓扑才直接使用 LangGraph——且常把 LangChain Agent 作为图中的节点或子图复用。一句话：<strong>LangChain 负责把 Agent 开箱即用，LangGraph 负责让系统按你设计的路线可靠地走完。</strong></p>
+</blockquote>
+<p>这道题的雷区是把它答成「LangGraph 比 LangChain 强在哪」的武器对比——上一篇文章我们定过位：<strong>LangChain 定协议，LangGraph 跑状态</strong>，两者是上下层而不是竞争对手。今天按面试官真的想听的来答：直接使用 LangGraph 时，到底多了哪些控制能力？它们分别解决什么工程问题？哪些场景为此值得放弃高层 API？这篇从<strong>显式状态机、持久化与人工介入、容错与恢复、并行与子图、流式与生产</strong>逐条展开，最后用采购审批的例子串起来。</p>
+<hr>
+<h2 id="1-先说前提：LangGraph-不是-LangChain-的对手">1 先说前提：LangGraph 不是 LangChain 的对手</h2>
+<p>先拉平一个常见误解：很多人一听说「LangGraph 是低层框架」，就默认它是 LangChain 的替代品甚至升级版——这就像拿一台装配好的汽车和它底盘的线控平台比谁更好开，两者根本不在一层。</p>
+<p>截至 2026 年 7 月，官方定位非常明确：</p>
+<ul>
+<li><strong>LangChain v1</strong> 是高层 Agent 框架：提供模型、工具、常见 Agent 循环和 middleware，目标是让你快速得到一个能用的 Agent；</li>
+<li><strong>LangGraph</strong> 是低层编排框架与运行时：负责有状态的流程如何执行、如何暂停、如何恢复，<code>create_agent</code> 返回的「编译后的图」本质上就是一个 LangGraph。</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com/xiaolinnote/ai/langchain/images/langgraph_advantages/0c479cd7_langchain-car-langgraph-chassis.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="整车与底盘比喻：LangChain 像装好方向盘和导航的整车，LangGraph 像开放的控制底盘，车辆内部线路由你决定"></p>
+<p>用汽车的比喻说：LangChain 像装好方向盘、刹车和导航的整车，调调座椅就能上路；LangGraph 像是把底盘和动力控制系统开放出来，转向、刹车、油门怎么联动、信号往哪走，你来接线。所以「核心优势」这个词要小心用——持久化、流式输出、人工介入<strong>不是 LangChain 无法获得的能力</strong>，<code>create_agent</code> 通过底层运行时全都具备。真正的优势在于控制粒度：直接使用 LangGraph 时，是你来决定这些能力放在<strong>哪个节点</strong>、围绕<strong>哪些状态</strong>生效、失败后<strong>从哪里恢复</strong>、子流程<strong>如何组合</strong>。</p>
+<p>还要注意，LangGraph 不是 LangChain 的附属品：它能用 LangChain 的模型和工具组件，但<strong>不强制依赖</strong>，也可以直接接其他模型的 SDK 或普通 Python 函数。它是一个独立的编排运行时，LangChain 只是常见的「零件供应商」之一。</p>
+<hr>
+<h2 id="2-摊开流程与状态：显式状态机">2 摊开流程与状态：显式状态机</h2>
+<p>LangGraph 对复杂业务最根本的优势，是把「流程」和「状态」从模型对话的暗盒里<strong>摊开成一张可以修改、可以检查的图</strong>。</p>
+<p>先看它提供的原语：</p>
+<ul>
+<li><strong>State</strong>：整个工作流共享的数据结构，分输入、输出、内部通道，节点只返回局部更新；</li>
+<li><strong>Node</strong>：一个执行单元，可以是模型调用、规则函数，也可以是完全不用 LLM 的普通代码；</li>
+<li><strong>Edge</strong>：节点之间的流转关系，条件边根据 State 决定下一步去哪；</li>
+<li><strong>Reducer</strong>：规定并行节点对同一字段的多次写入如何合并（比如「追加」而不是「覆盖」）；</li>
+<li><strong>Command</strong>：让一个节点既更新状态、又指定下一步去哪；</li>
+<li><strong>Send</strong>：在运行时才知道任务数量时，动态地把任务分发给多个节点实例。</li>
+</ul>
+<p>把它想成一份采购申请单：<strong>State 是不断补充内容的申请单</strong>（金额、审批意见、检查结果），<strong>Node 是窗</strong>口（预算窗口、合规窗口、审批窗口），<strong>Edge 规定这张单子下一步送去哪里</strong>，reducer 约定几个窗口同时填同一栏时怎么落笔——是追加到末尾，还是后写的覆盖先写的。图长什么样，执行就怎么走：哪些节点能并行、哪些必须等前置完成、哪份状态被保存、恢复后从哪继续，全写在图里。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs text">订单校验 -&gt; [预算检查 | 合规检查] -&gt; 人工审批 --通过--&gt; 执行采购系统<br>                                        \--拒绝--&gt; 流程结束<br></code></pre></td></tr></table></figure>
+<p>对应在 State 里，并行写入的合并规则必须显式声明，比如「多路证据追加到列表，而不是互相覆盖」：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> operator <span class="hljs-keyword">import</span> add<br><span class="hljs-keyword">from</span> typing <span class="hljs-keyword">import</span> Annotated, TypedDict<br><br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">ResearchState</span>(TypedDict, total=<span class="hljs-literal">False</span>):<br>    <span class="hljs-comment"># 并行研究节点共同写入的字段：声明为追加合并，而不是后写覆盖先写</span><br>    evidences: Annotated[<span class="hljs-built_in">list</span>[<span class="hljs-built_in">str</span>], add]<br></code></pre></td></tr></table></figure>
+<p>工程上的直接好处是：<strong>输入、输出和内部状态可以分离</strong>，测试可以只喂输入断言输出，调试可以盯着某一步的状态变化。但自由度意味着责任——错误的 State 设计会造成状态膨胀、并发覆盖、难以维护。这一节的记忆点是：<strong>让确定性规则与模型决策各就各位</strong>：需要模型判断的步骤交给 Agent，需要严格执行的权限、金额阈值、审批顺序写成节点与边，而不是靠模型「自觉」遵守提示词。</p>
+<hr>
+<h2 id="3-两条编排-API：Graph-API-与-Functional-API">3 两条编排 API：Graph API 与 Functional API</h2>
+<p>说到「用 LangGraph」，实际有两条入口，别只记得 <code>StateGraph</code>。</p>
+<ul>
+<li><strong>Graph API（<code>StateGraph</code>）</strong>：显式声明节点和边，适合复杂分支、并行汇合、多 Agent 路由——拓扑清晰，便于可视化和评审；</li>
+<li><strong>Functional API</strong>：通过 <code>@entrypoint</code>、<code>@task</code> 装饰器在<strong>普通 Python 流程</strong>上增加检查点、任务恢复和人工暂停，改造成本低。</li>
+</ul>
+<p>两者的定位差异，官方总结过一张选型表，核心结论可以浓缩成下面的对照：</p>
+<table>
+<thead>
+<tr>
+<th>需求特征</th>
+<th>更自然的入口</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>分支和循环很多，需要看清完整拓扑</td>
+<td>Graph API</td>
+<td>节点、边和共享 State 显式，便于可视化与评审</td>
+</tr>
+<tr>
+<td>多路并行后汇合，或多 Agent 交接</td>
+<td>Graph API</td>
+<td>并发关系、Reducer 和子图边界更容易建模</td>
+</tr>
+<tr>
+<td>已有过程式代码，希望少改代码</td>
+<td>Functional API</td>
+<td>保留普通 Python 控制流，用装饰器增加运行时能力</td>
+</tr>
+<tr>
+<td>线性流程加少量条件和人工确认</td>
+<td>Functional API</td>
+<td>局部变量与函数作用域更自然，样板代码更少</td>
+</tr>
+<tr>
+<td>不同子流程复杂度差异很大</td>
+<td>混合使用</td>
+<td>外层图负责调度，内部函数工作流负责局部步骤</td>
+</tr>
+</tbody>
+</table>
+<p>Functional API 的样子，一句话就能看出它为什么适合改造存量代码：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> langgraph.func <span class="hljs-keyword">import</span> entrypoint, task<br><br><br><span class="hljs-meta">@task</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">call_llm</span>(<span class="hljs-params">question: <span class="hljs-built_in">str</span></span>) -&gt; <span class="hljs-built_in">str</span>:<br>    <span class="hljs-comment"># 被 @task 装饰的普通函数：自动获得检查点与任务恢复能力</span><br>    <span class="hljs-keyword">return</span> llm.invoke(question)  <span class="hljs-comment"># 由项目按实际模型实现</span><br><br><br><span class="hljs-meta">@entrypoint(<span class="hljs-params">checkpointer=saver</span>)</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">assistant</span>(<span class="hljs-params">question: <span class="hljs-built_in">str</span></span>) -&gt; <span class="hljs-built_in">str</span>:<br>    <span class="hljs-comment"># 保留普通 if/for 的直写控制流，运行时为其加持久化与恢复</span><br>    answer = call_llm(question)<br>    <span class="hljs-keyword">return</span> answer<br></code></pre></td></tr></table></figure>
+<p>还支持混合使用：外层 <code>StateGraph</code> 负责调度和并行，内部节点调用 Functional API 工作流负责局部步骤。面试时能说出「不是二选一，而是按子流程复杂度选入口」，比只背 API 名字强得多。</p>
+<hr>
+<h2 id="4-流程跨小时不丢：持久化与检查点">4 流程跨小时不丢：持久化与检查点</h2>
+<p>让长任务「跑着跑着换个班还能继续」，是 LangGraph 被生产系统选中的招牌能力——<strong>Persistence（持久化）</strong>。</p>
+<p>机制不复杂：图执行过程中把每一次状态变更保存为 <strong>checkpoint</strong>，按 <code>thread_id</code> 组织线程状态。有了它，运行可以暂停、服务重启后可以从已保存的状态恢复。这里有两个易混淆的概念，回答时一定要分清：</p>
+<ul>
+<li><strong>Checkpointer</strong>：保存<strong>某个线程</strong>的图状态快照——回答的是「这次任务走到哪里」；</li>
+<li><strong>Store</strong>：保存图状态<strong>之外</strong>的应用数据——用户偏好、事实、共享知识，回答的是「以后其他任务还要记住什么」。</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com/xiaolinnote/ai/langchain/images/langgraph_advantages/db982838_checkpointer-vs-store-scope.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Checkpointer 与 Store 分工：线程内的检查点回答这次任务走到哪里，跨线程的 Store 回答以后还要记住什么"></p>
+<p>像看书：Checkpointer 是夹在书页里的<strong>书签</strong>，告诉你读到第几页；Store 是旁边的<strong>笔记本</strong>，记着「这本书是给谁买的」这种不随阅读进度变化的事。持久化不是简单的「把数据存进数据库」——有一个认知必须提前立住：<strong>durable execution 不是数据库开关</strong>。恢复时，节点代码可能重新执行，模型调用和 API 请求会<strong>再次发生</strong>，所以外部副作用必须有幂等保护：幂等键、upsert、发送记录、先查后写。否则「恢复」可能变成「重复发邮件、重复扣款」。（Checkpointer 与 Store 的完整机制在「长短期记忆」那篇讲过，这里只强调它们在长任务里的角色。）</p>
+<hr>
+<h2 id="5-人工随时进场：interrupt">5 人工随时进场：interrupt()</h2>
+<p>很多流程的难点不是「模型不会」，而是「人必须在中间搭一把手」——审批、补充材料、纠偏。LangGraph 的 <code>interrupt()</code> 允许在<strong>节点内部的任意位置</strong>暂停流程。</p>
+<p>它的大致用法是：触发时保存状态，并把一个可序列化的<strong>中断载荷</strong>交给外部系统（比如审批平台）；之后用相同的 <code>thread_id</code> 和 <code>Command(resume=...)</code> 恢复执行，外部输入会成为 <code>interrupt()</code> 的<strong>返回值</strong>，流程继续往下走。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs text">节点开始 -&gt; 中断前逻辑 -&gt; interrupt(载荷) -&gt; 保存 checkpoint<br>    -&gt; 外部审核系统审批 -&gt; Command(resume=审批结果) -&gt; 同一线程恢复<br>    -&gt; 后续路由（注意：节点从头重新执行，而非从 interrupt 处继续）<br></code></pre></td></tr></table></figure>
+<p>这比只支持「确认或取消」的审批灵活得多：可以批准、拒绝、<strong>修改金额、补充证据</strong>，外部系统拿到的是完整的上下文，交回的也是任意结构化数据。</p>
+<p><img src="https://cdn.xiaolincoding.com/xiaolinnote/ai/langchain/images/langgraph_advantages/6d354c97_interrupt-resume-reexec.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="interrupt 与 resume 流程：节点内任意位置暂停，外部系统审批后携带结果恢复，恢复时节点从头执行"></p>
+<p>两个重要的工程提醒：</p>
+<ol>
+<li><strong>选型</strong>：LangChain v1 的 <code>HumanInTheLoopMiddleware</code> 对「审批敏感工具调用」更省事；LangGraph 的优势在<strong>审批对象不是标准工具调用</strong>（比如审批的是结构化决策）、或暂停点要嵌进更长业务流的时候。</li>
+<li><strong>坑</strong>：节点恢复时是从<strong>节点开头</strong>重新执行，不是从 <code>interrupt()</code> 那一行继续——中断<strong>前</strong>的副作用同样要幂等，否则每次恢复都会重复执行一遍。</li>
+</ol>
+<p>面试加分句：「<code>interrupt()</code> 把暂停点从『大门安检』升级成『全程设卡』，每个业务节点都能停下来等外部系统。」</p>
+<hr>
+<h2 id="6-失败后不必整段重跑：容错与时间旅行">6 失败后不必整段重跑：容错与时间旅行</h2>
+<p>传统脚本（哪怕有重试）的失败处理是：<strong>整段重跑，或手工改数据库再祈祷流程能继续</strong>。LangGraph 把失败处理变成工作流的一部分，拆成三层：</p>
+<ol>
+<li><strong>Retry Policy</strong>：按异常类型和退避策略重试单次失败；</li>
+<li><strong>Timeout</strong>：限制单次尝试的时间上限；</li>
+<li><strong>Error Handler</strong>：重试耗尽后接管错误，可以返回 <code>Command</code> 一边更新错误状态、一边把流程送往<strong>降级、补偿或人工处理</strong>节点。</li>
+</ol>
+<p>特别要强调并行节点的失败处理——这是最容易在面试里出彩的点：<strong>LangGraph 会保存同一步中已经成功完成节点的结果。恢复时，成功分支不必全部重跑，只重试失败的部分。</strong> 对并行抓取多个数据源的深度研究场景，这直接省下真金白银——否则「一个慢接口失败，就让其他已经成功的请求也重新付费」。</p>
+<p>再往上还有 <strong>Time Travel（时间旅行）</strong>：通过状态历史找到旧 checkpoint，可以从旧位置<strong>重新执行</strong>（Replay），或者<strong>修改旧状态后分叉</strong>出另一条时间线（Fork）——非常适合「模型走错路线，回退到错误发生前重新来」的调试场景。</p>
+<p><img src="https://cdn.xiaolincoding.com/xiaolinnote/ai/langchain/images/langgraph_advantages/7017649e_replay-vs-fork-time-travel.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="Time Travel 的 Replay 与 Fork：从旧检查点重演或修改状态后分叉，但不会撤销现实中已发生的外部操作"></p>
+<p>但要避免夸大——「Time travel 不是把程序时光倒流后原样播放录像」：checkpoint <strong>之前</strong>的节点会跳过，<strong>之后</strong>的节点会重新执行，模型输出、网络响应和外部副作用可能不一样。恢复、重试、时间旅行本质上都会导致<strong>代码重复执行</strong>，所以这一节和上一节的坑是同一个：<strong>所有带副作用的调用都要能安全地执行多次</strong>。</p>
+<hr>
+<h2 id="7-复杂任务并行又汇合：Send、Reducer-与子图">7 复杂任务并行又汇合：Send、Reducer 与子图</h2>
+<p>深度研究类任务为什么天生适合图？拆主题 → 并行搜索多个来源 → 交叉验证、合并证据 → 发现空白后继续补搜 → 统一写报告。这类任务的核心矛盾是：<strong>分支数量在运行时才知道</strong>——Planner 拆出几个主题，取决于输入的问题。</p>
+<p>三个机制配齐了才能跑好这种结构：</p>
+<ul>
+<li><strong>Graph API 支持把任务拆成多条并行分支再汇合</strong>：fan-out 从同一节点扇出，fan-in 等所有分支都完成再前进；</li>
+<li><strong><code>Send</code> 动态创建分支</strong>：运行时才知道任务数量时，按状态内容直接向节点实例分发任务，而不是预先画死并行条数；</li>
+<li><strong>Reducer 合并写回</strong>：并行节点更新同一 State 字段时必须规定合并方式——「不能指望最后写入者碰巧正确」。</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com/xiaolinnote/ai/langchain/images/langgraph_advantages/26ba8598_research-send-reducer-subgraphs.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="深度研究中 Send、Reducer 与子图的分工：Planner 用 Send 分发分支，证据用 Reducer 合并，子图选择 per-thread 或 per-invocation 记忆范围"></p>
+<p><strong>子图</strong>解决的是模块化：一个完整的 LangChain <code>create_agent</code> 返回的本来就是图，可以直接作为外层 <code>StateGraph</code> 的节点或子图——不同团队可以分别维护研究、合规、财务子图。注意子图的记忆范围要<strong>显式选择</strong>：一次性子任务每次调用从新状态开始（per-invocation）；需要连续记忆的子 Agent 才在同线程多次调用间积累状态（per-thread）。</p>
+<p>这一节的克制提醒很有必要：<strong>多 Agent 不等于效果更好</strong>。角色越多，提示词、上下文交接、错误定位和 Token 成本越高。只有角色需要不同工具、不同状态结构、独立生命周期或确实需要并行时，子图才值得引入。</p>
+<hr>
+<h2 id="8-全程可见：流式输出来源">8 全程可见：流式输出来源</h2>
+<p>生产系统对黑盒运行深恶痛绝，而 LangGraph 的流式输出不只有模型 Token 一种：<strong>每一步 State 更新、模型消息、自定义进度、checkpoint 和任务状态</strong>都能以事件流的形式输出。</p>
+<p>产品上的直接收益是进度可见：界面上可以展示「正在查询政策库」「已完成 3/5 个来源」「等待财务审批」；开发上的收益是可观测：能看到哪个节点更新了什么、哪个任务失败、何时写入检查点。这就像外卖订单：不只在「已接单」和「已送达」之间干等，而是能看到出餐、取餐、配送中的每一步。</p>
+<p>需要再厘清一次与 LangChain 的关系：LangChain Agent 运行在 LangGraph 上，<strong>同样具备底层流式能力</strong>；直接使用 LangGraph 的优势在于——节点和业务阶段由我们定义，流式事件能与产品的进度条、审计日志和告警规则<strong>精确对应</strong>。配合 LangSmith 的 tracing 和 Studio，还能查看实际走过的节点路径、状态变更和耗时，比「看日志猜流程」可靠得多。</p>
+<hr>
+<h2 id="9-走向生产：记忆与部署边界">9 走向生产：记忆与部署边界</h2>
+<p>长任务上生产，绕不开两个问题：记忆怎么存、服务怎么部署。LangGraph 的答案是把记忆分两层：</p>
+<ul>
+<li><strong>短期记忆</strong>：跟随 State 和 Checkpointer，由 <code>thread_id</code> 隔离——当前会话消息、已完成步骤、审批上下文都在这层；</li>
+<li><strong>长期记忆</strong>：进入 Store，按 namespace 与 key 组织——用户偏好、历史事实、共享知识。生产环境必须使用<strong>数据库后端</strong>，并补齐租户隔离、保留期限、删除更正与敏感信息治理。</li>
+</ul>
+<p><img src="https://cdn.xiaolincoding.com/xiaolinnote/ai/langchain/images/langgraph_advantages/19bb1129_langgraph-production-deployment.png" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="LangGraph 生产部署架构：图运行时与 Agent Server、Postgres、Redis 等基础设施的组合关系"></p>
+<p>部署边界也要讲清楚：<strong>开源 LangGraph 是编排框架和运行时，不等于托管服务</strong>。可以自行托管，自己接 Checkpointer、Store 和任务队列；也可以使用托管的 Agent Server，把图、持久化数据库与任务队列组合成服务。面试时的加分话术是主动破除误区：<strong>别说出「用了 LangGraph 就自动高可用」</strong>——自托管时，数据库、任务队列、Worker 扩缩容、重试策略、监控和数据保留仍然是团队自己的责任。</p>
+<hr>
+<h2 id="10-一个完整例子：采购审批-Agent">10 一个完整例子：采购审批 Agent</h2>
+<p>把前面的能力串起来，看官方风格的「采购审批」示例——它有四件事值得我们注意：</p>
+<ol>
+<li><strong>业务拓扑是显式的</strong>：<code>StateGraph</code> 声明节点和边，谁先谁后、谁并行一清二楚；</li>
+<li><strong>两项检查能并行且有明确汇合点</strong>：从 <code>normalize</code> 扇出到两个检查节点，两项都完成后才进入人工审批；</li>
+<li><strong>人工审批可以跨时间暂停</strong>：<code>interrupt()</code> 把载荷交给审核系统，<code>Command(resume=...)</code> 带回结果；</li>
+<li><strong>执行动作有业务幂等键</strong>：<code>request_id</code> 既是线程标识的一部分，也用来防止恢复或重试造成重复采购。</li>
+</ol>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> typing <span class="hljs-keyword">import</span> <span class="hljs-type">Literal</span>, TypedDict<br><br><span class="hljs-keyword">from</span> langgraph.checkpoint.memory <span class="hljs-keyword">import</span> InMemorySaver<br><span class="hljs-keyword">from</span> langgraph.graph <span class="hljs-keyword">import</span> END, START, StateGraph<br><span class="hljs-keyword">from</span> langgraph.types <span class="hljs-keyword">import</span> Command, interrupt<br><br><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">PurchaseState</span>(TypedDict, total=<span class="hljs-literal">False</span>):<br>    <span class="hljs-comment"># request_id 也可作为外部采购接口的幂等键</span><br>    request_id: <span class="hljs-built_in">str</span><br>    amount: <span class="hljs-built_in">float</span><br>    budget_ok: <span class="hljs-built_in">bool</span><br>    compliance_ok: <span class="hljs-built_in">bool</span><br>    approved: <span class="hljs-built_in">bool</span><br>    result: <span class="hljs-built_in">str</span><br><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">normalize_request</span>(<span class="hljs-params">state: PurchaseState</span>) -&gt; <span class="hljs-built_in">dict</span>:<br>    <span class="hljs-comment"># 真实项目应在这里完成字段校验和权限检查</span><br>    <span class="hljs-keyword">return</span> &#123;<span class="hljs-string">&quot;amount&quot;</span>: <span class="hljs-built_in">round</span>(state[<span class="hljs-string">&quot;amount&quot;</span>], <span class="hljs-number">2</span>)&#125;<br><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">check_budget</span>(<span class="hljs-params">state: PurchaseState</span>) -&gt; <span class="hljs-built_in">dict</span>:<br>    <span class="hljs-comment"># 该节点可以替换为预算系统查询，并配置重试与超时</span><br>    <span class="hljs-keyword">return</span> &#123;<span class="hljs-string">&quot;budget_ok&quot;</span>: state[<span class="hljs-string">&quot;amount&quot;</span>] &lt;= <span class="hljs-number">100_000</span>&#125;<br><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">check_compliance</span>(<span class="hljs-params">state: PurchaseState</span>) -&gt; <span class="hljs-built_in">dict</span>:<br>    <span class="hljs-comment"># 与预算检查写入不同字段，因此两个节点可以安全并行</span><br>    <span class="hljs-keyword">return</span> &#123;<span class="hljs-string">&quot;compliance_ok&quot;</span>: <span class="hljs-literal">True</span>&#125;<br><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">human_review</span>(<span class="hljs-params">state: PurchaseState</span>) -&gt; <span class="hljs-built_in">dict</span>:<br>    <span class="hljs-comment"># 暂停流程，将两项检查结果交给审核系统</span><br>    review = interrupt(<br>        &#123;<br>            <span class="hljs-string">&quot;request_id&quot;</span>: state[<span class="hljs-string">&quot;request_id&quot;</span>],<br>            <span class="hljs-string">&quot;budget_ok&quot;</span>: state[<span class="hljs-string">&quot;budget_ok&quot;</span>],<br>            <span class="hljs-string">&quot;compliance_ok&quot;</span>: state[<span class="hljs-string">&quot;compliance_ok&quot;</span>],<br>        &#125;<br>    )<br>    <span class="hljs-keyword">return</span> &#123;<span class="hljs-string">&quot;approved&quot;</span>: <span class="hljs-built_in">bool</span>(review[<span class="hljs-string">&quot;approved&quot;</span>])&#125;<br><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">route_after_review</span>(<span class="hljs-params">state: PurchaseState</span>) -&gt; <span class="hljs-type">Literal</span>[<span class="hljs-string">&quot;execute&quot;</span>, <span class="hljs-string">&quot;reject&quot;</span>]:<br>    <span class="hljs-comment"># 审批结果决定后续确定性路径</span><br>    <span class="hljs-keyword">return</span> <span class="hljs-string">&quot;execute&quot;</span> <span class="hljs-keyword">if</span> state[<span class="hljs-string">&quot;approved&quot;</span>] <span class="hljs-keyword">else</span> <span class="hljs-string">&quot;reject&quot;</span><br><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">execute_purchase</span>(<span class="hljs-params">state: PurchaseState</span>) -&gt; <span class="hljs-built_in">dict</span>:<br>    <span class="hljs-comment"># 真实调用必须携带 request_id，防止恢复或重试造成重复采购</span><br>    <span class="hljs-keyword">return</span> &#123;<span class="hljs-string">&quot;result&quot;</span>: <span class="hljs-string">f&quot;采购申请 <span class="hljs-subst">&#123;state[<span class="hljs-string">&#x27;request_id&#x27;</span>]&#125;</span> 已执行&quot;</span>&#125;<br><br><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">reject_purchase</span>(<span class="hljs-params">state: PurchaseState</span>) -&gt; <span class="hljs-built_in">dict</span>:<br>    <span class="hljs-comment"># 拒绝路径不触发外部采购副作用</span><br>    <span class="hljs-keyword">return</span> &#123;<span class="hljs-string">&quot;result&quot;</span>: <span class="hljs-string">&quot;采购申请未通过&quot;</span>&#125;<br><br><br>builder = StateGraph(PurchaseState)<br>builder.add_node(<span class="hljs-string">&quot;normalize&quot;</span>, normalize_request)<br>builder.add_node(<span class="hljs-string">&quot;budget&quot;</span>, check_budget)<br>builder.add_node(<span class="hljs-string">&quot;compliance&quot;</span>, check_compliance)<br>builder.add_node(<span class="hljs-string">&quot;human_review&quot;</span>, human_review)<br>builder.add_node(<span class="hljs-string">&quot;execute&quot;</span>, execute_purchase)<br>builder.add_node(<span class="hljs-string">&quot;reject&quot;</span>, reject_purchase)<br><br>builder.add_edge(START, <span class="hljs-string">&quot;normalize&quot;</span>)<br><span class="hljs-comment"># 从同一节点扇出，预算和合规检查进入并行分支</span><br>builder.add_edge(<span class="hljs-string">&quot;normalize&quot;</span>, <span class="hljs-string">&quot;budget&quot;</span>)<br>builder.add_edge(<span class="hljs-string">&quot;normalize&quot;</span>, <span class="hljs-string">&quot;compliance&quot;</span>)<br><span class="hljs-comment"># 使用多起点边做 fan-in，两项检查都完成后才进入人工审批</span><br>builder.add_edge([<span class="hljs-string">&quot;budget&quot;</span>, <span class="hljs-string">&quot;compliance&quot;</span>], <span class="hljs-string">&quot;human_review&quot;</span>)<br>builder.add_conditional_edges(<span class="hljs-string">&quot;human_review&quot;</span>, route_after_review)<br>builder.add_edge(<span class="hljs-string">&quot;execute&quot;</span>, END)<br>builder.add_edge(<span class="hljs-string">&quot;reject&quot;</span>, END)<br><br><span class="hljs-comment"># 内存检查点仅用于示例，生产环境应替换为数据库后端</span><br>graph = builder.<span class="hljs-built_in">compile</span>(checkpointer=InMemorySaver())<br><br><span class="hljs-comment"># thread_id 是暂停、恢复和状态历史的定位依据</span><br>config = &#123;<span class="hljs-string">&quot;configurable&quot;</span>: &#123;<span class="hljs-string">&quot;thread_id&quot;</span>: <span class="hljs-string">&quot;purchase-2026-001&quot;</span>&#125;&#125;<br>graph.invoke(<br>    &#123;<span class="hljs-string">&quot;request_id&quot;</span>: <span class="hljs-string">&quot;PO-001&quot;</span>, <span class="hljs-string">&quot;amount&quot;</span>: <span class="hljs-number">58_000</span>&#125;,<br>    config=config,<br>)<br><br><span class="hljs-comment"># 审核员稍后提交结果，图从同一线程的中断点恢复</span><br>final_state = graph.invoke(<br>    Command(resume=&#123;<span class="hljs-string">&quot;approved&quot;</span>: <span class="hljs-literal">True</span>&#125;),<br>    config=config,<br>)<br><span class="hljs-built_in">print</span>(final_state[<span class="hljs-string">&quot;result&quot;</span>])<br></code></pre></td></tr></table></figure>
+<p>生产化还差三步：给外部查询（预算系统、合规系统）增加 <strong>Retry Policy 与 Timeout</strong>；给执行失败设计<strong>补偿或人工接管</strong>路径；把 <code>InMemorySaver</code> 换成<strong>持久化实现</strong>。而和 LangChain 的自然组合是：用 <code>create_agent</code> 做「材料理解」或「异常解释」这类靠模型的节点，外层采购流程仍由 <code>StateGraph</code> 控制——这正是前面说的「把 LangChain Agent 作为图中的节点或子图」。</p>
+<hr>
+<h2 id="11-选型：哪些场景该用、哪些不必用">11 选型：哪些场景该用、哪些不必用</h2>
+<p>回答最后一个问题：<strong>什么时候值得直接上 LangGraph？</strong> 面试官想听的判断标准只有一句话——</p>
+<blockquote>
+<p>这个系统最难的是「<strong>让模型会用工具</strong>」，还是「<strong>让整个任务可靠地走完一条复杂路线</strong>」？前者留在 LangChain，后者交给 LangGraph。</p>
+</blockquote>
+<p>适合 LangGraph 的四类场景：</p>
+<ol>
+<li><strong>业务顺序不能交给模型自由发挥</strong>：理赔、退款、采购、合同审核、生产变更——明确阶段、权限与审批点，模型只能参与理解和判断，真正的路线由确定性规则控制；</li>
+<li><strong>跨时间运行的任务</strong>：深度研究、报表生成、代码迁移、跨系统工单，持续数十分钟到数天，需要 checkpoint、interrupt 和 durable execution 保住进度；</li>
+<li><strong>长出并行分支的任务</strong>：Planner 临时拆出多个研究主题，各分支搜索、抽取、验证，用 Reducer 汇总；多 Agent 因不同工具、状态或团队边界组成子图；</li>
+<li><strong>需要干预中间状态的调试场景</strong>：复杂 RAG 证据不足时改写查询重检索，模型走错路线时查看 checkpoint、修改状态后重放。</li>
+</ol>
+<p>不必要用 LangGraph 的三类：</p>
+<ol>
+<li><strong>标准工具调用 Agent</strong>：查天气、查订单、总结文档，<code>create_agent</code> 更快、更短，也符合团队认知；</li>
+<li><strong>middleware 能解决的</strong>：动态提示词、模型切换、工具过滤、消息摘要、重试、护栏、敏感工具审批，先看 LangChain middleware；</li>
+<li><strong>固定流程</strong>：只有固定的 Prompt、模型和解析器，普通函数、LCEL 或一个队列任务可能就够了。</li>
+</ol>
+<p>选型对照可以浓缩成一张表：</p>
+<table>
+<thead>
+<tr>
+<th>判断问题</th>
+<th>优先 LangChain create_agent</th>
+<th>考虑直接使用 LangGraph</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>主流程</td>
+<td>常见模型与工具循环</td>
+<td>多阶段业务工作流</td>
+</tr>
+<tr>
+<td>路由由谁决定</td>
+<td>模型</td>
+<td>模型 + 确定性规则混合</td>
+</tr>
+<tr>
+<td>状态复杂度</td>
+<td>简单</td>
+<td>复杂共享状态</td>
+</tr>
+<tr>
+<td>运行时长</td>
+<td>单次交互或短任务</td>
+<td>跨小时、跨天</td>
+</tr>
+<tr>
+<td>人工介入</td>
+<td>审批敏感工具调用</td>
+<td>任意阶段补充、修改、审批、改道</td>
+</tr>
+<tr>
+<td>并行结构</td>
+<td>少量并行</td>
+<td>动态 fan-out / fan-in / map-reduce</td>
+</tr>
+<tr>
+<td>角色数量</td>
+<td>单 Agent</td>
+<td>多 Agent / 子图 / handoff</td>
+</tr>
+<tr>
+<td>故障处理</td>
+<td>通用重试</td>
+<td>节点级恢复、补偿、历史分叉</td>
+</tr>
+<tr>
+<td>团队成本</td>
+<td>快速交付</td>
+<td>愿意维护图、状态与恢复语义</td>
+</tr>
+</tbody>
+</table>
+<p>渐进式选型路径（这是官方推荐，也是面试的收尾答案）：先用 LangChain 搭出能工作的 Agent；当 middleware 已承担不了业务路由、状态字段越来越多、任务必须跨时间恢复时，把<strong>外围流程</strong>下沉到 LangGraph；已有 Agent 直接成为图里的节点或子图。最后破除一个误区：<strong>图越复杂，不代表系统越智能</strong>——节点过细会增加 checkpoint、序列化与维护成本，节点过粗会降低恢复粒度；边界应该按副作用、重试、人工介入和可观测性划分，而不是越大越显得高级。</p>
+<hr>
+<h2 id="12-面试总结">12 面试总结</h2>
+<p>回答这道题，最大的雷是把它答成「LangGraph 是 LangChain 的替代品」的能力对比。先避开几个误区：</p>
+<table>
+<thead>
+<tr>
+<th>误区</th>
+<th>正解</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LangGraph 相比 LangChain 的优势是持久化、流式、人工审批「它有而对方没有」</td>
+<td><code>create_agent</code> 运行在 LangGraph 上，这些能力两边都有；真正的优势是控制粒度——能力放在哪个节点、围绕哪些状态、失败从哪恢复</td>
+</tr>
+<tr>
+<td>LangGraph 必须配合 LangChain 使用</td>
+<td>不强制依赖，可接其他模型 SDK 或普通 Python 函数；LangChain 只是常见零件供应商</td>
+</tr>
+<tr>
+<td>用 LangGraph 就等于自动高可用</td>
+<td>开源 LangGraph 只是编排运行时；数据库、队列、扩缩容、监控仍是自托管团队的责任</td>
+</tr>
+<tr>
+<td>多 Agent / 大图 = 更智能</td>
+<td>角色越多成本越高；图越复杂不代表系统越智能，节点粒度应按副作用、重试、人工介入和可观测性划分</td>
+</tr>
+<tr>
+<td>持久化 = 数据存进数据库</td>
+<td>durable execution 恢复时会重新执行节点，外部副作用必须幂等；Time Travel 也不会撤销现实中已发生的操作</td>
+</tr>
+<tr>
+<td>所有 Agent 项目都应该下沉 LangGraph</td>
+<td>标准工具调用循环用 <code>create_agent</code> + middleware 更快；成熟方案是渐进式下沉，LangChain Agent 作为节点或子图复用</td>
+</tr>
+</tbody>
+</table>
+<p>再按「控制、可靠、工程化」三条主线组织答案（按面试原题《LangGraph 相比于 LangChain 有哪些核心优势》）：</p>
+<table>
+<thead>
+<tr>
+<th>主线</th>
+<th>机制</th>
+<th>解决什么问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>控制</td>
+<td>State、Node、Edge、条件路由显式化</td>
+<td>确定性规则与模型决策在同一个执行拓扑里各就各位</td>
+</tr>
+<tr>
+<td>控制</td>
+<td>Reducer 声明合并、Command 边改状态边改道、Send 动态分发</td>
+<td>并行写入、动态分支、运行期才知道的任务量</td>
+</tr>
+<tr>
+<td>控制</td>
+<td>两种编排 API：Graph API 与 Functional API</td>
+<td>按拓扑复杂度选入口，存量过程式代码低成本改造</td>
+</tr>
+<tr>
+<td>可靠</td>
+<td>Checkpointer 按 thread_id 保存检查点</td>
+<td>长任务可暂停、服务重启可恢复</td>
+</tr>
+<tr>
+<td>可靠</td>
+<td><code>interrupt()</code> + <code>Command(resume=...)</code></td>
+<td>外部系统在节点内任意位置介入、携带结构化结果返回</td>
+</tr>
+<tr>
+<td>可靠</td>
+<td>Retry/Timeout/Error Handler + 只重试失败分支 + Time Travel</td>
+<td>失败不必整段重跑，支持补偿、降级与历史分叉</td>
+</tr>
+<tr>
+<td>工程化</td>
+<td>流式事件（State 更新、进度、task 状态）</td>
+<td>进度可见、审计对齐、配合 LangSmith 定位问题</td>
+</tr>
+<tr>
+<td>工程化</td>
+<td>短期/长期记忆分层 + 自托管或 Agent Server</td>
+<td>有状态、长时间运行的生产系统</td>
+</tr>
+</tbody>
+</table>
+<p><strong>追问预案</strong>：</p>
+<ul>
+<li>「LangGraph 的核心优势到底怎么概括？」——把复杂 Agent 运行变成显式、可持久化、可观察、可恢复的状态机；LangChain 与 LangGraph 都有这些能力，差别在直接使用 LangGraph 时由开发者决定这些能力的位置和控制粒度。</li>
+<li>「持久化和记忆怎么区分？」——Checkpointer 按 <code>thread_id</code> 保存线程级状态快照（这次任务走到哪里）；Store 保存跨线程的应用数据（以后还要记住什么）；两者都可用数据库后端生产化。</li>
+<li>「人工介入只能审批工具调用吗？」——<code>interrupt()</code> 可在节点内任意位置暂停，载荷与恢复值都是结构化数据，支持批准、拒绝、修改金额、补充证据；LangChain 的 <code>HumanInTheLoopMiddleware</code> 更省事但只面向标准工具调用。</li>
+<li>「失败恢复会不会重复执行副作用？」——会。恢复、重试、时间旅行都会让节点代码重新执行，外部副作用必须有幂等键、upsert 或先查后写等幂等保护。</li>
+<li>「什么时候用 Functional API？」——已有过程式代码、线性流程加少量条件或人工确认时；复杂分支并行适合 Graph API，两者可混合使用。</li>
+<li>「LangGraph 和 LangChain 怎么配合？」——<code>create_agent</code> 返回的图可作为外层 <code>StateGraph</code> 的节点或子图，middleware 跟着一起工作；真实项目常见方案不是二选一，而是让 LangChain Agent 成为 LangGraph 中可复用的节点或子图。</li>
+</ul>
+<hr>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/langchain/langgraph_advantages.html">10. LangGraph 相比于 LangChain 有哪些核心优势？更适配哪些 Agent 场景？ | 小林面试笔记</a></li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/langchain/langchain_vs_langgraph.html">9. 请你详细说说 LangChain 和 LangGraph 的核心区别是什么？ | 小林面试笔记</a>（相关：LangGraph 的定位与上下层关系）</li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/langchain/langchain_architecture.html">3. LangChain 的底层架构与实现原理是什么？ | 小林面试笔记</a>（相关：LangGraph 在执行层的角色）</li>
+<li><a target="_blank" rel="noopener" href="https://xiaolinnote.com/ai/langchain/memory.html">6. LangChain 如何实现短期记忆和长期记忆？ | 小林面试笔记</a>（相关：Checkpointer 与 Store 的完整机制）</li>
+<li><a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/python/langgraph/overview">LangGraph 官方文档：Overview</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/python/langgraph/graph-api">LangGraph 官方文档：Graph API</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/python/langgraph/functional-api">LangGraph 官方文档：Functional API</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/python/langgraph/persistence">LangGraph 官方文档：Persistence</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/python/langgraph/interrupts">LangGraph 官方文档：Interrupts</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/python/langgraph/fault-tolerance">LangGraph 官方文档：Fault Tolerance</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/python/langgraph/use-time-travel">LangGraph 官方文档：Time Travel</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/python/langgraph/streaming">LangGraph 官方文档：Streaming</a></li>
+</ul>
+<blockquote>
+<p>本文图片均来源于公众号「小林面试笔记」，版权归原作者所有。</p>
+</blockquote>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/LangChain/" class="category-chain-item">LangChain</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/tags/LangChain/" class="print-no-link">#LangChain</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「LangChain」LangGraph 的核心优势？更适配哪些 Agent 场景？</div>
+      <div>https://marisamagic.github.io/2026/08/27/20260827_LangGraph核心优势/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年8月27日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/26/20260826_LangChain%E4%B8%8ELangGraph%E5%8C%BA%E5%88%AB/" title="「LangChain」LangChain 和 LangGraph 的核心区别？">
+                        <span class="hidden-mobile">「LangChain」LangChain 和 LangGraph 的核心区别？</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
