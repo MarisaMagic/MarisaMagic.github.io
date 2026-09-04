@@ -246,6 +246,86 @@
     
     
       <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2026/09/04/20260904_Kura-AI_%E5%A4%9A%E6%A8%A1%E6%80%81%E7%9F%A5%E8%AF%86%E5%BA%93/" target="_self">
+          <img src="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「Kura-AI」项目中多模态知识库是如何构建的">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/09/04/20260904_Kura-AI_%E5%A4%9A%E6%A8%A1%E6%80%81%E7%9F%A5%E8%AF%86%E5%BA%93/" target="_self">
+          「Kura-AI」项目中多模态知识库是如何构建的
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2026/09/04/20260904_Kura-AI_%E5%A4%9A%E6%A8%A1%E6%80%81%E7%9F%A5%E8%AF%86%E5%BA%93/" target="_self">
+        <div>
+          Kura-AI 的多模态知识库不是「整篇文档进一个向量」。文本按页做 L1/L2/L3 层级分块，只有叶子 L3 进 Milvus；父块进 PostgreSQL，检索时按 Auto-merge 上卷。PDF/Word 内嵌图抽成独立 L4，和文本分别用 qwen3-vl-embedding 写入同一集合；图文关系用 related_text_ids 记在 PG，命中文本后再并入候选。文档和图片本体
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-09-04 23:11" pubdate>
+              2026-09-04
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Kura-AI/" class="category-chain-item">Kura-AI</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+              <a href="/tags/RAG/">#RAG</a>
+            
+              <a href="/tags/Kura-AI/">#Kura-AI</a>
+            
+              <a href="/tags/%E5%A4%9A%E6%A8%A1%E6%80%81/">#多模态</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
         <a href="/2026/09/04/20260904_Kura-AI_Agent%E6%8E%A8%E7%90%86%E8%8C%83%E5%BC%8F/" target="_self">
           <img src="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「Kura-AI」项目中 Agent 采用了什么推理范式？如何设计的">
         </a>
@@ -912,86 +992,6 @@
             <i class="iconfont icon-date"></i>
             <time datetime="2026-08-20 12:25" pubdate>
               2026-08-20
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Agent-Tool/" class="category-chain-item">Agent Tool</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/AI/">#AI</a>
-            
-              <a href="/tags/Agent/">#Agent</a>
-            
-              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/">#大模型</a>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-      <div class="col-12 col-md-4 m-auto index-img">
-        <a href="/2026/08/19/20260819_MCP%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F/" target="_self">
-          <img src="https://sukicdn.com/wyx/i/2026/08/17/lho.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「Agent Tool」MCP 协议通常采用什么通信方式？">
-        </a>
-      </div>
-    
-    <article class="col-12 col-md-8 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/08/19/20260819_MCP%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F/" target="_self">
-          「Agent Tool」MCP 协议通常采用什么通信方式？
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt " href="/2026/08/19/20260819_MCP%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F/" target="_self">
-        <div>
-          MCP 采用「统一消息格式 + 分场景传输」的双层设计：不管哪种传输，底层都统一用 JSON-RPC 2.0（轻量 RPC 规范、易读易调试、语言无关，请求/响应用 id 匹配，格式固定）；本地场景用 stdio——Client 把 Server 当子进程启动，通过操作系统管道（RAM 里的 FIFO 缓冲区）通信，不走网卡也不经过 TCP/IP 协议栈，延迟极低、不用开端口没有网络安全问题、Se
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-08-19 14:20" pubdate>
-              2026-08-19
             </time>
           </div>
         
