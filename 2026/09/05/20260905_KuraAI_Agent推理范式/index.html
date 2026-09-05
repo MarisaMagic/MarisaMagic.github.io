@@ -1,0 +1,887 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Kura-AI 专题第 1 篇。知识库对话平台的工具集随用户配置变化、知识库与联网按回合开关，主干因此选 LangChain create_agent 的 Tool-Use-Loop，而不是独立 Plan-and-Execute 或终答级 Reflection；规划发生在每一步的 tool_calls 决策里，循环外再补选档、记忆预注入、两阶段读图与 MCP 确认。工程上用每轮工具配额和 recu">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Kura-AI」Agent 推理范式：为什么用 Tool-Use-Loop">
+<meta property="og:url" content="https://marisamagic.github.io/2026/09/05/20260905_KuraAI_Agent%E6%8E%A8%E7%90%86%E8%8C%83%E5%BC%8F/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="Kura-AI 专题第 1 篇。知识库对话平台的工具集随用户配置变化、知识库与联网按回合开关，主干因此选 LangChain create_agent 的 Tool-Use-Loop，而不是独立 Plan-and-Execute 或终答级 Reflection；规划发生在每一步的 tool_calls 决策里，循环外再补选档、记忆预注入、两阶段读图与 MCP 确认。工程上用每轮工具配额和 recu">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
+<meta property="article:published_time" content="2026-09-05T06:14:04.465Z">
+<meta property="article:modified_time" content="2026-09-05T06:17:57.636Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="Kura-AI">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
+  
+  
+  
+  <title>「Kura-AI」Agent 推理范式：为什么用 Tool-Use-Loop - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Kura-AI」Agent 推理范式：为什么用 Tool-Use-Loop"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-09-05 14:14" pubdate>
+          2026年9月5日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.2k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          35 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Kura-AI」Agent 推理范式：为什么用 Tool-Use-Loop</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<p>这是 <a target="_blank" rel="noopener" href="https://github.com/MarisaMagic/Kura-AI">Kura-AI</a> 专题的第 1 篇。后面每篇会拆一个功能点或技术点，讲我自己的项目：当初怎么想、为什么这么做、后来补了哪些优化。</p>
+<p>Kura-AI 是一个知识库对话智能体平台。用户可以给智能体配模型、提示词、知识库和 MCP 工具，然后在多轮对话里让它按需检索、联网、读附件、调外部工具。产品形态一句话就能说清，推理层却必须先回答一个更硬的问题：<strong>智能体到底按什么逻辑「想」和「做」？</strong></p>
+<p>我之前写过一篇理论向的整理：《「AI Agent」Agent 的三大范式：ReAct、Plan-and-Execute 与 Reflection》。那篇把三种范式放在不同层次上看：ReAct 管单步灵活度，Plan-and-Execute 管长任务不跑偏，Reflection 管输出质量。落到自己的项目里，选型就不能再停在「三种都很好」——对话路径必须灵活，又不能无限烧 token，更不能编造检索结果。</p>
+<p>Kura-AI 的选择很明确：<strong>主干是 Tool-Use-Loop（ReAct 的结构化后代），循环外包一层回合编排；局部借用轻量规划和人工确认，不上完整的 Plan 图，也不上终答级 Reflection。</strong></p>
+<hr>
+<h2 id="1-想法与设计：先定「决策和执行的关系」">1 想法与设计：先定「决策和执行的关系」</h2>
+<p>三种范式真正比的不是谁更先进，而是<strong>决策和执行怎么接在一起</strong>。Kura-AI 要接的是多轮对话，不是一条写死的流水线。</p>
+<h3 id="1-1-产品形态决定范式">1.1 产品形态决定范式</h3>
+<p>用户丢进来的，可能是「这个文档第 3 节怎么说」，也可能是「帮我看看这张图是谁，再找几张类似的」，还可能中途改口、补一张附件、打开联网开关。工具集本身也不是固定的：知识库和联网按<strong>本回合</strong>互斥，MCP 按智能体配置动态挂上。</p>
+<p>这种场景里，「先写出一份完整计划再逐步执行」往往是假需求。闲聊、单跳检索、搜图、读附件，经常走完一步就该收束；硬拆成五步计划，只会多一次强模型调用，换不来更可控的结构。走一步看一步、每步根据工具结果再决定下一步，才对得上真实对话。</p>
+<p>所以主干选 ReAct 的现代形态：<strong>模型用原生 <code>tool_calls</code> 决定「继续行动」还是「给出最终答案」</strong>。README 里写的「基于 Tool-Use-Loop 自主规划」，指的就是这件事——规划发生在每一步的工具决策里，不是单独的 planner 节点。</p>
+<h3 id="1-2-为什么不上完整的-Plan-and-Execute">1.2 为什么不上完整的 Plan-and-Execute</h3>
+<p>Plan-and-Execute 适合「写一份竞品报告」「把需求拆成开发清单」这类长流程：先定结构，再分步执行，规划与执行可以换不同模型。Kura-AI 当然也能接到这类任务，但它的主路径是<strong>对话回合</strong>，每回合的目标、可用工具、甚至检索范围都可能变。</p>
+<p>如果每回合先让模型出一份计划再执行，我会立刻碰到三个问题：</p>
+<ul>
+<li>多数回合只有一两次工具调用，计划阶段的延迟是纯开销；</li>
+<li>计划刚写完，用户下一句就改了目标，计划作废；</li>
+<li>知识库范围、联网开关、MCP 是否批准，都是回合级事实，不该提前写进一份「全局计划」。</li>
+</ul>
+<p>我没有把「规划」整个扔掉，只是把它降到更便宜、更局部的位置：回合开始前，用子模型做一次知识库选档，把检索圈进若干 <code>file_key</code>；模型在循环里自己选工具。这不是 planner / executor 两张图，是<strong>循环外的路由</strong>。</p>
+<h3 id="1-3-为什么不上完整的-Reflection">1.3 为什么不上完整的 Reflection</h3>
+<p>Reflection 能抬质量，代价也清楚：至少多一次评估调用，首字延迟和费用一起涨。Kura-AI 的对话要流式出字，思考区还要把检索步骤实时推给前端。再套一轮「生成 → 评估 → 重写」，体验上很难接受。</p>
+<p>质量我改用更便宜的约束：</p>
+<ul>
+<li>系统提示里写死引用纪律和失败码处理，搜不到就说搜不到，禁止把常识冒充检索结果；</li>
+<li>工具返回 <code>TOOL_CALL_LIMIT_REACHED</code> / <code>TOOL_DISABLED_THIS_TURN</code> / <code>KNOWLEDGE_BASE_NO_RELEVANT_INFO</code>，把模型推回最终回答；</li>
+<li>知识库工具内部另有一套打分 / 改写 / 再检索的小图，那是检索质量环，不是对终答做自我批评。</li>
+</ul>
+<p>一句话：前两者的核心是「把事做完」，Reflection 的核心是「把事做好」。Kura-AI 先保证回合能稳稳做完，质量靠纪律和守卫，而不是再请一个评审模型。</p>
+<h3 id="1-4-真正做的「规划」">1.4 真正做的「规划」</h3>
+<p>如果一定要给 Kura-AI 的推理层贴标签，我会写成三层，而不是某一个教科书名词：</p>
+<figure class="highlight ada"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs ada">外层：回合编排（选档、记忆预注入、读图、压缩、取消、MCP 确认）<br> └─ 内层：create_agent 的 Tool-<span class="hljs-keyword">Use</span>-<span class="hljs-keyword">Loop</span><br>      └─ 其中一个工具：知识库 RAG 子图（打分 → 改写 → 再检索）<br></code></pre></td></tr></table></figure>
+<p>「自主规划」落在内层：模型看工具 schema 和本轮上下文，自己决定调不调、调哪个。外层是系统替模型做的事，避免把选档、压缩、读图都塞进同一个 ReAct 循环里空转。MCP 高危工具则停下来等人点一次，再带着批准记录续跑——这是人在环上，不是动态 Replan。</p>
+<hr>
+<h2 id="2-实现思路：一轮对话怎么跑完">2 实现思路：一轮对话怎么跑完</h2>
+<h3 id="2-1-先看整条链路">2.1 先看整条链路</h3>
+<p>前端主路径走 Job + SSE：<code>POST /api/v1/user-agent/chat/jobs</code>，再订阅事件流。真正干活的是 <code>iter_chat_stream_events</code>；同步接口走同一套准备逻辑，只是最后 <code>invoke</code> 而不是 <code>astream</code>。</p>
+<pre><code class=" mermaid">flowchart TD
+  userMsg[用户消息] --&gt; policy[本轮工具策略 KB与联网互斥]
+  policy --&gt; prefetch[并行预取: 知识库选档 + 记忆预检索]
+  prefetch --&gt; vision[可选两阶段读图]
+  vision --&gt; compact[压缩或滑动窗口]
+  compact --&gt; turnCtx[本轮上下文并入最后一条 Human]
+  turnCtx --&gt; loop[create_agent Tool-Use-Loop]
+  loop --&gt;|tool_call| tools[内置工具或 MCP]
+  tools --&gt; guards[每轮次数守卫]
+  guards --&gt; loop
+  loop --&gt;|final_answer| stream[SSE: thinking_item / content]
+  stream --&gt; persist[落库 thinking_items / sources]
+</code></pre>
+<p>读图不进主循环：先无工具看图，写出一段描述，再让 Agent 吃纯文本往下走。这样后面每一跳工具调用都不必再带原图。</p>
+<h3 id="2-2-回合策略：工具始终挂上，用政策开关">2.2 回合策略：工具始终挂上，用政策开关</h3>
+<p>知识库和联网在请求里互斥。实现上我没有按开关动态删工具——每轮重绑 schema，模型侧的工具列表会抖，也更难复用缓存。做法是<strong>工具始终挂载</strong>，本轮禁用时由工具函数返回 <code>TOOL_DISABLED_THIS_TURN</code>，同时在最后一条 Human 里写明「本轮允许 / 不要调用哪些」。</p>
+<p>系统提示本身很克制：人设来自智能体配置的 <code>system_prompt</code>，空则回退 <code>You are a helpful assistant.</code>；只有打开对应开关，才追加联网纪律或知识库纪律。没有手写 <code>Thought:</code> / <code>Action:</code> / <code>Observation:</code> 文本协议。「怎么想」主要靠 tool schema、本轮上下文和失败哨兵。</p>
+<h3 id="2-3-组-Agent：把循环交给-create-agent">2.3 组 Agent：把循环交给 <code>create_agent</code></h3>
+<p>构建入口在 <code>build_model_and_agent</code>。模型用 OpenAI 兼容的 <code>init_chat_model</code>，再交给 LangChain 1.x 的 <code>create_agent</code>。底层是 LangGraph 的原生 tool-calling 图：有 <code>tool_calls</code> 就进工具节点，没有就结束。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">from</span> langchain.agents <span class="hljs-keyword">import</span> create_agent<br><br>system_prompt = _compose_system_prompt(<br>    ua,<br>    use_knowledge_retrieval=use_knowledge_retrieval,<br>    use_web_search=use_web_search,<br>)<br>agent = create_agent(<br>    model=model,<br>    tools=tools,<br>    system_prompt=system_prompt,<br>)<br></code></pre></td></tr></table></figure>
+<p>挂上去的能力可以分成五类，点到职责即可：</p>
+<ul>
+<li>知识库：<code>search_knowledge_base</code>、<code>search_knowledge_by_image</code></li>
+<li>联网：<code>web_search</code>、<code>fetch_url</code>、<code>web_image_search</code></li>
+<li>记忆：<code>search_session_memory</code>（窗口之外的归档轮次）</li>
+<li>附件：检索片段、读正文、列清单</li>
+<li>MCP：按智能体已启用服务动态加载；共享会话不加载属主凭据，避免别人的对话驱动你的钥匙</li>
+</ul>
+<p>循环本身的硬上限写在 invoke config 里：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">_agent_invoke_config</span>() -&gt; <span class="hljs-built_in">dict</span>[<span class="hljs-built_in">str</span>, <span class="hljs-type">Any</span>]:<br>    <span class="hljs-keyword">return</span> &#123;<span class="hljs-string">&quot;recursion_limit&quot;</span>: <span class="hljs-number">30</span>, <span class="hljs-string">&quot;callbacks&quot;</span>: [_KbPromptDebugCallback()]&#125;<br></code></pre></td></tr></table></figure>
+<p>没有经典 <code>AgentExecutor</code> 那种 <code>max_iterations</code>。模型不再发 <code>tool_calls</code>，图就停；万一它在配额里换着 query 空转，30 步会被 LangGraph 打断。</p>
+<h3 id="2-4-组上下文：压缩、记忆、本轮块，都不落进「用户原话」">2.4 组上下文：压缩、记忆、本轮块，都不落进「用户原话」</h3>
+<p>送给模型的消息，不是数据库里的原文照搬。<code>_prepare_to_invoke_messages</code> 按这个顺序准备：</p>
+<ol>
+<li>开了会话记忆和压缩，就按字符预算做会话摘要，旧轮变成一条「【会话压缩摘要】」；否则退回滑动窗口。</li>
+<li>用当前问题做一次记忆预检索，把较早轮次的摘录拼进本轮上下文。</li>
+<li>需要带图时展开多模态；两阶段读图成功则不再带原图，只带 caption。</li>
+<li>把「本轮上下文」并进<strong>最后一条 Human</strong>。这块只对当前 invoke 有效，不写回消息表。</li>
+</ol>
+<p>本轮块里会写清：知识库和联网谁开谁关、选档后的 <code>file_key</code>、附件列表、读图描述、记忆摘录、以及「用户刚批准了某个 MCP 工具，请立刻调用一次」。系统提示保持稳定，回合差异全部压到最后一条用户消息上——这是有意的：人设不该每回合改写，政策却必须每回合生效。</p>
+<p>流式路径里，选档和记忆预检索会 <code>asyncio.gather</code> 一起做，避免用户干等两段串行 LLM。</p>
+<h3 id="2-5-循环内：原生-function-calling，项目只做分流">2.5 循环内：原生 function calling，项目只做分流</h3>
+<p>继续还是结束，项目没有再包一层 router。规则就是模型自己的 tool-calling：</p>
+<ul>
+<li>返回带 <code>tool_calls</code> 的 <code>AIMessage</code> → 执行工具，结果变成 <code>ToolMessage</code> 再进模型；</li>
+<li>返回没有 <code>tool_calls</code> 的文本 → 图结束，这段文本就是终答。</li>
+</ul>
+<p>项目侧要处理的是<strong>展示</strong>。流式消费 <code>agent.astream(..., stream_mode=&quot;messages&quot;)</code> 时，一旦某条 chunk 带上 <code>tool_call_chunks</code>，此前当正文流出的过渡句会从答案里搬回思考区（<code>moved_from_content</code>）。用户看到的是「先出现一句『我先去知识库查一下』，随后这句话收进思考胶囊，正文只留最终回答」。</p>
+<p>思考区本身是一条有序时间线 <code>thinking_items</code>：选档、记忆预注入、MCP 加载、读图、检索步骤、工具前导句，按发生顺序交错。历史回放优先读落库的这条时间线，而不是事后拼 <code>rag_steps + thinking_text</code>。它是<strong>过程可观测</strong>，不是模型隐藏的思维链——API 的 reasoning token 不会进这个区域。</p>
+<h3 id="2-6-结束：来源、确认、落库、归档">2.6 结束：来源、确认、落库、归档</h3>
+<p>循环停下来之后，还会做几件循环外的事：</p>
+<ul>
+<li>知识库和联网的来源合并进统一的 <code>sources</code>，前端用来画引用；</li>
+<li>高危 MCP 若被拦截，SSE 打出 <code>mcp_confirmation_required</code>，本轮先停。用户点允许后，带着 <code>mcp_approved_pending_id</code> 再开一轮 regenerate，提示词里写「请立即调用该工具一次」；</li>
+<li>助手消息连同 <code>thinking_items</code>、<code>rag_steps</code>、<code>sources</code> 落库；</li>
+<li>被挤出原文窗口的轮次，后台切块写入会话记忆，供下一轮预注入或 <code>search_session_memory</code> 召回。</li>
+</ul>
+<p>到这里，一轮对话才算完整。内层循环负责「想下一步」，外层负责「这一轮的边界、上下文和人机交接」。</p>
+<hr>
+<h2 id="3-优化：把-ReAct-的已知毛病补上">3 优化：把 ReAct 的已知毛病补上</h2>
+<p>理论文里 ReAct 有两个经典坑：长流程走着走着忘了目标，以及在某一步陷入无效循环。再往工程上推一步，还有第三件事——历史一长，每步都把完整上下文带上，token 按步数线性涨。Kura-AI 没有换范式，是在同一条 Tool-Use-Loop 上补约束。</p>
+<h3 id="3-1-防空转：配额比「再检测一次循环」更管用">3.1 防空转：配额比「再检测一次循环」更管用</h3>
+<p>没有做「相同工具 + 相同参数」的通用循环检测。更有效的是<strong>每工具每轮配额</strong>，到上限就返回哨兵，让模型改去写最终答案。</p>
+<table>
+<thead>
+<tr>
+<th>工具</th>
+<th>每轮上限</th>
+<th>用意</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>search_knowledge_base</code></td>
+<td>1</td>
+<td>检索一次，带着结果作答</td>
+</tr>
+<tr>
+<td><code>search_session_memory</code></td>
+<td>1</td>
+<td>窗口外记忆补一刀即可</td>
+</tr>
+<tr>
+<td><code>web_search</code> / <code>web_image_search</code></td>
+<td>2</td>
+<td>防 ReAct 刷搜索限流</td>
+</tr>
+<tr>
+<td><code>fetch_url</code></td>
+<td>3</td>
+<td>允许精读，但不许连环打开</td>
+</tr>
+<tr>
+<td><code>search_knowledge_by_image</code></td>
+<td>不超过会话图片数</td>
+<td>有图才有额度</td>
+</tr>
+<tr>
+<td>MCP 待确认</td>
+<td>最多 3 条</td>
+<td>同一 <code>(tool, args)</code> 去重</td>
+</tr>
+</tbody>
+</table>
+<p>知识库次数守卫长这样：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-keyword">def</span> <span class="hljs-title function_">try_acquire_knowledge_tool_slot</span>() -&gt; <span class="hljs-built_in">bool</span>:<br>    <span class="hljs-string">&quot;&quot;&quot;同一轮对话仅允许一次知识库检索；成功占用返回 True。&quot;&quot;&quot;</span><br>    state = _state()<br>    <span class="hljs-keyword">if</span> state.knowledge_calls &gt;= <span class="hljs-number">1</span>:<br>        <span class="hljs-keyword">return</span> <span class="hljs-literal">False</span><br>    state.knowledge_calls += <span class="hljs-number">1</span><br>    <span class="hljs-keyword">return</span> <span class="hljs-literal">True</span><br></code></pre></td></tr></table></figure>
+<p>联网搜索的注释写得很直白：限制次数是为了「防 ReAct 循环刷限流」。配额用完不是杀进程，是把球踢回模型——再配上 <code>recursion_limit=30</code>，最坏情况也有硬切。</p>
+<h3 id="3-2-防上下文爆炸：压缩窗口，原文只增不改">3.2 防上下文爆炸：压缩窗口，原文只增不改</h3>
+<p>存储层保留当前对话分支的全文，裁剪发生在调用模型之前。默认按字符预算压缩：旧轮收成稳定摘要，最近一段原文留下；压缩失败则本轮硬截，不写坏 metadata。关掉压缩时，退回最近若干轮滑动窗口。</p>
+<p>被挤出窗口的内容不是扔掉。回合结束后异步归档到向量记忆，下一轮用预注入和工具两条通道召回。预注入最多带几条摘录，不够再让 Agent 自己调 <code>search_session_memory</code>。这样 ReAct 每一步看到的是「摘要 + 近文 + 必要时的记忆命中」，而不是越聊越长的全文。</p>
+<h3 id="3-3-成本：主模型跑循环，杂活用子模型">3.3 成本：主模型跑循环，杂活用子模型</h3>
+<p>Plan-and-Execute 有一个隐藏优势：强模型规划、弱模型执行。Kura-AI 没有拆成两张图，但把同一思路用在<strong>循环外的杂活</strong>上。智能体可以单独配 <code>sub_model</code>：选档、会话压缩、记忆查询重写、RAG 打分和改写，都走子配置；缺省再回退主模型。主模型只负责 Tool-Use-Loop 里那些「下一步调谁、最终怎么答」的决策。</p>
+<p>首包延迟也按这个思路削：选档和记忆预检索并行；读图从循环里拆出去，避免后面每一跳工具调用都带着原图。出过 <code>ToolMessage</code> 之后，模型输入会去掉 <code>image_url</code>，带图对话才不至于在第二轮工具调用时把上下文打爆。</p>
+<h3 id="3-4-可观测与可中断">3.4 可观测与可中断</h3>
+<p>对话页上的思考胶囊，不是装饰。<code>thinking_items</code> 按时间线落下，刷新历史还能展开当时的选档、检索和读图。调试时还可以打开完整 LLM 入参打印，但那只进终端，不进用户界面。</p>
+<p>取消也不能只看文本 chunk。工具执行阶段往往没有新 token 流出，所以另有一个看门狗周期探取消标记，命中就取消生成任务。用户点停止卡在「正在搜」里，是 ReAct 产品里很常见的体验坑，必须在循环外补一刀。</p>
+<p>MCP 则是另一类中断：读操作可以自动跑，写操作和高危工具默认先拦截。确认策略按服务配置，也可以全局关掉。这和 Cursor Plan 模式里的人工闸门是同一类东西——不是换范式，是给行动加上批准。</p>
+<h3 id="3-5-检索幻觉：失败也要有协议">3.5 检索幻觉：失败也要有协议</h3>
+<p>工具循环最容易演变成「没搜到就编一个」。Kura-AI 把失败变成协议，而不是让模型自由发挥。联网纪律要求：看到 <code>WEB_SEARCH_NO_RESULTS</code> / <code>FETCH_URL_FAILED</code> 这类哨兵，必须如实告诉用户没找到或打不开，不得编造链接和正文。知识库纪律同样：无资料就说无资料，常识推断不得冒充知识库结论。引用必须带 <code>[来源N]</code>，编号和工具返回对齐，图片地址还要求原样复制，禁止改写成另一套 URL。</p>
+<p>这些约束写进 system prompt，看起来像「提示词工程」，实际是在补 ReAct 没有的验收标准：行动可以失败，失败之后的话术不能失败。</p>
+<hr>
+<h2 id="4-收束：生产里的混合，不必堆满范式">4 收束：生产里的混合，不必堆满范式</h2>
+<p>如果把 Kura-AI 硬套回三种范式的选型表，我会这样填：</p>
+<ul>
+<li><strong>单步行动</strong>：ReAct / Tool-Use-Loop，用 <code>create_agent</code> 落地；</li>
+<li><strong>轻量规划</strong>：没有全局 Plan 图，但有回合前的知识库选档，以及工具内部的 RAG 改写；</li>
+<li><strong>质量</strong>：没有终答 Reflection，用引用纪律、失败哨兵和次数守卫代替；</li>
+<li><strong>意外与权限</strong>：MCP 确认是 HITL，不是动态 Replan。</li>
+</ul>
+<p>这和我在理论文末尾写的「生产级混合」并不矛盾。那句话是「全局计划 + 单步 ReAct + 整体 Reflection」。Kura-AI 按产品形态做了裁剪：<strong>单步 ReAct 留下，全局计划收成选档，整体 Reflection 先不加。</strong> 工程开发永远是够用就好——先让循环稳、可见、可停，再根据真实延迟和费用决定要不要加更重的结构。</p>
+<p>后续几篇会沿着这条循环往外拆：会话记忆怎么归档和召回、MCP 确认如何回到同一条对话、知识库选档为什么要放在 Agent 之前。那些是这条范式上的零件，不是另一套大脑。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Kura-AI/" class="category-chain-item">Kura-AI</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Agent/" class="print-no-link">#Agent</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/tags/Kura-AI/" class="print-no-link">#Kura-AI</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Kura-AI」Agent 推理范式：为什么用 Tool-Use-Loop</div>
+      <div>https://marisamagic.github.io/2026/09/05/20260905_KuraAI_Agent推理范式/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年9月5日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/27/20260827_LangGraph%E6%A0%B8%E5%BF%83%E4%BC%98%E5%8A%BF/" title="「LangChain」LangGraph 的核心优势？更适配哪些 Agent 场景？">
+                        <span class="hidden-mobile">「LangChain」LangGraph 的核心优势？更适配哪些 Agent 场景？</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+  <script>
+  Fluid.utils.createScript('https://lib.baomitu.com/mermaid/8.14.0/mermaid.min.js', function() {
+    mermaid.initialize({"theme":"default"});
+
+    Fluid.utils.listenDOMLoaded(function() {
+      Fluid.events.registerRefreshCallback(function() {
+        if ('mermaid' in window) {
+          mermaid.init();
+        }
+      });
+    });
+  });
+</script>
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
