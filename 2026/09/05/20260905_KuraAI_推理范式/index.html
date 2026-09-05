@@ -1,0 +1,849 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Kura-AI 的对话智能体没有自研 Thought-Action-Observation 解析器，也没有单独的 Planner。推理走的是 LangChain create_agent 驱动的 Tool-Use-Loop：模型用原生工具调用决定下一步；工具列表始终挂在 Agent 上，本轮能不能用、还能不能再调，靠工具返回值拦住；检索纪律和本轮文档范围只写在当前这条用户消息里，不会进会话历史。循">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Kura-AI」Agent 推理范式 Tool-Use-Loop 设计">
+<meta property="og:url" content="https://marisamagic.github.io/2026/09/05/20260905_KuraAI_%E6%8E%A8%E7%90%86%E8%8C%83%E5%BC%8F/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="Kura-AI 的对话智能体没有自研 Thought-Action-Observation 解析器，也没有单独的 Planner。推理走的是 LangChain create_agent 驱动的 Tool-Use-Loop：模型用原生工具调用决定下一步；工具列表始终挂在 Agent 上，本轮能不能用、还能不能再调，靠工具返回值拦住；检索纪律和本轮文档范围只写在当前这条用户消息里，不会进会话历史。循">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
+<meta property="article:published_time" content="2026-09-05T08:58:39.781Z">
+<meta property="article:modified_time" content="2026-09-05T13:45:04.636Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="Kura-AI">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
+  
+  
+  
+  <title>「Kura-AI」Agent 推理范式 Tool-Use-Loop 设计 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Kura-AI」Agent 推理范式 Tool-Use-Loop 设计"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-09-05 16:58" pubdate>
+          2026年9月5日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          2.8k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          24 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Kura-AI」Agent 推理范式 Tool-Use-Loop 设计</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<p>这篇文章讲的是 Kura-AI <strong>对话智能体怎么推理</strong>：模型怎么一步步判断「还要不要再调工具，还是已经可以回答了」，以及这条循环外面还有哪些约束。</p>
+<p>Kura-AI 选的是 <strong>Tool-Use-Loop</strong>（工具使用循环）。「下一步该干什么」交给支持原生工具调用（Function Calling）的模型自己判断；「这一轮能不能调、最多调几次、模型能看见哪些材料」则由服务端在本轮对话中进行约束。项目并没有使用手写 ReAct 文本解析，也没有先让模型写出完整计划再执行。</p>
+<hr>
+<h2 id="1-Agent-主循环">1 Agent 主循环</h2>
+<h3 id="1-1-策略选择">1.1 策略选择</h3>
+<p>对话智能体走的是 <strong>LangChain <code>create_agent</code> 驱动的 Tool-Use-Loop</strong>。模型通过原生工具调用决定下一步——调哪个工具、参数填什么，都写在结构化字段里，而不是混在一段自由文本中。工具跑完后，结果再喂回模型。模型觉得不用再调工具了，就输出正式回答。</p>
+<h3 id="1-2-如何实现">1.2 如何实现</h3>
+<p>入口在 <code>app/api/v1/user_agents/chat.py</code>。日常对话走的是流式路径：<code>chat_stream_endpoint</code> → <code>chat_with_agent_stream</code> → <code>iter_chat_stream_events</code>。</p>
+<p>真正把模型和 Agent 拼起来的，是 <code>app/chat/agent_service.py</code> 里的 <code>build_model_and_agent</code>。它用 <code>init_chat_model</code>（OpenAI 兼容协议）建好模型，带上工具列表和系统提示，再交给 <code>langchain.agents.create_agent</code>。</p>
+<p>循环本身和工具执行都交给 LangChain / LangGraph，项目里没有另写一套调度器。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/chat/agent_service.py · build_model_and_agent</span><br><span class="hljs-keyword">from</span> langchain.agents <span class="hljs-keyword">import</span> create_agent<br><br>agent_kwargs = &#123;<br>    <span class="hljs-string">&quot;model&quot;</span>: model,<br>    <span class="hljs-string">&quot;tools&quot;</span>: tools,<br>    <span class="hljs-string">&quot;system_prompt&quot;</span>: system_prompt,<br>&#125; <br>agent = create_agent(**agent_kwargs)<br></code></pre></td></tr></table></figure>
+<p>本轮如果开了知识库，循环通常走两轮就结束。模型不会输出 Thought / Action 这种文本，服务端也就没什么可解析的：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs text">产品：GPT Plus<br>本轮：知识库开 / 联网关<br>用户：GPT Plus 年费怎么退？<br><br>第 1 轮模型 → tool_calls:<br>  search_knowledge_base(query=&quot;GPT Plus 年费退款&quot;)<br>工具回喂 → [来源1] 开通未满 7 天可全额退，超过则按剩余整月折算……<br>第 2 轮模型 → （不再要工具）<br>  根据知识库，开通未满 7 天可全额退；超过 7 天按剩余整月折算。[来源1]<br></code></pre></td></tr></table></figure>
+<h3 id="1-3-其它方案">1.3 其它方案</h3>
+<ol>
+<li>
+<p><strong>手写 ReAct 文本循环</strong>（模型输出 Thought / Action / Observation，服务端解析后再拼回去）。</p>
+<ul>
+<li>优点：不依赖模型的 function calling，旧模型也能跑。</li>
+<li>缺点：现在主流 LLM 大多已经支持原生工具调用。自己写解析器，还要处理格式漂移、半截流式和多工具并行，<strong>实现成本高，后面也难维护</strong>。</li>
+</ul>
+</li>
+<li>
+<p><strong>Plan-and-Execute</strong>（先单独用 Planner 列出完整步骤，再逐步执行，必要时再规划）。</p>
+<ul>
+<li>优点：更适合复杂的长任务。计划先写清楚，后面执行时不容易跑偏。</li>
+<li>缺点：多一次规划就要多调一次大模型，<strong>延迟更高，token 消耗也更多</strong>。Kura-AI 目前主要是知识问答这类相对简单的场景，每一轮真正要管住的，是检索互斥和工具次数——这些已经写在系统提示里了。对这种对话来说，用工具策略比再加一层规划更划算。</li>
+</ul>
+</li>
+<li>
+<p><strong>Reflection</strong>（做完再检查：生成 → 评估 → 改进，给主循环加一层质量闭环）。</p>
+<ul>
+<li>优点：回答如果出现幻觉或明显错误，多一次 critic 评判可以把坏答案拦下来，让模型重写。</li>
+<li>缺点：不少工具内部已经有很明确的提示（比如知识库检索会告诉模型有没有资料、有没有超限、要不要待确认），系统提示也对回答可靠性做了约束。再加一层反思，等于 <strong>每轮多一次完整调用</strong>，延迟和 token 都会上去。另外，RAG 子图里的文档打分只服务 <code>search_knowledge_base</code> 内部，并不会约束外层最终回答。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="2-工具策略">2 工具策略</h2>
+<h3 id="2-1-策略选择">2.1 策略选择</h3>
+<p>Kura-AI 的做法是：<strong>工具列表始终挂在 Agent 上，本轮能不能用，靠策略拦住</strong>。组 Agent 时，知识库、联网、记忆、附件、MCP 会一次性交给模型。用户勾选的「本轮用知识库 / 用联网」并不会把工具从列表里拿掉；真正执行时，再按本轮开关和次数上限拦截。</p>
+<h3 id="2-2-如何实现">2.2 如何实现</h3>
+<p>开关来自对话 API 上的 <code>use_knowledge_retrieval</code> / <code>use_web_search</code>。<code>ChatRequest</code> 在 schema 层就把它们设成互斥，两个不能同时为真。</p>
+<p>真正起作用的地方分两层：</p>
+<ol>
+<li><strong>组装层</strong>在 <code>build_model_and_agent</code>。附件工具、<code>web_search</code> / <code>fetch_url</code> / <code>web_image_search</code>、<code>search_knowledge_base</code>、<code>search_knowledge_by_image</code>、<code>search_session_memory</code> 按配置往列表里加；MCP 外部工具作为 <code>extra_tools</code> 追加，按名字排序后交给 <code>create_agent</code>。</li>
+<li><strong>执行层</strong>在各工具函数内部。以 <code>app/kb/search_tool.py</code> 的 <code>_search_knowledge_base</code> 为例：先问 <code>is_knowledge_allowed_this_turn()</code>，再 <code>try_acquire_knowledge_tool_slot()</code>，两关都过了才跑 <code>run_rag_graph</code>。联网搜索的配额写在系统配置里，主要是防止模型在循环里反复刷接口被限流，默认 <code>WEB_SEARCH_MAX_CALLS_PER_TURN=2</code>。</li>
+</ol>
+<p>工具本身用的是 LangChain <code>StructuredTool</code>，schema 给模型看。MCP 远程工具由 <code>load_agent_mcp_tools</code> 接入；单个服务挂了只记错误，不会把整轮对话打断。请求之间靠 <code>app/chat/tools.py</code> 的 <code>_RequestState</code> + <code>ContextVar</code> 隔离，并发请求彼此看不见。共享会话默认不加载属主的 MCP，避免别人的对话去驱动属主凭据。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/chat/tools.py</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">set_turn_tool_policy</span>(<span class="hljs-params">*, use_knowledge_retrieval: <span class="hljs-built_in">bool</span>, use_web_search: <span class="hljs-built_in">bool</span></span>) -&gt; <span class="hljs-literal">None</span>:<br>    <span class="hljs-string">&quot;&quot;&quot;本轮检索开关（工具始终挂载，禁用时由工具函数返回 TOOL_DISABLED_THIS_TURN）。&quot;&quot;&quot;</span><br>    state = _state()<br>    state.allow_knowledge_retrieval = <span class="hljs-built_in">bool</span>(use_knowledge_retrieval)<br>    state.allow_web_search = <span class="hljs-built_in">bool</span>(use_web_search)<br></code></pre></td></tr></table></figure>
+<p>还是「GPT Plus 年费怎么退？」这句。工具列表不会因为开关变化而拆掉。本轮如果只开了联网、没开知识库，模型仍然看得到 <code>search_knowledge_base</code>；真去调的话，拿到的是错误码，循环继续走，整轮不会 500：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">TOOL_DISABLED_THIS_TURN: search_knowledge_base is not enabled for this turn.<br></code></pre></td></tr></table></figure>
+<p>本轮已经成功检索过一次，再调就会返回 <code>TOOL_CALL_LIMIT_REACHED</code>。系统会要求模型拿已有结果作答，而不是再搜一遍。</p>
+<h3 id="2-3-为什么这样做">2.3 为什么这样做</h3>
+<p><strong>延迟。</strong> 项目中不会按开关去重建 <code>create_agent</code>。工具 schema 保持稳定，模型就不用在「上一轮还有 <code>web_search</code>，这一轮突然没了」之间来回猜工具名。</p>
+<p><strong>可控，也省 token。</strong> 知识库每轮只允许成功占用 1 次，记忆检索同样 1 次；联网搜索、读页、搜图各自有上限。MCP 外部工具在系统里也有次数限制，避免模型在循环里反复调用。</p>
+<p><strong>失败怎么处理。</strong> 工具被禁用，或者次数用完，都返回带错误码的字符串（<code>TOOL_DISABLED_THIS_TURN</code> / <code>TOOL_CALL_LIMIT_REACHED</code>）。循环不会中断，模型被要求据此不再调用工具，而不是抛异常把整轮打掉。系统提示里的检索纪律会点名这些错误码，要求如实说「未找到」，而不是让模型编造来源。</p>
+<h3 id="2-4-其它方案">2.4 其它方案</h3>
+<ol>
+<li>
+<p><strong>按开关重建工具列表</strong>。</p>
+<ul>
+<li>优点：schema 里就看不到它，模型自然调不到。</li>
+<li>缺点：<code>build_model_and_agent</code> 的注释写死了「检索工具始终挂载」。相邻两轮如果工具集合来回变，模型更容易编一个已经卸掉的名字。改成明确返回错误码之后，模型能在同一轮里不再调用这个工具。</li>
+</ul>
+</li>
+<li>
+<p><strong>硬拦截</strong>（一违规就抛异常，直接拆掉 <code>create_agent</code> 循环）。</p>
+<ul>
+<li>优点：服务端最省事，一次停干净。</li>
+<li>缺点：对话要的是「告诉用户这轮不能搜 / 已经搜过了」，而不是直接停止。错误码进 <code>ToolMessage</code> 之后，模型才有机会把它收成一句人话。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="3-本轮上下文">3 本轮上下文</h2>
+<h3 id="3-1-策略选择">3.1 策略选择</h3>
+<p>Kura-AI 把内容拆成两处：<strong>长期纪律放进 system，本轮材料接在用户原话后面</strong>。人设，以及「什么时候允许搜知识库、怎么标知识库来源」，写在 <code>system_prompt</code> 里。本轮选中的文档范围、附件提示、读图描述、记忆摘录，只接到最后一条 Human 上，只对这一轮有效。会话历史里留下的仍是用户原话；检索出来的、临时拼上去的附加材料，不会写进历史。</p>
+<h3 id="3-2-如何实现">3.2 如何实现</h3>
+<p>先用 <code>storage.append_messages</code> 写入「GPT Plus 年费怎么退？」，再在 <code>_prepare_to_invoke_messages</code> 里把本轮材料拼到内存副本上。这份材料不会二次入库，也不会再开第二条 user 消息。</p>
+<p><code>_compose_system_prompt</code> 只拼人设和本轮检索纪律。本轮材料由 <code>_format_turn_context_block</code> 和 <code>_append_turn_context_message</code> 负责。知识库开启时，循环开始前会先跑 <code>_run_kb_document_preselect_with_context</code>，圈好 <code>file_key</code>，写进本轮块，同时注入 <code>search_knowledge_base</code>。之后工具侧不再让模型自己填检索范围。</p>
+<p>发给模型的最后一条 Human 长这样。刷新页面再 <code>load</code>，历史上只剩第一句：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs text">GPT Plus 年费怎么退？<br><br>【本轮上下文（仅本回合有效）】<br>本轮允许调用 search_knowledge_base / search_knowledge_by_image；<br>不要调用 web_search / fetch_url / web_image_search。<br><br>【本回合知识库检索范围】已限定在：<br>- `GPT-Plus退款说明.pdf`<br>调用 search_knowledge_base 时只传 query。<br></code></pre></td></tr></table></figure>
+<h3 id="3-3-为什么这样做">3.3 为什么这样做</h3>
+<p>把本轮的工具限制、知识库范围（如果有）写进 <code>system_prompt</code> 其实也能跑。最后没有这么做，主要是这几个原因：</p>
+<ul>
+<li>
+<p><strong>角色不一样。</strong> system 放的是人设和长期纪律。知识库文档范围、读图结果、记忆摘录，是「这一问临时带上的材料」，更适合跟在用户问句后面。</p>
+</li>
+<li>
+<p><strong>外部内容不该进 system。</strong> 读图描述、记忆摘录、用户上传的附件、超长上下文压缩出来的摘要，本质上都是外部拿来的文本。这些东西写进人设，模型更容易把它们当成指令。</p>
+</li>
+<li>
+<p><strong>先用轻量子模型圈好文档。</strong> 主循环开始前，先用一次轻量模型调用，把检索范围定到例如 <code>GPT-Plus退款说明.pdf</code>，再写进本轮块并注入检索工具。主模型第一轮就可以直接搜，不用先空转一轮去试「该查哪几份文档」。</p>
+</li>
+</ul>
+<h3 id="3-4-其它方案">3.4 其它方案</h3>
+<ol>
+<li>
+<p><strong>本轮材料也写进 <code>system_prompt</code></strong>。</p>
+<ul>
+<li>优点：每一轮都能在最前面看到，也不会写进历史。</li>
+<li>缺点：人设会被一份经常变动的清单撑得很长；外部文本进了 system，注入风险更大；做压缩时，这块临时内容还会被算进 system 长度。</li>
+</ul>
+</li>
+<li>
+<p><strong>另开一条 System / Human，并写入历史</strong>。</p>
+<ul>
+<li>优点：调试时能看见当时开了什么开关。</li>
+<li>缺点：压缩、记忆、重新生成时，系统会把这块当成用户真的说过的话。</li>
+</ul>
+</li>
+</ol>
+<h2 id="收束">收束</h2>
+<p>整条主路径可以看成三步：先决定这一轮模型能看见什么，再把工具列表交给 <code>create_agent</code>，最后用原生工具调用跑完这一轮循环。循环什么时候停，靠配额，以及模型自己判断「还要不要再调工具」。</p>
+<pre><code class=" mermaid">flowchart TD
+    A[对话入口 chat.py] --&gt; B[本轮上下文]
+    B --&gt; B1[选文档 / 记忆预注入 / 读图描述]
+    B1 --&gt; B2[并入最后一条 Human，不写会话历史]
+    B2 --&gt; C[工具策略]
+    C --&gt; C1[始终挂载 KB / Web / 记忆 / 附件 / MCP]
+    C1 --&gt; C2[set_turn_tool_policy + 每轮配额]
+    C2 --&gt; D[主循环]
+    D --&gt; D1[&quot;create_agent invoke / astream&quot;]
+    D1 --&gt; D2&#123;模型是否给出 tool_calls&#125;
+    D2 --&gt;|是| D3[工具执行：禁用或次数用完则返回错误码]
+    D3 --&gt; D1
+    D2 --&gt;|否| E[助手文本写入历史]
+    D1 --&gt;|recursion_limit 或取消| E
+</code></pre>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Kura-AI/" class="category-chain-item">Kura-AI</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Agent/" class="print-no-link">#Agent</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/tags/Kura-AI/" class="print-no-link">#Kura-AI</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Kura-AI」Agent 推理范式 Tool-Use-Loop 设计</div>
+      <div>https://marisamagic.github.io/2026/09/05/20260905_KuraAI_推理范式/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年9月5日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/08/27/20260827_LangGraph%E6%A0%B8%E5%BF%83%E4%BC%98%E5%8A%BF/" title="「LangChain」LangGraph 的核心优势？更适配哪些 Agent 场景？">
+                        <span class="hidden-mobile">「LangChain」LangGraph 的核心优势？更适配哪些 Agent 场景？</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+  <script>
+  Fluid.utils.createScript('https://lib.baomitu.com/mermaid/8.14.0/mermaid.min.js', function() {
+    mermaid.initialize({"theme":"default"});
+
+    Fluid.utils.listenDOMLoaded(function() {
+      Fluid.events.registerRefreshCallback(function() {
+        if ('mermaid' in window) {
+          mermaid.init();
+        }
+      });
+    });
+  });
+</script>
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
