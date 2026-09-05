@@ -246,324 +246,6 @@
     
     
       <div class="col-12 col-md-4 m-auto index-img">
-        <a href="/2026/09/05/20260904_Kura-AI_%E5%A4%9A%E6%A8%A1%E6%80%81%E7%9F%A5%E8%AF%86%E5%BA%93/" target="_self">
-          <img src="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「Kura-AI」项目中多模态知识库是如何构建的">
-        </a>
-      </div>
-    
-    <article class="col-12 col-md-8 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/09/05/20260904_Kura-AI_%E5%A4%9A%E6%A8%A1%E6%80%81%E7%9F%A5%E8%AF%86%E5%BA%93/" target="_self">
-          「Kura-AI」项目中多模态知识库是如何构建的
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt " href="/2026/09/05/20260904_Kura-AI_%E5%A4%9A%E6%A8%A1%E6%80%81%E7%9F%A5%E8%AF%86%E5%BA%93/" target="_self">
-        <div>
-          Kura-AI 的多模态知识库最终落成「文本叶子进 Milvus、父块进 PostgreSQL、图片单独成块」这套结构，而不是把整篇 PDF 压成一个向量，也不是把图文融合成一条 embedding。PDF / Word 里的图抽成独立 L4，和文本分别用 qwen3-vl-embedding 写入同一个集合，图文关系用 related_text_ids 在入库时写死。这篇文章梳理这套方案当初是怎
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-09-05 13:20" pubdate>
-              2026-09-05
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Kura-AI/" class="category-chain-item">Kura-AI</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/AI/">#AI</a>
-            
-              <a href="/tags/RAG/">#RAG</a>
-            
-              <a href="/tags/Kura-AI/">#Kura-AI</a>
-            
-              <a href="/tags/%E5%A4%9A%E6%A8%A1%E6%80%81/">#多模态</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-      <div class="col-12 col-md-4 m-auto index-img">
-        <a href="/2026/09/05/20260905_Kura-AI_%E9%95%BF%E7%9F%AD%E6%9C%9F%E8%AE%B0%E5%BF%86/" target="_self">
-          <img src="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「Kura-AI」项目中长短期记忆是如何设计的">
-        </a>
-      </div>
-    
-    <article class="col-12 col-md-8 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/09/05/20260905_Kura-AI_%E9%95%BF%E7%9F%AD%E6%9C%9F%E8%AE%B0%E5%BF%86/" target="_self">
-          「Kura-AI」项目中长短期记忆是如何设计的
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt " href="/2026/09/05/20260905_Kura-AI_%E9%95%BF%E7%9F%AD%E6%9C%9F%E8%AE%B0%E5%BF%86/" target="_self">
-        <div>
-          我在 Kura-AI 里设计长短期记忆时，没有走 Checkpointer 加 Store，也没做跨会话的用户画像，而是把它做成单会话内的三层：消息原文永远留在 PostgreSQL 的消息树里，压缩不删任何一行；压缩只是让子模型把挤出窗口的旧轮写成摘要，存进会话行的 metadata，每轮现场拼出「摘要 + 近文原文」喂给主模型；离开窗口的整轮原文再切块进独立的 Milvus 集合，靠预注入和每
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-09-05 12:57" pubdate>
-              2026-09-05
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Kura-AI/" class="category-chain-item">Kura-AI</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/AI/">#AI</a>
-            
-              <a href="/tags/Kura-AI/">#Kura-AI</a>
-            
-              <a href="/tags/%E8%AE%B0%E5%BF%86/">#记忆</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-      <div class="col-12 col-md-4 m-auto index-img">
-        <a href="/2026/09/05/20260904_Kura-AI_Agent%E6%8E%A8%E7%90%86%E8%8C%83%E5%BC%8F/" target="_self">
-          <img src="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「Kura-AI」项目中 Agent 采用了什么推理范式？如何设计的">
-        </a>
-      </div>
-    
-    <article class="col-12 col-md-8 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/09/05/20260904_Kura-AI_Agent%E6%8E%A8%E7%90%86%E8%8C%83%E5%BC%8F/" target="_self">
-          「Kura-AI」项目中 Agent 采用了什么推理范式？如何设计的
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt " href="/2026/09/05/20260904_Kura-AI_Agent%E6%8E%A8%E7%90%86%E8%8C%83%E5%BC%8F/" target="_self">
-        <div>
-          我在 Kura-AI 里给主对话 Agent 选的推理范式，不是教科书里的文本 ReAct，也不是 Plan-and-Execute 或多智能体。主干是 LangChain v1 的 create_agent 驱动的 Function-Calling ReAct：模型用原生 tool_calls 自己决定调工具还是终答，循环上限 30 步；进循环之前再套一层确定性脚手架——会话压缩、知识库前置选档
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-09-05 12:10" pubdate>
-              2026-09-05
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Kura-AI/" class="category-chain-item">Kura-AI</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/AI/">#AI</a>
-            
-              <a href="/tags/Agent/">#Agent</a>
-            
-              <a href="/tags/Kura-AI/">#Kura-AI</a>
-            
-              <a href="/tags/ReAct/">#ReAct</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-      <div class="col-12 col-md-4 m-auto index-img">
-        <a href="/2026/09/05/20260905_Kura-AI_Agentic_RAG/" target="_self">
-          <img src="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「Kura-AI」项目中 Agentic RAG 是如何设计与实现的">
-        </a>
-      </div>
-    
-    <article class="col-12 col-md-8 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/09/05/20260905_Kura-AI_Agentic_RAG/" target="_self">
-          「Kura-AI」项目中 Agentic RAG 是如何设计与实现的
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt " href="/2026/09/05/20260905_Kura-AI_Agentic_RAG/" target="_self">
-        <div>
-          Kura-AI 的 Agentic RAG 不是每问必检索的 Naive RAG，也不是把 grade / rewrite 拆成主循环里的一串工具。主干仍是 Function-Calling ReAct：主 Agent 只决定「要不要搜、用什么 query」，每轮 search_knowledge_base 最多成功一次。进循环前，子模型按当前问题和最近对话圈定 file_key，范围用闭包锁进工
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-09-05 01:44" pubdate>
-              2026-09-05
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Kura-AI/" class="category-chain-item">Kura-AI</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/AI/">#AI</a>
-            
-              <a href="/tags/Agent/">#Agent</a>
-            
-              <a href="/tags/RAG/">#RAG</a>
-            
-              <a href="/tags/Kura-AI/">#Kura-AI</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-      <div class="col-12 col-md-4 m-auto index-img">
         <a href="/2026/08/27/20260827_LangGraph%E6%A0%B8%E5%BF%83%E4%BC%98%E5%8A%BF/" target="_self">
           <img src="https://sukicdn.com/wyx/i/2026/08/24/185sw.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「LangChain」LangGraph 的核心优势？更适配哪些 Agent 场景？">
         </a>
@@ -1033,6 +715,326 @@
               <a href="/tags/LLM/">#LLM</a>
             
               <a href="/tags/LangChain/">#LangChain</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2026/08/20/20260820_A2A%E5%8D%8F%E8%AE%AE%E4%B8%8EMCP%E5%8C%BA%E5%88%AB/" target="_self">
+          <img src="https://sukicdn.com/wyx/i/2026/08/17/lho.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「Agent Tool」什么是 A2A 协议？它和 MCP 协议的区别是什么？">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/08/20/20260820_A2A%E5%8D%8F%E8%AE%AE%E4%B8%8EMCP%E5%8C%BA%E5%88%AB/" target="_self">
+          「Agent Tool」什么是 A2A 协议？它和 MCP 协议的区别是什么？
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2026/08/20/20260820_A2A%E5%8D%8F%E8%AE%AE%E4%B8%8EMCP%E5%8C%BA%E5%88%AB/" target="_self">
+        <div>
+          A2A（Agent-to-Agent）是 Google 发布的开放协议，解决「多个 AI Agent 之间怎么互相通信协作」：一个 Agent 把子任务委托给专业 Agent，接收方按自己声明的能力承接，支持异步长任务与流式返回。与 MCP 的区别一句话——MCP 解决「单个 Agent 怎么连工具和数据」（向下），A2A 解决「多个 Agent 之间怎么分工协作」（向外），一纵一横、各管一层，互
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-08-20 13:03" pubdate>
+              2026-08-20
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Agent-Tool/" class="category-chain-item">Agent Tool</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+              <a href="/tags/Agent/">#Agent</a>
+            
+              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/">#大模型</a>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2026/08/20/20260820_SSE_WebSocket_WebRTC%E5%AF%B9%E6%AF%94/" target="_self">
+          <img src="https://sukicdn.com/wyx/i/2026/08/17/lho.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「Agent Tool」LLM 通信协议怎么选：SSE、WebSocket 与 WebRTC">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/08/20/20260820_SSE_WebSocket_WebRTC%E5%AF%B9%E6%AF%94/" target="_self">
+          「Agent Tool」LLM 通信协议怎么选：SSE、WebSocket 与 WebRTC
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2026/08/20/20260820_SSE_WebSocket_WebRTC%E5%AF%B9%E6%AF%94/" target="_self">
+        <div>
+          LLM 对话里的通信协议按数据流分两类选型。文字流方面——SSE 是 HTTP 原生单向长连接，客户端以 Accept 头声明 text/event-stream、服务端沿连接持续推送 data 文本流、EventSource 免手写解析，适合流式输出与多轮对话（ChatGPT、OpenAI API 皆如此），局限是单向双通道复杂、HTTP/1.1 同域 6 连接上限、只能传文本（Base64 膨
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-08-20 12:25" pubdate>
+              2026-08-20
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Agent-Tool/" class="category-chain-item">Agent Tool</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+              <a href="/tags/Agent/">#Agent</a>
+            
+              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/">#大模型</a>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2026/08/19/20260819_MCP%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F/" target="_self">
+          <img src="https://sukicdn.com/wyx/i/2026/08/17/lho.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「Agent Tool」MCP 协议通常采用什么通信方式？">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/08/19/20260819_MCP%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F/" target="_self">
+          「Agent Tool」MCP 协议通常采用什么通信方式？
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2026/08/19/20260819_MCP%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F/" target="_self">
+        <div>
+          MCP 采用「统一消息格式 + 分场景传输」的双层设计：不管哪种传输，底层都统一用 JSON-RPC 2.0（轻量 RPC 规范、易读易调试、语言无关，请求/响应用 id 匹配，格式固定）；本地场景用 stdio——Client 把 Server 当子进程启动，通过操作系统管道（RAM 里的 FIFO 缓冲区）通信，不走网卡也不经过 TCP/IP 协议栈，延迟极低、不用开端口没有网络安全问题、Se
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-08-19 14:20" pubdate>
+              2026-08-19
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Agent-Tool/" class="category-chain-item">Agent Tool</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+              <a href="/tags/Agent/">#Agent</a>
+            
+              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/">#大模型</a>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2026/08/19/20260819_MCP%E4%B8%8EAgentSkill%E5%8C%BA%E5%88%AB/" target="_self">
+          <img src="https://sukicdn.com/wyx/i/2026/08/17/lho.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「Agent Tool」MCP 和 Agent Skill 的区别是什么？">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/08/19/20260819_MCP%E4%B8%8EAgentSkill%E5%8C%BA%E5%88%AB/" target="_self">
+          「Agent Tool」MCP 和 Agent Skill 的区别是什么？
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2026/08/19/20260819_MCP%E4%B8%8EAgentSkill%E5%8C%BA%E5%88%AB/" target="_self">
+        <div>
+          MCP 和 Agent Skill 不是同类概念、不是竞争关系而是互补：MCP 解决「Agent 怎么获得外部能力」——把数据库/API/文件系统标准化封装成服务，粒度是原子操作（read_file、query_database），schema 对模型可见，让 Agent 从「只会聊天」到「能真正干活」（新员工配电脑、装软件、开权限的类比）；Skill 解决「有了能力之后该怎么用」——把知识和流程
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-08-19 14:02" pubdate>
+              2026-08-19
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Agent-Tool/" class="category-chain-item">Agent Tool</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+              <a href="/tags/Agent/">#Agent</a>
+            
+              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/">#大模型</a>
+            
+              <a href="/tags/LLM/">#LLM</a>
             
           </div>
         
