@@ -1,0 +1,976 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Kura-AI 把工具当成给模型看的接口来设计：提示词引导大模型调用什么工具，Schema 只接收大模型该填的字段，乱调由工具函数返回错误码拦截。特别的，知识库检索工具没有 file_key 参数，文档检索范围在智能体启动前就会通过一次轻量级子模型调用注入 RAG 检索流程；调用成功工具返回结果，如果是知识库检索工具会带编号来源，调用失败会带稳定错误码。另外，还支持了 MCP 远程接入外部工具。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Kura-AI」Agent 工具设计">
+<meta property="og:url" content="https://marisamagic.github.io/2026/09/05/20260905_KuraAI_Agent%E5%B7%A5%E5%85%B7%E8%AE%BE%E8%AE%A1/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="Kura-AI 把工具当成给模型看的接口来设计：提示词引导大模型调用什么工具，Schema 只接收大模型该填的字段，乱调由工具函数返回错误码拦截。特别的，知识库检索工具没有 file_key 参数，文档检索范围在智能体启动前就会通过一次轻量级子模型调用注入 RAG 检索流程；调用成功工具返回结果，如果是知识库检索工具会带编号来源，调用失败会带稳定错误码。另外，还支持了 MCP 远程接入外部工具。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
+<meta property="article:published_time" content="2026-09-05T13:55:56.192Z">
+<meta property="article:modified_time" content="2026-09-05T16:20:45.205Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="Kura-AI">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
+  
+  
+  
+  <title>「Kura-AI」Agent 工具设计 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Kura-AI」Agent 工具设计"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-09-05 21:55" pubdate>
+          2026年9月5日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.3k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          36 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Kura-AI」Agent 工具设计</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <h2 id="0-前言">0 前言</h2>
+<p>这篇文章讲的是 Kura-AI <strong>对话智能体的工具怎么设计</strong>。</p>
+<p>工具对模型是一份契约：LLM 决定调用什么工具、填写什么参数。首先是需要大模型拥有原生的 Function Calling 能力，其次还需要工具函数有完整的 <code>name</code>、<code>description</code> 和 <code>args_schema</code>。模型只负责决定调哪个工具、参数填什么。工具内部具体执行逻辑、次数上限、接口凭据都在服务端，模型既看不到，也改不了。</p>
+<p>每个部分告诉模型「这轮该不该调工具」，分工是这样的：</p>
+<ul>
+<li><strong>System</strong>：主要包括预定人设和长期纪律。知识库开着时，它会告诉模型：引用要怎么标，工具报了错误码时该怎么跟用户说。</li>
+<li><strong>本轮 Human</strong>：主要包括当前这轮对话允许调用哪些工具。如果有知识库检索，会展示只传 <code>query</code> 的提示和已经圈定的检索文档范围（由轻量级子模型调用得到）。这些部分会临时拼接到当前这轮对话 Human 消息的后面，但是不会持久化存储到数据库。</li>
+<li><strong>工具 description / schema</strong>：主要是工具的说明书，包括什么时候该调、什么时候不该调、参数怎么填写。特别的，知识库检索工具没有 file_key 参数，文档检索范围在智能体启动前，就会通过一次轻量级子模型调用提前注入 RAG 检索流程。</li>
+<li><strong>工具函数</strong>：LLM 如果调用了不该调用的工具，工具会返回 <code>TOOL_DISABLED_THIS_TURN</code> 或 <code>TOOL_CALL_LIMIT_REACHED</code>。</li>
+</ul>
+<p>工具列表始终挂着，本轮能不能用靠返回值拦住。挂载策略不在这里展开。挂到 <code>create_agent</code> 上的工具分两类：系统自己带的，以及按智能体配置加载的 MCP。</p>
+<p><strong>系统工具</strong></p>
+<table>
+<thead>
+<tr>
+<th>分组</th>
+<th>工具</th>
+<th>做什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>知识库</td>
+<td><code>search_knowledge_base</code></td>
+<td>按问题搜文档片段（文本和图片）</td>
+</tr>
+<tr>
+<td>知识库</td>
+<td><code>search_knowledge_by_image</code></td>
+<td>用本会话里的一张图去搜库</td>
+</tr>
+<tr>
+<td>联网</td>
+<td><code>web_search</code></td>
+<td>搜公开网页</td>
+</tr>
+<tr>
+<td>联网</td>
+<td><code>fetch_url</code></td>
+<td>打开某个链接，读正文</td>
+</tr>
+<tr>
+<td>联网</td>
+<td><code>web_image_search</code></td>
+<td>按文字搜图</td>
+</tr>
+<tr>
+<td>附件</td>
+<td><code>list_session_attachments_brief</code></td>
+<td>列出本会话已经上传的附件</td>
+</tr>
+<tr>
+<td>附件</td>
+<td><code>search_session_attachment</code></td>
+<td>在单份文档里用关键词定位段落</td>
+</tr>
+<tr>
+<td>附件</td>
+<td><code>read_session_attachment</code></td>
+<td>抽取 pdf / docx / 表格等正文</td>
+</tr>
+<tr>
+<td>记忆</td>
+<td><code>search_session_memory</code></td>
+<td>搜本会话里已经归档的较早对话</td>
+</tr>
+</tbody>
+</table>
+<p><strong>已支持的可扩展 MCP 外部工具</strong></p>
+<p>智能体的配置中启用了哪些 MCP 远程服务，就作为 <code>extra_tools</code> 追加进来；也可以自己填一个远程地址。下面是预置商店里已经接好的服务，一键添加即可。名字和参数表跟远端走，和系统工具重名就跳过。共享会话默认不加载属主的 MCP。具体怎么容错、怎么确认，第 4 节再写。</p>
+<table>
+<thead>
+<tr>
+<th>预置服务</th>
+<th>做什么</th>
+<th>高风险确认</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Context7</td>
+<td>查较新的开发文档和代码示例</td>
+<td>默认不弹</td>
+</tr>
+<tr>
+<td>Tavily Search</td>
+<td>实时搜网页、抽正文</td>
+<td>默认不弹</td>
+</tr>
+<tr>
+<td>Exa Search</td>
+<td>语义搜网页和技术文档</td>
+<td>默认不弹</td>
+</tr>
+<tr>
+<td>GitHub</td>
+<td>仓库、Issue、PR 相关操作</td>
+<td>写操作会先停下来问用户</td>
+</tr>
+<tr>
+<td>Hugging Face</td>
+<td>查模型、数据集、Spaces</td>
+<td>默认不弹</td>
+</tr>
+</tbody>
+</table>
+<p>特别的，知识库检索范围选档、相关长期记忆预注入、附件图片的读取和内容理解，这些发生在智能体启动之前，不是工具。</p>
+<hr>
+<h2 id="1-大模型看见什么">1 大模型看见什么</h2>
+<h3 id="1-1-策略选择">1.1 策略选择</h3>
+<p>Kura-AI 把工具说明书写成两截。<strong>description 写清何时用、何时不要用、本轮有什么约束</strong>；<strong>schema 只留模型该填的字段</strong>。范围、开关、属主知识库是哪一个，都不交给模型。</p>
+<p>本轮开了知识库的话，模型看见的 <code>search_knowledge_base</code> 只有一个参数：<code>query</code>。该查哪几份文档，对话开始前就已经由选档子模型圈好，写进本轮 Human，并注入工具闭包。主模型第一跳只需决定「要不要搜、搜什么词」。</p>
+<h3 id="1-2-如何实现">1.2 如何实现</h3>
+<p>工具在 <code>build_model_and_agent</code> 里一次性拼好，按名字排序后交给 <code>create_agent</code>。该让模型填的字段就留在参数表里，不该填的关在闭包里。</p>
+<p>以 <code>web_search</code> 为例，参数表中保留的参数除了 <code>query</code>，还有 <code>freshness</code>、<code>site</code>、<code>extra_query</code>。<code>extra_query</code> 写得很直白：同一意图的第二种说法，并行搜完再合并，不要为同一意图再调一次。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/chat/web_search_tool.py · _WebSearchArgs</span><br>extra_query: <span class="hljs-built_in">str</span> | <span class="hljs-literal">None</span> = Field(<br>    default=<span class="hljs-literal">None</span>,<br>    description=(<br>        <span class="hljs-string">&quot;可选：同一意图的第二种检索说法，与 query 并行搜索后合并。&quot;</span><br>        <span class="hljs-string">&quot;不要为同一意图再单独调用一次 web_search。&quot;</span><br>    ),<br>)<br></code></pre></td></tr></table></figure>
+<p>以知识库为例，<code>make_search_knowledge_tool</code> 的注释写明：前置选档注入 <code>knowledge_base_document_filter</code>，避免和前置范围冲突。模型看见的参数表只有 <code>query</code>。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/kb/search_tool.py · make_search_knowledge_tool</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">_SearchKbArgs</span>(<span class="hljs-title class_ inherited__">BaseModel</span>):<br>    query: <span class="hljs-built_in">str</span> = Field(description=<span class="hljs-string">&quot;用于检索的自然语言问题或关键词，应与用户意图一致。&quot;</span>)<br></code></pre></td></tr></table></figure>
+<p>description 会再补一句：「本回合可检索的文档范围已由系统预先确定，你只需传 query，不要尝试指定文件名或换库。」本轮 Human 里也会写同一句话，并列出已经圈好的 <code>file_key</code>。两处都是软约束；硬约束是 schema 里根本没有这个字段。</p>
+<h3 id="1-3-为什么这样做">1.3 为什么这样做</h3>
+<p>少一个参数，就少一次幻觉。如果让模型自己填 <code>file_key</code>，它很容易编一个已经卸掉的文件名，或者跟前置选档对着干。范围放进闭包，主模型第一轮就可以直接搜，不用先空转一轮去试「该查哪几份文档」。</p>
+<p>description 是模型选工具时真正会读的说明书。<code>web_search</code> 把「何时不要用」写进去，包括「知识库已经开了就别搜网」这个互斥的系统约束；<code>search_session_memory</code> 把「答案已经在近轮里就别调」写进去。这些话 System 里未必点得这么操作化，工具自己说更准。</p>
+<h3 id="1-4-其它方案">1.4 其它方案</h3>
+<ol>
+<li>
+<p><strong>把 <code>file_key</code> / 本轮开关做成模型参数</strong>。</p>
+<ul>
+<li>优点：一张 schema 看起来更「完整」，调试时能看见模型想查哪几份。</li>
+<li>缺点：模型会填错范围、编文件名，或者跟前置选档打架。开关一旦交给模型，本轮互斥就从硬约束变成软请求。</li>
+</ul>
+</li>
+<li>
+<p><strong>description 只写「搜索知识库」</strong>。</p>
+<ul>
+<li>优点：短，省一点 token。</li>
+<li>缺点：模型不知道何时不该调、调完该怎么引用、图片行能不能改写。这些细则只好全堆进 System，人设会被操作手册撑得很长。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="2-返回值是给模型的下一句指令">2 返回值是给模型的下一句指令</h2>
+<h3 id="2-1-策略选择">2.1 策略选择</h3>
+<p>工具一律回<strong>字符串</strong>。其中知识库检索调用成功时带编号来源，失败时带<strong>稳定错误码</strong>。循环不会因为一次禁用或空结果停掉，模型被要求据此改口，而不是再猜一遍。</p>
+<p>「GPT Plus 年费怎么退？」如果知识库里真没有退款说明，工具不会丢一段低相关摘录让模型硬编。二次检索和逐块打分都过不了，就回 <code>KNOWLEDGE_BASE_NO_RELEVANT_INFO</code>，并写明：如实告诉用户没有资料，不要引用片段，也不要编知识库结论。</p>
+<h3 id="2-2-如何实现">2.2 如何实现</h3>
+<p>工具禁用和工具调用次数用完，文案出在 <code>app/chat/tools.py</code>。</p>
+<p>知识库关掉时，知识库检索工具被禁用，此时如果调用知识库检索函数，会直接返回：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs text">TOOL_DISABLED_THIS_TURN: search_knowledge_base is not enabled for this turn.<br>Do not call knowledge-base retrieval tools; answer without them.<br></code></pre></td></tr></table></figure>
+<p>已经成功占用过一次再调，则是 <code>TOOL_CALL_LIMIT_REACHED</code>，并要求用已有结果作答。以图检索是个例外：超额码写成 <code>TOOL_CALL_LIMIT</code>（没有 <code>_REACHED</code>），上限等于当前会话里图片附件的张数；没有图片附件，第一次也会被拦住。</p>
+<p>空结果也有稳定前缀。知识库二次门控失败是 <code>KNOWLEDGE_BASE_NO_RELEVANT_INFO</code>；联网搜不到是 <code>WEB_SEARCH_NO_RESULTS</code>，读页失败是 <code>FETCH_URL_FAILED</code>，搜图失败是 <code>WEB_IMAGE_SEARCH_FAILED</code>。这些码和 <code>agent_prompt.py</code> 里的联网纪律、知识库纪律点名对齐——System 要求模型按字面转述给人，不得编造来源。</p>
+<p>成功时，知识库走 <code>format_knowledge_retrieval_tool_output</code>。正文按 <code>[i] 文件名 (Page n)</code> 编号，图片块额外给一行现成的 Markdown，括号里是带 <code>exp</code> 和 <code>sig</code> 的 <code>/api/v1/media/</code> 地址。前端用来展示的 <code>kb_sources</code>，编号和这段正文一致。整段成功输出会包进非可信隔离；联网三件套和 MCP 字符串结果同样会隔离并截断。会话记忆的成功输出目前不包这层。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">Retrieved Chunks:<br>检索结果：1 个文档<br><br>[1] GPT-Plus退款说明.pdf (Page 2)<br>开通未满 7 天可全额退；超过 7 天按剩余整月折算。<br></code></pre></td></tr></table></figure>
+<p>工具内部的异常也不会砸进 Agent 循环。检索出错时返回 <code>知识库检索出错：&#123;e&#125;</code> 这类字符串，循环继续，模型还有机会对人说一声失败。</p>
+<h3 id="2-3-为什么这样做">2.3 为什么这样做</h3>
+<p>错误码是写给模型的下一句指令，不是写给日志的。<code>Do not call ...</code>、<code>不得编造任何搜索结果</code>，和 System 里点名的码对上，模型才知道该停、该改口、该如实说「没找到」。</p>
+<p>编号来源是给引用用的。模型不必自己发明 <code>[来源1]</code>，也不必改写图片地址。图片行如果让模型拼接，它很容易把文档名、页码或 <code>stored_relpath</code> 填进括号里；工具把可复制的那一行写死，引用纪律才执行得下去。</p>
+<p>返回字符串而不是抛异常，循环才能把这句话收成 <code>ToolMessage</code>。对话要的是「这轮不能搜 / 库里没有」，而不是前端一个 500 错误。</p>
+<h3 id="2-4-其它方案">2.4 其它方案</h3>
+<ol>
+<li>
+<p><strong>失败就抛异常，拆掉 <code>create_agent</code> 循环</strong>。</p>
+<ul>
+<li>优点：服务端最省事，一次停干净。</li>
+<li>缺点：用户看不到「为什么没搜到」。对话要的是一句人话，不是把整轮打掉。</li>
+</ul>
+</li>
+<li>
+<p><strong>成功和失败都回 JSON，让模型自己拆</strong>。</p>
+<ul>
+<li>优点：程序好解析，字段整齐。</li>
+<li>缺点：模型还要再理解一套结构；流式路径上，一段带「下一步该怎么做」的纯文本反而更稳。前端需要的来源列表，走 <code>_set_last_rag_context</code> 这条侧信道就够了，不必塞进模型该读的那一串。</li>
+</ul>
+</li>
+<li>
+<p><strong>成功结果不编号，只丢原始片段</strong>。</p>
+<ul>
+<li>优点：格式简单。</li>
+<li>缺点：<code>[来源N]</code> 对不上，模型更容易改写链接或漏标出处。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="3-工具函数自己检查开关和次数">3 工具函数自己检查开关和次数</h2>
+<h3 id="3-1-策略选择">3.1 策略选择</h3>
+<p>每个工具函数是同一套路：<strong>先问本轮开没开，再看次数还够不够，最后才跑检索或外部 API</strong>。这些检查写在工具函数里，不写在 LangGraph 图外，也不靠模型自觉。</p>
+<h3 id="3-2-如何实现">3.2 如何实现</h3>
+<p>以 <code>_search_knowledge_base</code> 为例，开头先做两步检查：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/kb/search_tool.py</span><br><span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> is_knowledge_allowed_this_turn():<br>    <span class="hljs-keyword">return</span> knowledge_disabled_this_turn_msg(<span class="hljs-string">&quot;search_knowledge_base&quot;</span>)<br><br><span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> try_acquire_knowledge_tool_slot():<br>    <span class="hljs-keyword">return</span> (<br>        <span class="hljs-string">&quot;TOOL_CALL_LIMIT_REACHED: search_knowledge_base has already been called once in this turn. &quot;</span><br>        <span class="hljs-string">&quot;Use existing retrieval result and provide final final answer directly.&quot;</span><br>    )<br></code></pre></td></tr></table></figure>
+<p>过了这两关，才调用 <code>run_rag_graph</code>。联网三件套同样：先 <code>is_web_search_allowed_this_turn()</code>，再 <code>try_acquire_*</code>。知识库和记忆每轮只许成功占用 1 次；<code>web_search</code> 默认 2 次，<code>web_image_search</code> 默认 2 次，<code>fetch_url</code> 默认 3 次；以图检索跟会话里图片附件的张数走。附件三件套和 MCP 远程调用本身没有这套次数槽——MCP 高风险确认另有每轮上限。</p>
+<p>这些计数挂在 <code>_RequestState</code> 上，经 ContextVar 按请求分发。并发对话互不可见，不会把别人的检索次数或 RAG 上下文串过来。每轮入口会清零计数，再 <code>set_turn_tool_policy</code> 写下本轮开关。没有「新建一个状态对象」的 API，靠清计数和改开关复用当前请求的那一份。</p>
+<p>选档、记忆预注入、读图都发生在智能体启动之前。主模型看不见选档过程，也传不了 <code>file_key</code>。读图是两阶段 caption，不是再挂一把 <code>read_image</code>。</p>
+<h3 id="3-3-为什么这样做">3.3 为什么这样做</h3>
+<p>函数里的检查和说明书必须对得上。description 写了「每轮最多一次」，函数就真的只允许成功一次；Human 写了「不要调 web_search」，函数就真的回禁用码。软约束负责指路，硬拦负责兜底。模型仍可能发出一次不该发的 <code>tool_calls</code>，但检索不会跑，外网也不会被刷。</p>
+<p>状态按请求隔离，是因为工具函数可能跑在 <code>to_thread</code> 或执行器里。ContextVar 会把同一份 <code>_RequestState</code> 带过去，同步路径又在单线程内，所以跨用户串扰被挡住了。如果做成进程里一个全局计数器，两个人同时问「年费怎么退？」就会抢同一把槽。</p>
+<h3 id="3-4-其它方案">3.4 其它方案</h3>
+<ol>
+<li>
+<p><strong>用 LangGraph middleware 统一计数</strong>。</p>
+<ul>
+<li>优点：工具函数更「纯」，只负责检索。</li>
+<li>缺点：不同工具的上限规则并不一样（知识库 1 次，以图检索跟附件张数走，联网走配置）。规则散落在中间件里，反而离 description 更远。Kura-AI 把规则放在函数里，和返回给模型的那句话写在一起。</li>
+</ul>
+</li>
+<li>
+<p><strong>进程级全局计数器</strong>。</p>
+<ul>
+<li>优点：实现短。</li>
+<li>缺点：并发请求会互相踩额度，RAG 上下文也可能串到别人的对话里。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="4-MCP：同一套约定的外延">4 MCP：同一套约定的外延</h2>
+<h3 id="4-1-策略选择">4.1 策略选择</h3>
+<p>外部工具也必须遵守这份契约：<strong>列表尽量稳定，失败回字符串，高风险先停下来</strong>。MCP 不是另一套 Agent，只是 <code>extra_tools</code>。单服务挂了不能把整张表拆掉，也不能让共享用户的一句话去驱动属主凭据。</p>
+<h3 id="4-2-如何实现">4.2 如何实现</h3>
+<p>加载在 <code>load_agent_mcp_tools</code>。只拉该智能体已启用的服务；连不上时记下错误，对话继续。若缓存里还有上次成功的 schema，就挂一层 stub，调用时返回 <code>MCP_UNAVAILABLE</code>，名字和参数表还在。没有缓存，这个服务跳过，别的继续。工具名和内置九个名字冲突，或者彼此重名，直接跳过，避免把 <code>web_search</code> 换掉。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/mcp_client/service.py · _stub_mcp_tools_from_snapshot</span><br>err_text = <span class="hljs-string">f&quot;MCP_UNAVAILABLE: 服务「<span class="hljs-subst">&#123;server_name&#125;</span>」当前不可用：<span class="hljs-subst">&#123;error[:<span class="hljs-number">200</span>]&#125;</span>&quot;</span><br><span class="hljs-comment"># stub 的 name / description / args_schema 与上次成功快照一致</span><br><span class="hljs-comment"># 真正调用只返回上面这句，不连远程</span><br></code></pre></td></tr></table></figure>
+<p>每把远程工具还会再包两层。<code>_guard_mcp_tool_output</code> 把字符串当非可信内容隔离、截断。<code>wrap_mcp_tool_with_confirmation</code> 看这是不是高风险写操作：annotation 里 <code>destructiveHint</code> 为真，或名字、描述命中 create / delete / push 这类词，就先不执行，返回 <code>MCP_CONFIRMATION_REQUIRED pending_id=...</code>，让模型停下来请用户确认。同一参数重复提交会复用已有 pending；本轮确认条数到顶，则回 <code>MCP_CONFIRMATION_LIMIT_REACHED</code>。</p>
+<p>共享会话默认不加载属主 MCP。<code>_mcp_tools_allowed_for</code> 写得很清楚：这些工具带着属主预置的请求头，模型会自主调用。共享用户的对话或注入文本一旦能驱动它们，就是在用属主身份做事。默认关着，可用 <code>SHARE_CHAT_ALLOW_OWNER_MCP_TOOLS</code> 打开，但不推荐。知识库正好相反——共享会话仍检索发布者的库，只是不加载发布者的 MCP。</p>
+<h3 id="4-3-为什么这样做">4.3 为什么这样做</h3>
+<p>模型已经见过这些工具名。服务抖动时如果整表消失，下一跳它仍可能编一个刚卸掉的名字。stub 留下 schema，回来的是一句带错误码的人话，和内置工具的禁用码是同一思路。</p>
+<p>高风险确认把「先执行再解释」改成「先停再问」。远程工具的副作用在 Kura-AI 进程外面，回滚不了；返回确认码、等 <code>pending_id</code> 批准后再跑一次，比在 System 里写「请谨慎调用」要硬。</p>
+<p>输出当非可信内容，是因为 MCP 回的是外部文本。它和知识库原文、网页正文一样，不能被模型当成新的系统指令。记忆检索目前没有这层包裹，因为它来自本会话已经归档的对话，不是外部服务。</p>
+<h3 id="4-4-其它方案">4.4 其它方案</h3>
+<ol>
+<li>
+<p><strong>MCP 挂了就从列表拿掉</strong>。</p>
+<ul>
+<li>优点：表里只剩活着的工具，模型不会点到死服务。</li>
+<li>缺点：相邻两轮工具集合来回变，模型更容易幻觉一个刚消失的名字。有缓存时挂 stub，比整表消失更稳。</li>
+</ul>
+</li>
+<li>
+<p><strong>所有 MCP 都弹确认</strong>。</p>
+<ul>
+<li>优点：副作用被一刀切拦住。</li>
+<li>缺点：只读查询也会打断对话。现在按 annotation 和写操作词表区分，只读的 <code>get</code> / <code>list</code> 不必每次停下来。</li>
+</ul>
+</li>
+<li>
+<p><strong>共享会话也加载属主工具</strong>。</p>
+<ul>
+<li>优点：被分享的人能用同一套外部能力。</li>
+<li>缺点：属主请求头会跟着模型走。对话内容或工具返回里的注入文本，就能以属主身份打到外部服务。默认关掉，就是为了挡住这条路。</li>
+</ul>
+</li>
+</ol>
+<h2 id="收束">收束</h2>
+<p>工具对模型是一份契约。模型只负责决定调哪个工具、参数填什么。参数表管能填什么，返回的字符串告诉模型下一步怎么接，检索范围和凭据焊在服务端，模型改不了。提示词只负责指路；不该调的工具真被点到了，由工具函数自己检查开关和次数，拦住以后检索不会跑。</p>
+<pre><code class=" mermaid">flowchart TD
+    A[create_agent 工具列表] --&gt; B[模型看见 name description schema]
+    B --&gt; C&#123;给出 tool_calls&#125;
+    C --&gt;|是| D[工具函数：检查开关、次数、确认]
+    D --&gt; E[返回字符串或错误码]
+    E --&gt; B
+    C --&gt;|否| F[正式回答]
+</code></pre>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Kura-AI/" class="category-chain-item">Kura-AI</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Agent/" class="print-no-link">#Agent</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/tags/Kura-AI/" class="print-no-link">#Kura-AI</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Kura-AI」Agent 工具设计</div>
+      <div>https://marisamagic.github.io/2026/09/05/20260905_KuraAI_Agent工具设计/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年9月5日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/09/05/20260905_KuraAI_%E6%8E%A8%E7%90%86%E8%8C%83%E5%BC%8F/" title="「Kura-AI」Agent 推理范式 Tool-Use-Loop 设计">
+                        <span class="hidden-mobile">「Kura-AI」Agent 推理范式 Tool-Use-Loop 设计</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+  <script>
+  Fluid.utils.createScript('https://lib.baomitu.com/mermaid/8.14.0/mermaid.min.js', function() {
+    mermaid.initialize({"theme":"default"});
+
+    Fluid.utils.listenDOMLoaded(function() {
+      Fluid.events.registerRefreshCallback(function() {
+        if ('mermaid' in window) {
+          mermaid.init();
+        }
+      });
+    });
+  });
+</script>
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
