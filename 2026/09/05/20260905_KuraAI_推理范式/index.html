@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
 <meta property="article:published_time" content="2026-09-05T08:58:39.781Z">
-<meta property="article:modified_time" content="2026-09-05T14:49:15.736Z">
+<meta property="article:modified_time" content="2026-09-05T16:30:07.703Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="Agent">
@@ -430,20 +430,20 @@
 </ol>
 <h2 id="收束">收束</h2>
 <p>整条主路径可以看成三步：先决定这一轮模型能看见什么，再把工具列表交给 <code>create_agent</code>，最后用原生工具调用跑完这一轮循环。循环什么时候停，靠配额，以及模型自己判断「还要不要再调工具」。</p>
-<pre><code class=" mermaid">flowchart TD
-    A[对话入口 chat.py] --&gt; B[本轮上下文]
-    B --&gt; B1[选文档 / 记忆预注入 / 读图描述]
-    B1 --&gt; B2[并入最后一条 Human，不写会话历史]
-    B2 --&gt; C[工具策略]
-    C --&gt; C1[始终挂载 KB / Web / 记忆 / 附件 / MCP]
-    C1 --&gt; C2[set_turn_tool_policy + 每轮配额]
-    C2 --&gt; D[主循环]
+<pre><code class=" mermaid">graph TD
+    A[&quot;对话入口 chat.py&quot;] --&gt; B[&quot;本轮上下文&quot;]
+    B --&gt; B1[&quot;选文档 / 记忆预注入 / 读图描述&quot;]
+    B1 --&gt; B2[&quot;并入最后一条 Human，不写会话历史&quot;]
+    B2 --&gt; C[&quot;工具策略&quot;]
+    C --&gt; C1[&quot;始终挂载 KB / Web / 记忆 / 附件 / MCP&quot;]
+    C1 --&gt; C2[&quot;set_turn_tool_policy + 每轮配额&quot;]
+    C2 --&gt; D[&quot;主循环&quot;]
     D --&gt; D1[&quot;create_agent invoke / astream&quot;]
-    D1 --&gt; D2&#123;模型是否给出 tool_calls&#125;
-    D2 --&gt;|是| D3[工具执行：禁用或次数用完则返回错误码]
+    D1 --&gt; D2&#123;&quot;模型是否给出 tool_calls&quot;&#125;
+    D2 --&gt;|是| D3[&quot;工具执行：禁用或次数用完则返回错误码&quot;]
     D3 --&gt; D1
-    D2 --&gt;|否| E[助手文本写入历史]
-    D1 --&gt;|recursion_limit 或取消| E
+    D2 --&gt;|否| E[&quot;助手文本写入历史&quot;]
+    D1 --&gt;|&quot;recursion_limit 或取消&quot;| E
 </code></pre>
 
                 

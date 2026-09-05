@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
 <meta property="article:published_time" content="2026-09-05T13:55:56.192Z">
-<meta property="article:modified_time" content="2026-09-05T16:20:45.205Z">
+<meta property="article:modified_time" content="2026-09-05T16:30:08.716Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="Agent">
@@ -268,7 +268,7 @@
         
         
         
-          36 分钟
+          37 分钟
         
       </span>
     
@@ -564,13 +564,13 @@
 </ol>
 <h2 id="收束">收束</h2>
 <p>工具对模型是一份契约。模型只负责决定调哪个工具、参数填什么。参数表管能填什么，返回的字符串告诉模型下一步怎么接，检索范围和凭据焊在服务端，模型改不了。提示词只负责指路；不该调的工具真被点到了，由工具函数自己检查开关和次数，拦住以后检索不会跑。</p>
-<pre><code class=" mermaid">flowchart TD
-    A[create_agent 工具列表] --&gt; B[模型看见 name description schema]
-    B --&gt; C&#123;给出 tool_calls&#125;
-    C --&gt;|是| D[工具函数：检查开关、次数、确认]
-    D --&gt; E[返回字符串或错误码]
+<pre><code class=" mermaid">graph TD
+    A[&quot;create_agent 工具列表&quot;] --&gt; B[&quot;模型看见 name description schema&quot;]
+    B --&gt; C&#123;&quot;给出 tool_calls&quot;&#125;
+    C --&gt;|是| D[&quot;工具函数：检查开关、次数、确认&quot;]
+    D --&gt; E[&quot;返回字符串或错误码&quot;]
     E --&gt; B
-    C --&gt;|否| F[正式回答]
+    C --&gt;|否| F[&quot;正式回答&quot;]
 </code></pre>
 
                 
