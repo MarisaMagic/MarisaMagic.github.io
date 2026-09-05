@@ -19,16 +19,16 @@
   <meta name="author" content="MarisaMagic">
   <meta name="keywords" content="">
   
-    <meta name="description" content="Kura-AI 的多模态知识库不是「整篇文档进一个向量」。文本按页做 L1&#x2F;L2&#x2F;L3 层级分块，只有叶子 L3 进 Milvus；父块进 PostgreSQL，检索时按 Auto-merge 上卷。PDF&#x2F;Word 内嵌图抽成独立 L4，和文本分别用 qwen3-vl-embedding 写入同一集合；图文关系用 related_text_ids 记在 PG，命中文本后再并入候选。文档和图片本体">
+    <meta name="description" content="Kura-AI 的多模态知识库最终落成「文本叶子进 Milvus、父块进 PostgreSQL、图片单独成块」这套结构，而不是把整篇 PDF 压成一个向量，也不是把图文融合成一条 embedding。PDF &#x2F; Word 里的图抽成独立 L4，和文本分别用 qwen3-vl-embedding 写入同一个集合，图文关系用 related_text_ids 在入库时写死。这篇文章梳理这套方案当初是怎">
 <meta property="og:type" content="article">
 <meta property="og:title" content="「Kura-AI」项目中多模态知识库是如何构建的">
-<meta property="og:url" content="https://marisamagic.github.io/2026/09/04/20260904_Kura-AI_%E5%A4%9A%E6%A8%A1%E6%80%81%E7%9F%A5%E8%AF%86%E5%BA%93/index.html">
+<meta property="og:url" content="https://marisamagic.github.io/2026/09/05/20260904_Kura-AI_%E5%A4%9A%E6%A8%A1%E6%80%81%E7%9F%A5%E8%AF%86%E5%BA%93/index.html">
 <meta property="og:site_name" content="MarisaMagic&#39;s Blog">
-<meta property="og:description" content="Kura-AI 的多模态知识库不是「整篇文档进一个向量」。文本按页做 L1&#x2F;L2&#x2F;L3 层级分块，只有叶子 L3 进 Milvus；父块进 PostgreSQL，检索时按 Auto-merge 上卷。PDF&#x2F;Word 内嵌图抽成独立 L4，和文本分别用 qwen3-vl-embedding 写入同一集合；图文关系用 related_text_ids 记在 PG，命中文本后再并入候选。文档和图片本体">
+<meta property="og:description" content="Kura-AI 的多模态知识库最终落成「文本叶子进 Milvus、父块进 PostgreSQL、图片单独成块」这套结构，而不是把整篇 PDF 压成一个向量，也不是把图文融合成一条 embedding。PDF &#x2F; Word 里的图抽成独立 L4，和文本分别用 qwen3-vl-embedding 写入同一个集合，图文关系用 related_text_ids 在入库时写死。这篇文章梳理这套方案当初是怎">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
-<meta property="article:published_time" content="2026-09-04T15:11:59.437Z">
-<meta property="article:modified_time" content="2026-09-04T15:46:50.997Z">
+<meta property="article:published_time" content="2026-09-05T05:20:30.546Z">
+<meta property="article:modified_time" content="2026-09-05T05:20:30.548Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="RAG">
@@ -244,8 +244,8 @@
     
       <span class="post-meta">
         <i class="iconfont icon-date-fill" aria-hidden="true"></i>
-        <time datetime="2026-09-04 23:11" pubdate>
-          2026年9月4日 晚上
+        <time datetime="2026-09-05 13:20" pubdate>
+          2026年9月5日 下午
         </time>
       </span>
     
@@ -256,7 +256,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          5.3k 字
+          5.5k 字
         
       </span>
     
@@ -267,7 +267,7 @@
         
         
         
-          45 分钟
+          46 分钟
         
       </span>
     
@@ -315,15 +315,15 @@
                 
                 <p>⭐ Kura AI 项目链接：<a target="_blank" rel="noopener" href="https://github.com/MarisaMagic/Kura-AI">https://github.com/MarisaMagic/Kura-AI</a></p>
 <h2 id="0-前言">0 前言</h2>
-<p>这是 Kura-AI 专题的第 2 篇。第 1 篇写的是对话 Agent 的推理范式：主循环是 Function-Calling ReAct，知识库检索藏在 <code>search_knowledge_base</code> 的 LangGraph 子图里。这一篇往 retriever 的上游走一步，回答：<strong>多模态知识库是怎么建出来的？</strong></p>
-<p>先把结论放在前面。Kura-AI 的知识库不是把一份 PDF 压成一个向量，也不是把图文融合成一条「超级 embedding」。它是：</p>
+<p>这是 Kura-AI 专题的第 2 篇。第 1 篇写的是对话 Agent 的推理范式：主循环是 Function-Calling ReAct，知识库检索藏在 <code>search_knowledge_base</code> 的 LangGraph 子图里。这一篇写知识库本身：一份带图的文档是怎么拆开、入库，又在不惊动正在用的旧库的前提下被换掉的。</p>
+<p>做这个功能的时候，眼前有好几条「看起来更省事」的路：整篇文档一个向量、图文融合成一条 embedding、向量塞进现成的 PostgreSQL、上传同步解析、重传先删后写。最后落下来的是这套：</p>
 <ul>
-<li><strong>文本</strong>：按页做 L1 / L2 / L3 层级分块，<strong>只有叶子 L3 进 Milvus</strong>；父块进 PostgreSQL，检索时按 Auto-merge 上卷成更完整的上下文；</li>
-<li><strong>图片</strong>：从 PDF / Word 抽出独立 <strong>L4</strong>，和文本 <strong>分别</strong> 用 <code>qwen3-vl-embedding</code> 写入同一集合；图文关系用 <code>related_text_ids</code> 记在 PG，命中文本后再并入候选；</li>
-<li><strong>本体</strong>：文档和图片进 MinIO；PG 只存元数据。按 <code>kb_scope = u&#123;uid&#125;_a&#123;aid&#125;</code> 隔离到每一个智能体；</li>
-<li><strong>入库</strong>：后台线程 Job，<strong>先处理完全部向量，再替换落库</strong>。失败、超时、取消，旧文档原样保留。</li>
+<li><strong>文本</strong>按页切成 L1 / L2 / L3，<strong>只有叶子 L3 进 Milvus</strong>；父块放 PostgreSQL，检索时再按 Auto-merge 往上卷；</li>
+<li><strong>图片</strong>从 PDF / Word 里抽出来，单独做成 L4，和文本 <strong>分别</strong> 用 <code>qwen3-vl-embedding</code> 写进同一个集合；图和哪段话对应，用 <code>related_text_ids</code> 在入库时写死；</li>
+<li><strong>原件</strong>进 MinIO，PostgreSQL 只记账。每个智能体一份 <code>kb_scope = u&#123;uid&#125;_a&#123;aid&#125;</code>；</li>
+<li><strong>上传</strong>丢给后台线程，<strong>向量全部算完才替换旧文档</strong>。失败、超时、取消，旧的还在。</li>
 </ul>
-<p>选型的第一约束还是产品形态。Kura-AI 是用户可配置的智能体中心：每个智能体一份知识库，属主上传、对话按需检索、共享用户能问但不能改。构建时必须同时满足三件事——细粒度召回、图表跟得上对应段落、半途失败不能把正在用的库砸掉。</p>
+<p>这些决定不是从「多模态 RAG 应该长什么样」推出来的，是从实际用这个产品会踩的坑倒推的：用户会传带图的 PDF，会同名再传一版，会在上传还没结束时继续对话，共享出去的智能体还不能让别人改库。</p>
 <pre><code class=" mermaid">flowchart TD
   upload[上传 API 立即返回 task_id] --&gt; job[kb_job 线程池]
   job --&gt; parse[解析文本并抽图]
@@ -337,62 +337,60 @@
   swap --&gt; minio[MinIO: 原文档 + 图片]
 </code></pre>
 <hr>
-<h2 id="1-功能设计：一份文档入库要完成什么">1 功能设计：一份文档入库要完成什么</h2>
-<p>谈分块之前，先把「上传一份文档」当成产品合同写清楚。实现入口是 <code>app/api/v1/user_agents/kb.py</code> 的 <code>kb_upload</code>（只校验、入队）和 <code>app/kb/kb_service.py</code> 的 <code>run_ingest_pipeline_sync</code>（真正解析、嵌入、落库）。前端在 <code>web/src/views/agents/knowledge-base/index.vue</code>。</p>
-<h3 id="1-1-边界">1.1 边界</h3>
+<h2 id="1-先把「一份文档入库」这件事想清楚">1 先把「一份文档入库」这件事想清楚</h2>
+<p>入口很简单：<code>app/api/v1/user_agents/kb.py</code> 的 <code>kb_upload</code> 只负责校验和入队，真正干活的是 <code>app/kb/kb_service.py</code> 里的 <code>run_ingest_pipeline_sync</code>。页面在 <code>web/src/views/agents/knowledge-base/index.vue</code>。</p>
+<h3 id="1-1-边界：能做什么、故意不做什么、什么绝对不能发生">1.1 边界：能做什么、故意不做什么、什么绝对不能发生</h3>
 <ul>
-<li><strong>能做什么</strong>：属主给某个智能体上传 PDF、Word、Excel、TXT、Markdown（默认上限 50MB）；列表、按文件名删除、取消进行中的任务；同名再传等于替换，内容 SHA256 没变则跳过重建。</li>
-<li><strong>不能做什么</strong>：共享（非属主）用户可以对话检索属主的库，但知识库 API 走 <code>get_owned</code>，不能上传或删除。没有独立的「重建索引」接口。不接受把一张独立图片当成知识库文档。Excel 和纯文本不抽图。没有 OCR——扫描件如果抽不出文字，文本通道几乎是空的。</li>
-<li><strong>必须让位</strong>：解析或嵌入失败时，旧版文档必须仍可检索；不能先删后写，把正在对话的库写成空洞。</li>
-<li><strong>什么算成功</strong>：叶子块能被以文 / 以图检索命中；父块能按层级合并；命中文本能拉到同页关联图；进度可看、任务可取消；删文档或删智能体时，Milvus、父块、图片对象、文档对象一起清掉。</li>
+<li><strong>要能做的</strong>：属主给某个智能体传 PDF、Word、Excel、TXT、Markdown（默认 50MB）；能列表、按文件名删、取消正在跑的任务；同名再传就是替换，内容 SHA256 没变就跳过。</li>
+<li><strong>故意不做的</strong>：共享用户可以问属主的库，但不能改——知识库 API 走 <code>get_owned</code>。没有单独的「重建索引」按钮。独立图片不能作为文档上传，图片只能是文档里抽出来的。Excel 和纯文本不抽图。也没有 OCR：扫描件如果抽不出字，文本这边几乎是空的——这是明知的代价。</li>
+<li><strong>绝对不能发生的</strong>：解析或嵌入失败，结果把正在对话用的旧库先删掉。</li>
+<li><strong>做成的样子</strong>：叶子能被以文、以图搜到；父块能合并回去；命中一段文字能带上旁边的图；进度看得到、任务停得住；删文档或删智能体时，向量、父块、图片、原件一起走。</li>
 </ul>
-<p>这四条决定了后面所有设计。分块再漂亮，上传同步卡死 API、重传把旧库先砸了、共享用户改了属主的文档，都不算做成。</p>
-<h3 id="1-2-一份文档的生命周期：任务在-Redis，就绪才进-PG">1.2 一份文档的生命周期：任务在 Redis，就绪才进 PG</h3>
-<p>系统里没有 <code>pending / processing / ready / failed</code> 这种文档状态机。处理中只存在于 Redis 任务快照，列表里出现的文档就是已就绪。</p>
-<p>上传接口读完整文件、校验扩展名和魔数之后，立刻返回 <code>task_id</code>：</p>
+<p>后面所有「为什么不换一种做法」，基本都是这几条在挡路。</p>
+<h3 id="1-2-任务在-Redis-里跑，进了-PG-才算入库成功">1.2 任务在 Redis 里跑，进了 PG 才算入库成功</h3>
+<p>没有给文档做 <code>pending / processing / ready / failed</code> 状态机。处理中只活在 Redis 任务快照里，列表里能看见的文档就是已经落稳的。</p>
+<p>上传接口把文件读完、核对扩展名和魔数，立刻还一个 <code>task_id</code>：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/api/v1/user_agents/kb.py  kb_upload()</span><br><span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">上传知识库文档：只校验并受理，立即返回 task_id；解析/向量化在后台线程执行。</span><br><span class="hljs-string">进度轮询：GET /kb/upload/status?task_id=...；取消：POST /kb/upload/cancel?task_id=...</span><br><span class="hljs-string">&quot;&quot;&quot;</span><br>ua = <span class="hljs-keyword">await</span> user_agent_controller.get_owned(agent_id, user_id)<br><span class="hljs-comment"># 扩展名白名单 + upload_sniff 魔数校验 + 50MB 上限</span><br>task_id = <span class="hljs-keyword">await</span> kb_job.create_kb_upload_job(...)<br></code></pre></td></tr></table></figure>
-<p>任务状态写在 <code>kb_upload_job:&#123;task_id&#125;:meta</code>：<code>queued</code> → <code>running</code>（阶段 <code>parsing</code> / <code>chunking</code> / <code>embedding</code> / <code>writing</code>）→ <code>completed</code> / <code>failed</code> / <code>timeout</code> / <code>cancelled</code>。前端每 500ms 轮询进度——这和对话 Job 的 Redis SSE 不是一套。对话要续传思考过程和正文；知识库上传只要最新百分比，一份快照够了。</p>
-<p><code>mg_kb_documents</code> 只在替换落库成功后才写入。处理期间旧版仍可查、仍可被 Agent 检索。失败则任务终态带 <code>error</code>，文档表不动。</p>
-<p>隔离键是：</p>
+<p>任务记在 <code>kb_upload_job:&#123;task_id&#125;:meta</code>，状态是 <code>queued</code> → <code>running</code>（<code>parsing</code> / <code>chunking</code> / <code>embedding</code> / <code>writing</code>）→ <code>completed</code> / <code>failed</code> / <code>timeout</code> / <code>cancelled</code>。前端每 500ms 来问一次进度。</p>
+<p>这里和第 1 篇的对话 Job 不一样。对话要续传思考过程和正文，所以走 Redis SSE；知识库上传只关心「现在到百分之几了」，一份快照就够。<code>mg_kb_documents</code> 要等替换落库成功才写一行。向量还没算完之前，同名旧版完整留着，Agent 还能搜到；真正换库只发生在最后那几秒的临界区，先删旧再写新，会有一个很短的空窗。别的文件全程不受影响，新传的文件在落库成功前不会出现在列表里。</p>
+<p>隔离键是用户加智能体：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/kb/kb_scope.py</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">kb_scope_for</span>(<span class="hljs-params">user_id: <span class="hljs-built_in">int</span>, agent_id: <span class="hljs-built_in">int</span></span>) -&gt; <span class="hljs-built_in">str</span>:<br>    <span class="hljs-keyword">return</span> <span class="hljs-string">f&quot;u<span class="hljs-subst">&#123;<span class="hljs-built_in">int</span>(user_id)&#125;</span>_a<span class="hljs-subst">&#123;<span class="hljs-built_in">int</span>(agent_id)&#125;</span>&quot;</span><br></code></pre></td></tr></table></figure>
-<p>一个智能体一份命名空间。智能体 ORM 不存知识库外键；Milvus 过滤、OBS 路径、PG 行都靠这串 scope。对话侧固定用<strong>属主</strong>的 scope，所以发布出去的智能体，别人问到的仍是发布者那份库。</p>
-<h3 id="1-3-四级分块：叶子负责被找到，父块负责被读懂">1.3 四级分块：叶子负责被找到，父块负责被读懂</h3>
-<p><code>MultimodalDocumentLoader</code> 模块头把模型写死了：三组 <code>RecursiveCharacterTextSplitter</code> 对应 L1 / L2 / L3，图片作为独立 L4，和文本块通过位置关联。</p>
-<p>默认 <code>chunk_size=900</code>、<code>chunk_overlap=90</code> 时，三层大约是 1800 / 900 / 450，重叠按倍递减。分隔符带了中英文句读，避免中文被按空格切碎。</p>
+<p>智能体表上没有知识库外键。Milvus 过滤、对象存储路径、PG 行，都认这串 scope。对话侧固定用<strong>属主</strong>的 scope，所以智能体发布出去以后，别人问到的还是属主建好的那份库，只是改不了。</p>
+<h3 id="1-3-为什么切成四级，而不是一刀切完就入库">1.3 为什么切成四级，而不是一刀切完就入库</h3>
+<p><code>MultimodalDocumentLoader</code> 用三组 <code>RecursiveCharacterTextSplitter</code> 做 L1 / L2 / L3，图片单独做 L4。默认 <code>chunk_size=900</code>、<code>chunk_overlap=90</code>，三层大概是 1800 / 900 / 450，重叠 240 / 120 / 60。分隔符里放了中英文句读，免得中文被按空格切得乱七八糟。</p>
 <table>
 <thead>
 <tr>
 <th>层级</th>
-<th>存哪</th>
-<th>检索时干什么</th>
+<th>存放位置</th>
+<th>检索时的用途</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>L1 / L2 文本</td>
-<td>PostgreSQL <code>mg_kb_parent_chunks</code> + Redis 缓存</td>
-<td>不直接 ANN；Auto-merge 的上卷目标</td>
+<td>PostgreSQL <code>mg_kb_parent_chunks</code>，外加 Redis 缓存</td>
+<td>不直接做 ANN，给 Auto-merge 往上卷</td>
 </tr>
 <tr>
 <td>L3 文本</td>
 <td>Milvus：dense + 服务端 BM25</td>
-<td>默认叶子层（<code>LEAF_RETRIEVE_LEVEL=3</code>）</td>
+<td>默认检索粒度（<code>LEAF_RETRIEVE_LEVEL=3</code>）</td>
 </tr>
 <tr>
 <td>L4 图片</td>
-<td>Milvus dense + PG <code>mg_kb_images</code> + MinIO 原图</td>
-<td>以文搜图、以图搜图；<code>text</code> 为空，没有 BM25</td>
+<td>Milvus 的 dense + PG <code>mg_kb_images</code> + MinIO 原图</td>
+<td>以文搜图、以图搜图；<code>text</code> 留空，不走 BM25</td>
 </tr>
 </tbody>
 </table>
-<p><code>chunk_id</code> 用展示文件名的 SHA256 前 16 位做指纹，避免路径里的特殊字符：</p>
+<p><code>chunk_id</code> 用展示文件名的 SHA256 前 16 位做指纹，路径里那些奇怪字符就进不去了。L1–L3 的序号是页内该层计数；L4 用的是整篇文档的全局序号，后面还会跟一个 <code>::i0</code>——当前实现里图片序号恒为 0，真正把各张图分开的，是前面的全局序号和内容哈希文件名。</p>
 <figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs css">&#123;kb_scope&#125;::&#123;filename_sha256<span class="hljs-selector-attr">[:16]</span>&#125;::p&#123;page&#125;::l&#123;level&#125;::&#123;index&#125;<span class="hljs-selector-attr">[::i&#123;img_idx&#125;]</span><br></code></pre></td></tr></table></figure>
 <p>入库时按层级拆开，只有叶子进向量库：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/kb/kb_service.py  run_ingest_pipeline_sync()</span><br>parent_docs = [c <span class="hljs-keyword">for</span> c <span class="hljs-keyword">in</span> chunks <span class="hljs-keyword">if</span> <span class="hljs-built_in">int</span>(c.get(<span class="hljs-string">&quot;chunk_level&quot;</span>, <span class="hljs-number">0</span>) <span class="hljs-keyword">or</span> <span class="hljs-number">0</span>) <span class="hljs-keyword">in</span> (<span class="hljs-number">1</span>, <span class="hljs-number">2</span>)]<br>leaf_docs = [c <span class="hljs-keyword">for</span> c <span class="hljs-keyword">in</span> chunks <span class="hljs-keyword">if</span> <span class="hljs-built_in">int</span>(c.get(<span class="hljs-string">&quot;chunk_level&quot;</span>, <span class="hljs-number">0</span>) <span class="hljs-keyword">or</span> <span class="hljs-number">0</span>) <span class="hljs-keyword">in</span> (<span class="hljs-number">3</span>, <span class="hljs-number">4</span>)]  <span class="hljs-comment"># L3 文本 + L4 图片</span><br></code></pre></td></tr></table></figure>
-<p>类型分发也在 loader 里一次做完。PDF 用 <code>PyPDFLoader</code> 抽分页文本、PyMuPDF 抽内嵌图和 bbox；Word 用 <code>Docx2txtLoader</code> 加 <code>python-docx</code> 抽 inline 图；Excel 逐 sheet 转 Markdown 表格（隐藏表跳过）；TXT / MD 整篇当一页。不认识的扩展名直接抛错。</p>
-<p>PDF 小于 100×100 的图当图标丢掉。Word 没有真实页码，用段落序号顶上，纵坐标按 <code>para_idx * 100</code> 估算。<code>.doc</code> / <code>.xls</code> 扩展名放行且魔数认 OLE，但 loader 吃的是 OOXML——老二进制格式实际上可能解析失败。</p>
-<h3 id="1-4-存储分层：向量、正文、像素各管各的">1.4 存储分层：向量、正文、像素各管各的</h3>
-<p>构建产物拆在四处，检索时再拼：</p>
+<p>各格式的处理方式：PDF 用 <code>PyPDFLoader</code> 抽分页文本，PyMuPDF 抽内嵌图和位置；Word 用 <code>Docx2txtLoader</code> 加 <code>python-docx</code> 抽段落里的图；Excel 一张表转成一块 Markdown（隐藏表跳过）；TXT / MD 整篇当作一页。不认识的扩展名直接拒。</p>
+<p>PDF 里小于 100×100 的图当作图标丢掉。Word 没有页的概念，只能用段落序号顶上，纵坐标按 <code>para_idx * 100</code> 估一个。扩展名允许 <code>.doc</code> / <code>.xls</code>，魔数也认 OLE，但 loader 实际吃的是 OOXML——老格式能过校验，解析却大概率失败，这是已知的代价。</p>
+<h3 id="1-4-向量、正文、像素拆开存">1.4 向量、正文、像素拆开存</h3>
 <table>
 <thead>
 <tr>
@@ -407,155 +405,149 @@
 </tr>
 <tr>
 <td>PostgreSQL</td>
-<td>文档行（<code>content_hash</code>、叶子数）；L1/L2 全文；图片元数据与 <code>related_text_ids</code></td>
+<td>文档行（<code>content_hash</code>、叶子数）；L1/L2 全文；图片元数据和 <code>related_text_ids</code></td>
 </tr>
 <tr>
 <td>Redis</td>
-<td>上传进度、同名替换锁、父块缓存、选档文件名列表</td>
+<td>上传进度、同名替换锁、父块缓存、选档用的文件名列表</td>
 </tr>
 <tr>
 <td>Milvus <code>kura_ai_kb</code></td>
-<td>L3 / L4 的 dense；文本块另有服务端 BM25 稀疏向量</td>
+<td>L3 / L4 的 dense；文本块另外有服务端算好的 BM25</td>
 </tr>
 </tbody>
 </table>
-<p>Milvus 里图片块的 <code>text</code> 故意留空，<code>image_path</code> 只是相对 IMAGES 前缀的 relpath。像素不进向量库，base64 也只在检索期 rerank 时现读对象存储——入库路径不生成 caption，<code>KbImage.caption</code> 字段预留着，当前不用。</p>
+<p>Milvus 里图片块的 <code>text</code> 故意留空，<code>image_path</code> 只是相对路径。像素不进向量库。base64 只在检索做 rerank 时才现读——入库路径不生成 caption，<code>KbImage.caption</code> 字段只是预留，模型里的注释写的就是「预留，默认空」。对话侧的读图是另一件事，第 1 篇写过。</p>
 <hr>
 <h2 id="2-实现思路：为什么是这套，而不是其它">2 实现思路：为什么是这套，而不是其它</h2>
-<h3 id="2-1-主干：先处理后替换">2.1 主干：先处理后替换</h3>
-<p><code>run_ingest_pipeline_sync</code> 的语义写在函数头里，比任何设计文档都直白：</p>
+<h3 id="2-1-先处理，再替换">2.1 先处理，再替换</h3>
+<p><code>run_ingest_pipeline_sync</code> 的注释就是当初的设计备忘：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/kb/kb_service.py  run_ingest_pipeline_sync()</span><br><span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">「先处理后替换」语义：</span><br><span class="hljs-string">- 解析 + 全部向量生成成功之前不碰旧数据；失败/超时/取消时旧文档原样保留，仅清理本次临时产物。</span><br><span class="hljs-string">- 成功后进入「替换落库」临界区（同名文档 Redis NX 锁互斥，后完成者生效）：</span><br><span class="hljs-string">  删旧 → 父块 → 叶子块纯插入 → 图片元数据 → PG 文档行。</span><br><span class="hljs-string">&quot;&quot;&quot;</span><br></code></pre></td></tr></table></figure>
-<p>顺序可以压成：</p>
+<p>实际顺序是：</p>
 <ol>
-<li>同展示名且 <code>content_hash</code> 相同 → 直接返回 <code>unchanged</code>，不解析不嵌入；</li>
-<li>临时目录写源文件、抽图、三级分块、图文关联；</li>
-<li><code>MultimodalMilvusWriter.embed_documents</code> <strong>只生成向量，不写 Milvus</strong>；</li>
-<li>向量齐了，才把图片和文档本体上传到对象存储，并把 chunk 里的 <code>image_path</code> 改成 relpath；</li>
-<li>拿 Redis NX 锁，删旧、写父块、按预计算向量 <code>write_documents</code>、写 <code>KbDocument</code>。</li>
+<li>同名且 hash 相同，直接回 <code>unchanged</code>，连解析都不做；</li>
+<li>临时目录里抽图、切块、把图和 L3 对上；</li>
+<li><code>embed_documents</code> <strong>只算向量，不写 Milvus</strong>；</li>
+<li>向量齐了，才把图片和原件上传到对象存储，并把 <code>image_path</code> 改成相对路径；</li>
+<li>拿 Redis NX 锁，删旧、写父块、按算好的向量插入、写 <code>KbDocument</code>。</li>
 </ol>
-<p>写入拆成两段，就是为了第 5 步里不再调嵌入 API。临界区只有纯 I/O，数秒内结束。同名并发上传时锁把落库串行化，后完成者生效；图片文件名带内容哈希 8 位后缀，删旧图时用 <code>exclude_image_rels</code> 保护「新旧内容相同、key 撞车」的那几张。</p>
-<p>为什么不先删后写？嵌入是分钟级的，PDF 里几十张图还是逐张 HTTP。先删的话，用户点一次重传，对话立刻检索空洞，失败还没得回滚。为什么不按块增量更新？一份文档的层级树、图文关联、BM25 统计是整份一起算的，块级 patch 省不了多少，正确性成本更高。当前粒度就是<strong>整文档替换</strong>。</p>
-<h3 id="2-2-为何图文分块，不用融合向量">2.2 为何图文分块，不用融合向量</h3>
-<p><code>MultimodalEmbeddingService</code> 里其实实现了 <code>get_multimodal_fusion_embeddings</code>（<code>enable_fusion=True</code>）。全仓库没有调用方。生产路径是 writer 按 <code>content_type</code> 拆开：</p>
+<p>第 3、5 步拆开，是为了临界区里不再调嵌入 API。那一小段只有读写，几秒就结束。同名一起传的时候，锁保证落库串行，后做完的生效；图片文件名带了内容哈希后 8 位，删旧图时用 <code>exclude_image_rels</code> 护住「新旧其实是同一张图、key 撞车」的情况。</p>
+<p>为什么不先删后写？嵌入是分钟级的，PDF 里几十张图还得一张一张打 HTTP。先删的话，用户点一次重传，对话马上搜空，失败了还回不去。为什么不做块级增量？一份文档的层级树、图文关系和 BM25 统计是整份一起算的，局部打补丁省不了多少，对不齐的风险更大。所以现在的粒度就是<strong>整份文档换掉</strong>。</p>
+<h3 id="2-2-图和文分开-embed，不用融合向量">2.2 图和文分开 embed，不用融合向量</h3>
+<p><code>MultimodalEmbeddingService</code> 里其实写过 <code>get_multimodal_fusion_embeddings</code>，后来没用，全仓库也没有调用方。生产路径按 <code>content_type</code> 拆开：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/kb/multimodal_milvus_writer.py  embed_documents()</span><br>text_chunks = [doc <span class="hljs-keyword">for</span> doc <span class="hljs-keyword">in</span> documents <span class="hljs-keyword">if</span> doc.get(<span class="hljs-string">&quot;content_type&quot;</span>) == <span class="hljs-string">&quot;text&quot;</span>]<br>image_chunks = [doc <span class="hljs-keyword">for</span> doc <span class="hljs-keyword">in</span> documents <span class="hljs-keyword">if</span> doc.get(<span class="hljs-string">&quot;content_type&quot;</span>) == <span class="hljs-string">&quot;image&quot;</span>]<br><span class="hljs-comment"># 文本按 EMBEDDING_BATCH_SIZE 批调；稀疏向量由服务端 BM25 Function 基于 text 自动计算</span><br>dense_embeddings = <span class="hljs-variable language_">self</span>.embedding_service.get_text_embeddings(texts, request_timeout=timeout)<br><span class="hljs-comment"># 图片逐张串行（DashScope 一次只能处理一张）</span><br>dense = <span class="hljs-variable language_">self</span>.embedding_service.get_image_embeddings(batch_paths, ...)<br></code></pre></td></tr></table></figure>
-<p>图片写入 Milvus 时 <code>text</code> 为空、<code>chunk_level=4</code>：</p>
+<p>图片写入时 <code>text</code> 为空、<code>chunk_level=4</code>：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/kb/multimodal_milvus_writer.py  write_documents()</span><br>&#123;<br>    <span class="hljs-string">&quot;dense_embedding&quot;</span>: dense_emb,<br>    <span class="hljs-string">&quot;text&quot;</span>: <span class="hljs-string">&quot;&quot;</span>,  <span class="hljs-comment"># 图片块不存储文本</span><br>    <span class="hljs-string">&quot;chunk_level&quot;</span>: <span class="hljs-number">4</span>,<br>    <span class="hljs-string">&quot;content_type&quot;</span>: <span class="hljs-string">&quot;image&quot;</span>,<br>    <span class="hljs-string">&quot;image_path&quot;</span>: doc.get(<span class="hljs-string">&quot;image_path&quot;</span>, <span class="hljs-string">&quot;&quot;</span>),<br>    ...<br>&#125;<br></code></pre></td></tr></table></figure>
-<p>融合一条向量看起来省事，但和后面的检索合同对不上。以图搜图需要独立的图片向量；命中一段说明文字再把旁边的图拉进来，需要 <code>related_text_ids</code>，不是一次融合能代替的；工具输出要把文本和带签名的 <code>/api/v1/media/</code> Markdown 分开格式化；BM25 只吃 <code>text</code> 字段，融合块会把 BM25 赖以计分的 <code>text</code> 搅浑。同一模型、同一 <code>dense_embedding</code> 字段、分别 embed，查询文本和图片块才能直接做内积——这已经是跨模态，不必再做 CLIP 式双塔对齐。</p>
-<h3 id="2-3-为何三级文本切分，叶子进-Milvus、父块进-PG">2.3 为何三级文本切分，叶子进 Milvus、父块进 PG</h3>
-<p>细叶子召回准，短句子当最终上下文又碎。Milvus 只索引 L3，命中同一 <code>parent_chunk_id</code> 的子块达到阈值（默认 3）就用 PG 里的 L2 / L1 替换。检索永远是<strong>先叶子后合并</strong>，所以构建时必须把层级树写完整：<code>parent_chunk_id</code>、<code>root_chunk_id</code>、<code>chunk_level</code>、页内 <code>position_start / position_end</code>。</p>
-<p>父块不进向量库，因为 Auto-merge 是按 id 取全文，不是再做一次 ANN。PostgreSQL 对这种主键点查更合适，还可以 Redis 缓存 <code>kb_parent_chunk:&#123;chunk_id&#125;</code>。反过来，把 L1 也建成向量，检索会被大段重复文本冲掉，过滤表达式还更难写。</p>
-<p>L4 不参与 RecursiveCharacterTextSplitter。图片是文档内嵌资源，不是切出来的句子；它的 <code>parent_chunk_id</code> 在关联阶段指向某个 <strong>L3</strong>，而不是 L2。</p>
-<h3 id="2-4-图文如何关联：几何优先，顺序兜底">2.4 图文如何关联：几何优先，顺序兜底</h3>
-<p>检索不靠「同一个 filename 就当配图」。构建时就要把 L3 和图片绑上。PDF 曾经把字符下标和页面纵坐标混在一起比，后来改成两套策略：能搜到 L3 的页面 bbox 时，优先把「在图片上方」最近的那块文绑给这张图；搜不到 bbox，再按阅读顺序和图片纵向顺序 zip。非 PDF 没有同一套坐标系，直接顺序配对，避免再把字符 offset 和 y 坐标比大小。</p>
+<p>融合一条向量看起来干净，但后面的检索对不上这套。以图搜图需要图片自己的向量；用户问到某段说明时，检索侧还要把旁边的图拉进来，这靠的是 <code>related_text_ids</code>，不是一次融合能代替的；给模型看的时候，文本和带签名的 <code>/api/v1/media/</code> Markdown 也必须分开。BM25 只认 <code>text</code>，融在一起会把关键词计分搅乱。</p>
+<p>文本和图片交给同一个 <code>qwen3-vl-embedding</code>、写进同一个 <code>dense_embedding</code> 字段，查询文本就能直接和图片块做 IP 内积。这条路要成立，前提就是模型把文本和图像对齐到了同一个向量空间——代码里没有哪一行专门写这件事，但整套设计就是按这个假设用的。模型已经把跨模态对齐做了，自然没必要再上 CLIP 双塔。</p>
+<h3 id="2-3-叶子进-Milvus，父块进-PostgreSQL">2.3 叶子进 Milvus，父块进 PostgreSQL</h3>
+<p>细叶子召回准，拿短句子当最终上下文又碎。Auto-merge 的实现是：Milvus 只索引 L3，同一 <code>parent_chunk_id</code> 下命中够多（默认 3 块）就用 PG 里的 L2 / L1 换上去，做两轮，L3 → L2 → L1。所以构建时必须把树写完整：<code>parent_chunk_id</code>、<code>root_chunk_id</code>、<code>chunk_level</code>、页内起止位置。</p>
+<p>父块不建成向量。Auto-merge 是按 id 取全文，不是再搜一次。这种点查用 PostgreSQL 更合适，外面再套一层 Redis。如果把 L1 也丢进 Milvus，大段重复文本会把检索冲掉，过滤也不好写。</p>
+<p>L4 不走文本切分器。图片是文档里嵌着的资源，不是切出来的句子；关联阶段把它的 <code>parent_chunk_id</code> 指到某个 <strong>L3</strong>，不是 L2。</p>
+<h3 id="2-4-图和文怎么对上：能算几何就算，算不了再按顺序">2.4 图和文怎么对上：能算几何就算，算不了再按顺序</h3>
+<p>图文配对不拖到检索时再猜，更不能图省事把「同一个文件名」直接当配图。构建时就要把 L3 和图片绑上。PDF 这边走过弯路：最早把字符下标和页面纵坐标混在一起比，后来才改成现在这套——能定位到页面框时，优先把「在这张图上方」最近的那块文本给它；这张图上面没有 L3，就改绑纵向距离最近的那块。只有整页都框不住、或者 PDF 打不开，才退回按阅读顺序和图片从上到下 zip。Word 没有同一套坐标系，直接按顺序配，不再拿字符位置和 y 坐标比。</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/kb/multimodal_document_loader.py  _associate_text_with_images()</span><br><span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">建立 L3 文本块与图片的关联关系（检索侧 related_text_ids 以 L3 为主）。</span><br><span class="hljs-string">PDF 使用 page.search_for 得到的 bbox 与图片位置同一坐标系；无 bbox 时按阅读/纵向序配对。</span><br><span class="hljs-string">非 PDF 同页用顺序配对，避免将字符下标与纵坐标比较。</span><br><span class="hljs-string">&quot;&quot;&quot;</span><br></code></pre></td></tr></table></figure>
-<p>关联结果双向写：图片带着 <code>related_text_ids</code>，文本块带着 <code>related_image_ids</code>。真正持久化的是 PG 里 <code>KbImage.related_text_ids</code>（JSONB）。Milvus 不存这张关系表——向量库负责「像」，关系表负责「这张图属于哪段话」。</p>
-<p>图片为什么不 OCR？VL embedding 直接吃像素，少一条错误传播的管线。代价很明确：扫描版 PDF 几乎没有有效 L3，只能靠图侧 dense 碰运气。<code>caption</code> 不在入库时生成，也是同一逻辑：构建阶段不把多一次视觉模型调用打进上传关键路径，描述留给对话侧的两阶段读图（第 1 篇写过）。</p>
-<h3 id="2-5-为什么选-Milvus">2.5 为什么选 Milvus</h3>
-<p>先前 RAG 专题里写过面试口径：原型 Chroma、中规模 Qdrant、千万到亿级分布式才上 Milvus。Kura-AI <strong>没有</strong>按数据规模选。个人智能体中心的体量，pgvector 或 Qdrant 都扛得住。真正绑住实现的，是 <strong>同一 collection 里 dense + 服务端 BM25 + 标量过滤是不是一等公民</strong>。</p>
-<p>产品侧要同时成立的三件事，都落在 <code>app/kb/milvus_client.py</code>：</p>
-<p><strong>文本叶子要语义检索和关键词检索两路并行。</strong> <code>hybrid_retrieve</code> 用 HNSW / IP 搜 <code>dense_embedding</code>，同时把查询原文交给 <code>bm25_sparse</code>，<code>RRFRanker(k=60)</code> 融合。图片块 <code>text=&quot;&quot;</code>，BM25 覆盖不到图，以图检索只走 <code>dense_retrieve</code>。中文精确单字召回注释里写了由 dense 向量兜底——Milvus 2.5 的 BM25 Function 还不接受 analyzer 参数，用内置 <code>standard</code>。</p>
+<p>内存里两边都会记一笔：图片有 <code>related_text_ids</code>，文本块有 <code>related_image_ids</code>。真正留下的只有 PG 里 <code>KbImage.related_text_ids</code>。Milvus 不管这张关系表——它负责「像不像」，关系表负责「这张图属于哪段话」。</p>
+<p>为什么不上 OCR？想让 VL embedding 直接看像素，少一条识别错了再往下传的管线。代价也很清楚：扫描件几乎没有有效 L3，只能碰图片这边的向量。caption 不在入库时生成，也是同一想法：上传这条关键路径上，不再塞一次视觉模型调用。</p>
+<h3 id="2-5-为什么是-Milvus">2.5 为什么是 Milvus</h3>
+<p>按社区通常的说法：原型用 Chroma，中规模用 Qdrant，上了千万、要分布式再上 Milvus。Kura-AI 这点体量，pgvector 或 Qdrant 其实都跑得动。最终还是选了 Milvus，看的是另一件事：<strong>同一个 collection 里，dense、服务端 BM25、按字段过滤，是不是一等公民</strong>。</p>
+<p>当时要同时成立的三件事，都写在 <code>app/kb/milvus_client.py</code>：</p>
+<p><strong>文本既要语义近，也要词能对上。</strong> <code>hybrid_retrieve</code> 用 HNSW / IP 搜 <code>dense_embedding</code>，同时把用户原话丢给 <code>bm25_sparse</code>，再用 <code>RRFRanker(k=60)</code> 揉在一起。图片块 <code>text</code> 是空的，BM25 覆盖不到图，以图检索只走 dense。中文单字召回靠 dense 兜底——Milvus 2.5 的 BM25 Function 还不让配 analyzer，只能用内置 <code>standard</code>。</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/kb/milvus_client.py  init_collection()</span><br>bm25_function = Function(<br>    name=<span class="hljs-string">&quot;bm25_fn&quot;</span>,<br>    function_type=FunctionType.BM25,<br>    input_field_names=[<span class="hljs-string">&quot;text&quot;</span>],<br>    output_field_names=<span class="hljs-string">&quot;bm25_sparse&quot;</span>,<br>)<br>schema.add_function(bm25_function)<br><br>index_params.add_index(<br>    field_name=<span class="hljs-string">&quot;dense_embedding&quot;</span>,<br>    index_type=<span class="hljs-string">&quot;HNSW&quot;</span>,<br>    metric_type=<span class="hljs-string">&quot;IP&quot;</span>,<br>    params=&#123;<span class="hljs-string">&quot;M&quot;</span>: <span class="hljs-number">16</span>, <span class="hljs-string">&quot;efConstruction&quot;</span>: <span class="hljs-number">256</span>&#125;,<br>)<br>index_params.add_index(<br>    field_name=<span class="hljs-string">&quot;bm25_sparse&quot;</span>,<br>    index_type=<span class="hljs-string">&quot;SPARSE_INVERTED_INDEX&quot;</span>,<br>    metric_type=<span class="hljs-string">&quot;BM25&quot;</span>,<br>)<br></code></pre></td></tr></table></figure>
-<p>查询侧 BM25 直接传文本，不用客户端再算一遍稀疏向量：</p>
+<p>查询时 BM25 直接传文本，不用在客户端再算一遍稀疏向量：</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/kb/milvus_client.py  hybrid_retrieve()</span><br>sparse_search = AnnSearchRequest(<br>    data=[query_text],<br>    anns_field=<span class="hljs-string">&quot;bm25_sparse&quot;</span>,<br>    param=&#123;<span class="hljs-string">&quot;metric_type&quot;</span>: <span class="hljs-string">&quot;BM25&quot;</span>&#125;,<br>    limit=top_k * <span class="hljs-number">2</span>,<br>    expr=filter_expr,<br>)<br>results = <span class="hljs-variable language_">self</span>._get_client().hybrid_search(<br>    collection_name=<span class="hljs-variable language_">self</span>.collection_name,<br>    reqs=[dense_search, sparse_search],<br>    ranker=RRFRanker(k=rrf_k),<br>    limit=top_k,<br>    output_fields=output_fields,<br>)<br></code></pre></td></tr></table></figure>
-<p><strong>写入时由库计算 BM25，客户端不维护词表。</strong> 旧集合用进程内 BM25 词表，<code>migrate_bm25.py</code> 注释写得很狠：跨重启索引漂移、IDF 失真。迁移脚本只拷 scalar 和 dense，不重调 embedding，专门把 BM25 改成服务端 Function。这是 Milvus 2.5 的能力，也解释了 compose 钉在 <code>milvusdb/milvus:v2.5.14</code>。</p>
-<p><strong>过滤和图文块挤在同一个集合。</strong> 检索表达式是 <code>kb_scope</code>、可选 <code>filename in [...]</code>、<code>chunk_level == 3 || 4</code>。会话记忆另开 <code>kura_ai_chat_memory</code>，不和知识库抢 schema。多模态不是两个库，是同一张表里 <code>content_type</code> 分流。</p>
-<p>对照其它选项，用产品约束收口，不写成向量库百科：</p>
+<p><strong>BM25 交给库在写入时算，不自己养词表。</strong> 最早那版是进程内词表，重启一次 IDF 就漂。<code>migrate_bm25.py</code> 把旧集合的 dense 原样拷过去，稀疏改成服务端 Function，没有再付一次 embedding 的钱。这也是 compose 里钉死 <code>milvusdb/milvus:v2.5.14</code> 的原因。</p>
+<p><strong>图和文挤在同一个集合里过滤。</strong> 检索表达式是 <code>kb_scope</code>、可选的 <code>filename in [...]</code>、<code>chunk_level == 3 || 4</code>。会话记忆另开了 <code>kura_ai_chat_memory</code>，不跟知识库抢字段。多模态在这里不是两个库，是一张表里用 <code>content_type</code> 分开。</p>
+<p>其它选项的取舍：</p>
 <ul>
-<li><strong>pgvector</strong>：项目已经用 PostgreSQL 存 L1/L2 和图片元数据，向量却故意不进 PG。父块要的是按 id 取全文做 Auto-merge，不是 ANN；叶子要 hybrid + RRF + 服务端 BM25。pgvector 通常还得另接 tsvector 或 ParadeDB，过滤表达式和 <code>hybrid_search</code> 也没有这一套现成。把父块和叶子塞进同一张关系表，层级合并和 ANN 会互相污染。</li>
-<li><strong>Chroma</strong>：嵌入式、适合原型。扛不住「每智能体一个 scope、前置选档 filename、图文混排」这条布尔过滤链，也没有写入即计算的 BM25 Function。</li>
-<li><strong>Qdrant</strong>：中规模生产很强，稀疏向量也有。但当前路径绑的是 Milvus 2.5「Function 写时出稀疏、查询传原文」，以及已经 docker 化的 standalone（etcd + 专用 minio + milvus）。换成 Qdrant 要重写 schema、混合检索和迁移脚本，对当前体量收益不明显。</li>
-<li><strong>Elasticsearch</strong>：向量检索是后补能力。Kura-AI 要的是 ANN 原生，顺带 BM25，不是倒过来。</li>
+<li><strong>pgvector</strong>：父块、图片元数据已经在 PostgreSQL 里了，向量不塞进去。父块只要按 id 取全文；叶子要 hybrid、RRF、服务端 BM25。pgvector 通常还得再接一套全文检索，过滤和 <code>hybrid_search</code> 也没有现成的这一套。全塞进一张关系表，合并和 ANN 会搅在一起。</li>
+<li><strong>Chroma</strong>：原型好用。这里需要的是「每个智能体一个 scope、选档按文件名、图文混着滤」，它吃力，也没有写入就算 BM25 这件事。</li>
+<li><strong>Qdrant</strong>：中规模很能打，也有稀疏向量。但这条路径已经绑在 Milvus 2.5 的 Function 上了，standalone（etcd + 专用 minio + milvus）也 docker 好了。换过去要重写 schema、混合检索和迁移脚本，以现在的体量不划算。</li>
+<li><strong>Elasticsearch</strong>：向量是后补的。想要的是 ANN 原生，BM25 顺便带上，不是倒过来。</li>
 </ul>
-<p>运维只需要一句：本地 compose 跑 standalone；云上可填 <code>MILVUS_TOKEN</code> 接 Zilliz。不把部署手册写进这篇。</p>
-<h3 id="2-6-为何后台线程-Job，而不是同步解析">2.6 为何后台线程 Job，而不是同步解析</h3>
-<p>抽图、批文本 embedding、逐图 HTTP，动辄几十秒到几分钟。同步放在 FastAPI 路由里会堵住事件循环，对话 Job 一起排队。<code>kb_job.py</code> 模块头把根治点写在第一段：专用 <code>ThreadPoolExecutor</code>（默认并行 8），worker 里跑同步 <code>run_ingest_pipeline_sync</code>，任务线程自建 <code>MilvusManager</code>，避免跨线程共用单例客户端。</p>
-<p>进度按阶段映射到百分比：parsing 0–10，chunking 10–12，embedding 12–85，writing 85–100。嵌入占了大半条，和真实耗时对齐，避免解析刚结束进度条就跳到 90%、然后在 embedding 上假死。超出并行上限的任务保持 <code>queued</code>。单次嵌入 HTTP 超时默认 90 秒，避免 DashScope SDK 默认 300 秒把整单悬死；整单上限 900 秒。</p>
-<h3 id="2-7-构建产物必须撑住怎样的检索">2.7 构建产物必须撑住怎样的检索</h3>
-<p>检索细节是下一篇的事。构建时只要记住消费侧的几条硬约束，存错了后面全补不回来：</p>
+<p>本地 compose 跑 standalone，云上可以填 <code>MILVUS_TOKEN</code> 接 Zilliz。部署细节就不在这篇展开了。</p>
+<h3 id="2-6-为什么丢进后台线程，而不是上传接口里当场解析">2.6 为什么丢进后台线程，而不是上传接口里当场解析</h3>
+<p>抽图、批文本 embedding、逐张打图片 HTTP，几十秒到几分钟都正常。丢在 FastAPI 路由里会堵住事件循环，对话那条 Job 也要排队。所以知识库单独开了 <code>ThreadPoolExecutor</code>（默认 8 个工人），worker 里跑同步流水线，而且每个任务自己 new 一个 <code>MilvusManager</code>，不跟别的线程抢同一个客户端。</p>
+<p>进度条按阶段加权：parsing 0–10，chunking 10–12，embedding 12–85，writing 85–100。嵌入占了绝大多数时间，所以这一段给得最宽；要是四段平分，前几秒进度就冲过一大截，然后几分钟纹丝不动，用户只会以为卡死了。百分比只前进不回退，每次上报取 <code>max</code>。超出并行上限的任务停在 <code>queued</code>。单次嵌入 HTTP 默认 90 秒，避免 SDK 默认 300 秒把工人占死；整单 900 秒封顶。</p>
+<h3 id="2-7-存的时候就要想着后面怎么搜">2.7 存的时候就要想着后面怎么搜</h3>
+<p>检索怎么打分、怎么改写，留给后面的专题。构建这边只要记住：存错了，后面补不回来。</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/kb/rag_utils.py  retrieve_documents()</span><br><span class="hljs-keyword">if</span> include_images:<br>    base_filter = <span class="hljs-string">f&#x27;kb_scope == &quot;<span class="hljs-subst">&#123;esc&#125;</span>&quot; &amp;&amp; (chunk_level == <span class="hljs-subst">&#123;LEAF_RETRIEVE_LEVEL&#125;</span> || chunk_level == 4)&#x27;</span><br><span class="hljs-keyword">else</span>:<br>    base_filter = <span class="hljs-string">f&#x27;kb_scope == &quot;<span class="hljs-subst">&#123;esc&#125;</span>&quot; &amp;&amp; chunk_level == <span class="hljs-subst">&#123;LEAF_RETRIEVE_LEVEL&#125;</span>&#x27;</span><br></code></pre></td></tr></table></figure>
 <ul>
-<li>只存纯文本：没有 L4，以文搜图、以图搜图、<code>KB_RELATED_IMAGE_EXPANSION</code> 全废；工具也给不出带 <code>exp</code> / <code>sig</code> 的图片 Markdown。</li>
-<li>不写 <code>related_text_ids</code>：命中说明文字之后，只能靠向量偶然撞上旁边的图。</li>
-<li>没有 <code>parent_chunk_id</code> 和 PG 父块：Auto-merge 无法 L3 → L2 → L1，召回上下文永远碎。</li>
-<li><code>filename</code> 必须是稳定的 file_key：前置选档和 Milvus <code>filename in [...]</code> 共用同一字符串，模型不能在工具参数里改范围（第 1 篇写过选档在 Agent 调用前做完）。</li>
-<li>图片二进制和向量分离：rerank 需要时才从对象存储读成 Data URI；构建期不把原图塞进 Milvus。</li>
+<li>只存纯文本：没有 L4，以文搜图、以图搜图、按关联拉图全没了，工具也给不出带签名的图片 Markdown。</li>
+<li>不写 <code>related_text_ids</code>：问到说明文字之后，只能碰运气看向量会不会撞上旁边那张图。</li>
+<li>没有 <code>parent_chunk_id</code> 和 PG 父块：Auto-merge 卷不上去，上下文永远是碎片。</li>
+<li><code>filename</code> 必须稳：前置选档和 Milvus 的 <code>filename in [...]</code> 用的是同一串字。模型不能在工具参数里自己改范围，这件事第 1 篇写过，选档在 Agent 调用前就做完了。</li>
+<li>原图和向量分开：rerank 需要时再从对象存储读成 Data URI，构建期不把像素塞进 Milvus。</li>
 </ul>
 <hr>
 <h2 id="3-优化：性能、体验、可靠性">3 优化：性能、体验、可靠性</h2>
-<p>流水线能跑，还不等于能用。下面这些是已经落地的，不是规划。</p>
+<p>能跑和能用不是一回事。下面这些是已经写进代码的，不是下一步计划。</p>
 <h3 id="3-1-性能与成本">3.1 性能与成本</h3>
-<p><strong>文本批处理，图片串行但可取消。</strong> <code>EMBEDDING_BATCH_SIZE</code> 默认 10，文本 embed 和 Milvus insert 共用。图片受 DashScope 限制必须一张一张来，但每张前走 <code>tick_cb</code> → <code>KbUploadTaskGuard.checkpoint()</code>，取消和超时不用干等到当前图的 HTTP 结束才发现。单次 HTTP 90 秒封顶。</p>
-<p><strong>同内容秒跳过。</strong> 展示名 + SHA256 命中现有 <code>KbDocument</code>，整条解析 / 嵌入 / 替换都不走，任务直接 <code>unchanged</code>。这是唯一的「增量」：没有块级 patch。</p>
-<p><strong>BM25 迁移不重调 embedding。</strong> <code>migrate_bm25</code> 把旧集合的 dense 原样拷到新 schema，BM25 改由 Function 计算。换检索算法不该再付一次向量账单。</p>
-<p><strong>父块读路径有 Redis。</strong> Auto-merge 按 id 取 L1/L2 是检索热路径，<code>ParentChunkStore</code> 写入时就种缓存。选档用的文件名列表也按 <code>kb_scope</code> 缓存一小时，文档变更时主动失效。</p>
+<p>文本按 <code>EMBEDDING_BATCH_SIZE</code>（默认 10）一批一批走，图片受 DashScope 限制只能一张一张来，但每张之前会 <code>checkpoint()</code>，取消和超时不用干等到当前这张图的 HTTP 结束。同名同内容直接跳过，这是唯一的「增量」——没有块级补丁。</p>
+<p>换 BM25 实现的时候，dense 原样拷，没有重调 embedding。父块是检索热路径，写入时就放进 Redis；选档用的文件名列表按 scope 缓存一小时，文档有变动再主动丢掉。</p>
 <h3 id="3-2-体验">3.2 体验</h3>
-<p>知识库页要让人看出「现在卡在哪」，而不是一个转圈。前端是双层进度：HTTP 上传百分比，和后台 <code>parsing → embedding → writing</code> 阶段进度。多文件并行，每个文件独立 <code>task_id</code>、独立轮询；批次总进度取均值。进行中的任务写入 <code>sessionStorage</code>，刷新页面能接着问状态。</p>
-<p>可取消不是装饰。取消标记写 Redis，worker 在批边界 <code>checkpoint()</code> 退出；嵌入阶段失败时旧文档仍在，用户不用面对「取消了但库已经空了」。超时文案带 900 秒提示。同内容重传会明确说「内容未变化」，避免以为卡住。</p>
-<p>聊天里知识库图片必须走同源相对路径 <code>/api/v1/media/...</code>（带签名），不拼 <code>PUBLIC_API_BASE</code> 的绝对 URL，以免被前端 CSP <code>img-src</code> 拦掉。构建时把像素放进对象存储、检索时再签发，就是为了这条展示合同。</p>
+<p>知识库页做了两层进度：HTTP 上传百分比，和后台 <code>parsing → embedding → writing</code>。多文件就多个 <code>task_id</code>、各自轮询，总进度取平均。做到一半刷新页面，<code>sessionStorage</code> 里还记着，回来能接着问。</p>
+<p>取消不是摆设。标记写进 Redis，worker 跑到一批的边界就停；嵌入还没进替换区就失败的话，旧文档还在。超时会告诉你 900 秒到了。同内容再传，前端会明说「内容未变化，已跳过重建」，免得以为卡住。</p>
+<p>聊天里的知识库图片走同源 <code>/api/v1/media/...</code>，带 <code>exp</code> + HMAC <code>sig</code>。media 接口的注释写得很直白：<strong>签名读取，无需登录</strong>——签名本身就是这张图的凭证，文件本体存对象存储，验签后由后端流式中转，到期自动失效。地址默认只拼相对路径（<code>sign_media_url</code> 的 <code>absolute</code> 参数默认就是 <code>False</code>），浏览器按当前域名解析，前端代理换到哪台后端都不用手动改。构建时把像素放进对象存储、检索时再签发，就是为了聊天页能把图亮出来。</p>
 <h3 id="3-3-可靠性">3.3 可靠性</h3>
-<ul>
-<li><strong>失败分阶段</strong>：解析 / 嵌入失败只清临时目录，不碰旧 Milvus / PG / OBS。临界区内失败是窄窗口——旧数据此刻已删——代码会尽力清掉新上传对象，并承认同名再传可自愈。</li>
-<li><strong>图片单张 embed 失败用零向量继续</strong>，避免一张坏图打掉整份 PDF；文本 embed 条数对不上则整单中止，因为 BM25 和 dense 必须对齐叶子列表。</li>
-<li><strong>几何关联失败退回顺序配对</strong>，打不开 PDF 也不阻断入库。</li>
-<li><strong>协作式超时</strong>：整单 900 秒、单次 HTTP 90 秒，加上逐图检查点，避免 SDK 默认超时把线程池占满。</li>
-<li><strong>权限</strong>：进度查询校验 <code>meta.user_id</code>，防止拿别人的 <code>task_id</code> 看任务；管理接口一律 <code>get_owned</code>。</li>
-<li><strong>过滤表达式转义</strong>：<code>milvus_escape</code> 处理 scope 和 filename 里的引号，避免用户文件名打穿 expr。</li>
-</ul>
+<p>解析、嵌入失败只清临时目录，旧的 Milvus / PG / 对象存储不动。真正危险的是已经进了替换锁、旧数据删掉之后又失败——这个窗口很窄，新上传的对象会尽量清掉，而且同名再传一次就能自愈。</p>
+<p>图片单张 embed 失败，用零向量顶上，不让一张坏图毁掉整份 PDF；文本向量条数对不上就整单停，因为 BM25 和 dense 必须对齐。PDF 整页都框不住 L3、或者文件打不开，才退回按顺序配，不阻断入库。</p>
+<p>进度查询会核对 <code>meta.user_id</code>，不能拿别人的 <code>task_id</code> 看任务。Milvus 过滤里的 scope 和文件名会做转义，避免文件名里的引号把表达式打穿。</p>
 <hr>
 <h2 id="4-对照与收束">4 对照与收束</h2>
-<p>把常见多模态知识库做法和 Kura-AI 实装置在同一张表里，会更清楚「我们选的是哪一层，改的是哪一层」：</p>
+<p>对照那些更常见的做法，最终留下的是这张表：</p>
 <table>
 <thead>
 <tr>
 <th>维度</th>
-<th>常见做法</th>
-<th>Kura-AI 实装</th>
+<th>更常见的路</th>
+<th>Kura-AI 里的做法</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>文档表示</td>
-<td>整篇或整页一个向量；或图文融合单一 embedding</td>
-<td>L1/L2/L3 文本树 + 独立 L4 图片；分别 embed</td>
+<td>整篇或整页一个向量；图文融合成一条</td>
+<td>L1/L2/L3 文本树 + 独立 L4；分别 embed</td>
 </tr>
 <tr>
 <td>图片</td>
-<td>OCR 进文本通道；或整页截图</td>
-<td>抽内嵌图，VL embedding 吃像素；无 OCR、入库不生成 caption</td>
+<td>OCR 进文本；或整页截图</td>
+<td>抽内嵌图，让 VL embedding 看像素；入库不 OCR、不写 caption</td>
 </tr>
 <tr>
 <td>图文关系</td>
-<td>检索时按页猜测</td>
-<td>构建期写 <code>related_text_ids</code>，命中文本再扩图</td>
+<td>检索时按页猜</td>
+<td>入库时写 <code>related_text_ids</code>，命中文本再带图</td>
 </tr>
 <tr>
 <td>切分</td>
 <td>单层 chunk 直接检索</td>
-<td>叶子进 Milvus，父块进 PG，Auto-merge 上卷</td>
+<td>叶子进 Milvus，父块进 PG，再往上卷</td>
 </tr>
 <tr>
 <td>向量库</td>
-<td>pgvector 把所有东西塞进 PostgreSQL；或 Chroma 原型库</td>
-<td>Milvus hybrid（HNSW + 服务端 BM25 + 标量过滤）；PG 只放父块和关系</td>
+<td>全部塞进 pgvector 或 Chroma</td>
+<td>Milvus 做 hybrid；PG 只放父块和关系</td>
 </tr>
 <tr>
 <td>原图</td>
-<td>base64 进向量 payload</td>
-<td>MinIO + relpath；rerank 时才现读 Data URI</td>
+<td>base64 跟向量绑在一起</td>
+<td>MinIO + 相对路径；rerank 时再读</td>
 </tr>
 <tr>
 <td>更新</td>
 <td>先删后写，或同步解析</td>
-<td>后台 Job + 先处理后替换；同 hash 跳过</td>
+<td>后台 Job，先处理完再替换；hash 相同就跳过</td>
 </tr>
 <tr>
 <td>隔离</td>
 <td>全局一个库</td>
-<td><code>kb_scope</code> 一智能体一份；共享只读属主库</td>
+<td>一个智能体一份 scope；共享只能问</td>
 </tr>
 </tbody>
 </table>
-<p>一句话收束：<strong>文本负责被问到，图片负责被看到；关联在入库时写死，检索时再拼回来。</strong> Milvus 负责「像不像、词能不能对上」，PostgreSQL 负责「这段话的父块和旁边那张图」，对象存储负责像素。三者叠在一起，才是 Kura-AI 现在的多模态知识库。</p>
+<p>一句话收束：<strong>文本负责被问到，图片负责被看到；关联在入库时写死，检索时再拼回来。</strong> Milvus 管「像不像、词能不能对上」，PostgreSQL 管「这段话的父块和旁边那张图」，对象存储管像素。三者叠在一起，才是现在这套多模态知识库。</p>
 
                 
               </div>
@@ -615,7 +607,7 @@
   <div class="license-box my-3">
     <div class="license-title">
       <div>「Kura-AI」项目中多模态知识库是如何构建的</div>
-      <div>https://marisamagic.github.io/2026/09/04/20260904_Kura-AI_多模态知识库/</div>
+      <div>https://marisamagic.github.io/2026/09/05/20260904_Kura-AI_多模态知识库/</div>
     </div>
     <div class="license-meta">
       
@@ -627,7 +619,7 @@
       
         <div class="license-meta-item license-meta-date">
           <div>发布于</div>
-          <div>2026年9月4日</div>
+          <div>2026年9月5日</div>
         </div>
       
       
@@ -663,8 +655,8 @@
                   <article class="post-next col-6">
                     
                     
-                      <a href="/2026/09/04/20260904_Kura-AI_Agent%E6%8E%A8%E7%90%86%E8%8C%83%E5%BC%8F/" title="「Kura-AI」项目中 Agent 采用了什么推理范式？如何设计的">
-                        <span class="hidden-mobile">「Kura-AI」项目中 Agent 采用了什么推理范式？如何设计的</span>
+                      <a href="/2026/09/05/20260905_Kura-AI_%E9%95%BF%E7%9F%AD%E6%9C%9F%E8%AE%B0%E5%BF%86/" title="「Kura-AI」项目中长短期记忆是如何设计的">
+                        <span class="hidden-mobile">「Kura-AI」项目中长短期记忆是如何设计的</span>
                         <span class="visible-mobile">下一篇</span>
                         <i class="iconfont icon-arrowright"></i>
                       </a>

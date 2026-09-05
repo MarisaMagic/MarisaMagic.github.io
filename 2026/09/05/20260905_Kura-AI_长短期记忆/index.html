@@ -1,0 +1,963 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="我在 Kura-AI 里设计长短期记忆时，没有走 Checkpointer 加 Store，也没做跨会话的用户画像，而是把它做成单会话内的三层：消息原文永远留在 PostgreSQL 的消息树里，压缩不删任何一行；压缩只是让子模型把挤出窗口的旧轮写成摘要，存进会话行的 metadata，每轮现场拼出「摘要 + 近文原文」喂给主模型；离开窗口的整轮原文再切块进独立的 Milvus 集合，靠预注入和每">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Kura-AI」项目中长短期记忆是如何设计的">
+<meta property="og:url" content="https://marisamagic.github.io/2026/09/05/20260905_Kura-AI_%E9%95%BF%E7%9F%AD%E6%9C%9F%E8%AE%B0%E5%BF%86/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="我在 Kura-AI 里设计长短期记忆时，没有走 Checkpointer 加 Store，也没做跨会话的用户画像，而是把它做成单会话内的三层：消息原文永远留在 PostgreSQL 的消息树里，压缩不删任何一行；压缩只是让子模型把挤出窗口的旧轮写成摘要，存进会话行的 metadata，每轮现场拼出「摘要 + 近文原文」喂给主模型；离开窗口的整轮原文再切块进独立的 Milvus 集合，靠预注入和每">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
+<meta property="article:published_time" content="2026-09-05T04:57:11.120Z">
+<meta property="article:modified_time" content="2026-09-05T04:58:39.016Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Kura-AI">
+<meta property="article:tag" content="记忆">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
+  
+  
+  
+  <title>「Kura-AI」项目中长短期记忆是如何设计的 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Kura-AI」项目中长短期记忆是如何设计的"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-09-05 12:57" pubdate>
+          2026年9月5日 下午
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.5k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          47 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Kura-AI」项目中长短期记忆是如何设计的</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>⭐ Kura AI 项目链接：<a target="_blank" rel="noopener" href="https://github.com/MarisaMagic/Kura-AI">https://github.com/MarisaMagic/Kura-AI</a></p>
+<h2 id="0-前言">0 前言</h2>
+<p>这是 Kura-AI 专题的第 4 篇。第 1 篇写推理范式时，已经点过「会话压缩、记忆预注入、落库后归档」；第 2、第 3 篇分别写知识库怎么建、Agentic RAG 怎么搜。这一篇停在<strong>同一场对话内部</strong>：窗口越聊越长之后，什么留下给模型看，什么归档，怎么找回来。</p>
+<p>先把结论放在前面。Kura-AI 的记忆是<strong>单会话内的三层</strong>，不是教科书 STM / LTM 的一对一翻译：</p>
+<ul>
+<li><strong>原文树</strong>：PostgreSQL <code>mg_chat_messages</code> 保存这场对话完整长什么样，含重生成分叉；Redis 只缓存当前路径。UI 永远读这一层。<strong>压缩不删这里的任何一行。</strong></li>
+<li><strong>短时上下文</strong>：这一轮主模型实际看见什么。默认按字符预算触发：子模型把挤出窗口的旧轮写成摘要，摘要进会话行 <code>mg_chat_sessions.metadata_json</code>；送给模型的是现场拼出来的「摘要 + 近文原文」，这条摘要 Human 不落回消息表。关掉压缩才退回最近 N 轮滑动窗口。</li>
+<li><strong>会话归档记忆</strong>：离开原文窗口的整轮<strong>原文</strong>切块，写入与知识库隔离的 Milvus 集合 <code>kura_ai_chat_memory</code>。压缩摘要本身不进向量库。进循环前预注入一小段，仍不够再调一次 <code>search_session_memory</code>。</li>
+</ul>
+<p>跨会话「这个用户是谁」的长期画像<strong>故意没有做</strong>。产品是按智能体、按会话隔离的对话中心，不是全局私人助理。</p>
+<pre><code class=" mermaid">flowchart TD
+  user[用户提问] --&gt; load[storage.load 当前路径]
+  load --&gt; compact[压缩视图或滑动窗口]
+  load --&gt; prefetch[记忆预检索]
+  compact --&gt; inject[摘录并进本轮 Human]
+  prefetch --&gt; inject
+  inject --&gt; react[create_agent ReAct]
+  react --&gt;|不够再搜| tool[search_session_memory 每轮一次]
+  tool --&gt; react
+  react --&gt; save[助手消息落库]
+  save --&gt; archive[后台归档离开窗口的整轮]
+  archive --&gt; milvus[Milvus kura_ai_chat_memory]
+  milvus --&gt; prefetch
+  milvus --&gt; tool
+</code></pre>
+<p>入库细节和第 1 篇的主循环范式只引用、不展开。知识库检索和记忆检索同构——hybrid、子模型打杂——但不复述第 2、第 3 篇。</p>
+<hr>
+<h2 id="1-先把「这场对话要记住什么」想清楚">1 先把「这场对话要记住什么」想清楚</h2>
+<p>谈压缩和向量之前，我先把「这场对话要记住什么」当成产品合同写清楚。读路径入口是 <code>app/chat/agent_service.py</code> 的 <code>_prepare_to_invoke_messages</code>；写路径入口是同一文件里助手落库之后的 <code>schedule_archive_session_memory</code>。</p>
+<h3 id="1-1-边界：能记住什么、不能做什么、什么算成功">1.1 边界：能记住什么、不能做什么、什么算成功</h3>
+<p>我给一场对话的记忆立了四条规矩：</p>
+<ul>
+<li><strong>能做什么</strong>：续聊时模型看见最近原文，外加一份可重放的压缩摘要；窗口外的旧轮可按当前问题预注入，或由 Agent 再搜一次；重生成、切分支时，共享前缀的摘要和向量能复用，旁支轮次不会串进当前回答。</li>
+<li><strong>不能做什么</strong>：记忆不跨会话、不跨用户、不进知识库 collection <code>kura_ai_kb</code>。模型改不了 <code>memory_scope</code>。同一轮 <code>search_session_memory</code> 最多<strong>调用</strong>一次——槽位发起即占位、失败不释放；顺带说一句，工具 description 里对模型写的是「最多成功调用一次」，措辞比实现更严，两边口径不一致，读代码时留意。</li>
+<li><strong>必须让位</strong>：压缩摘要失败时，本轮只截断原文窗口，不把半成品写进 metadata。没有 <code>EMBEDDING_API_KEY</code> 时，归档和检索整条跳过，对话仍能继续，只是早期事实找不回来。</li>
+<li><strong>什么算成功</strong>：前端时间线仍是完整消息树；主模型上下文不随轮数线性膨胀；用户说「上次那个数」时，能从归档里捞回具体片段，而不是只剩一句「之前讨论过相关问题」。</li>
+</ul>
+<p>这四条决定了后面所有设计。摘要再漂亮，把原文改没了、把兄弟分支的结论搜进来、没嵌入密钥就把整轮对话打成 500，都不算做成。</p>
+<h3 id="1-2-作用域是会话，不是用户">1.2 作用域是会话，不是用户</h3>
+<p>记忆设计的第一步不是选 Milvus，而是定作用域。Kura-AI 的隔离键只有一行：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/chat/memory_scope.py</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">memory_scope_for</span>(<span class="hljs-params">user_id: <span class="hljs-built_in">int</span>, agent_id: <span class="hljs-built_in">int</span>, session_id: <span class="hljs-built_in">str</span></span>) -&gt; <span class="hljs-built_in">str</span>:<br>    <span class="hljs-string">&quot;&quot;&quot;构建单会话记忆范围键：u&#123;user&#125;_a&#123;agent&#125;_s&#123;session_id&#125;&quot;&quot;&quot;</span><br>    sid = (session_id <span class="hljs-keyword">or</span> <span class="hljs-string">&quot;&quot;</span>).strip()<br>    <span class="hljs-keyword">return</span> <span class="hljs-string">f&quot;u<span class="hljs-subst">&#123;<span class="hljs-built_in">int</span>(user_id)&#125;</span>_a<span class="hljs-subst">&#123;<span class="hljs-built_in">int</span>(agent_id)&#125;</span>_s<span class="hljs-subst">&#123;sid&#125;</span>&quot;</span><br></code></pre></td></tr></table></figure>
+<p>三元组缺一不可。同一个用户开两个会话，记忆互不可见；同一个智能体被两个人用，也互不可见。删会话时必须先 <code>purge_session_memory_vectors</code>，再删 PostgreSQL 行——代码注释写的是「PG 会话行删除后无法再查 session_id」：会话行一删，就再也拼不出 scope 键，向量会变成没人能删的孤儿。</p>
+<p>知识库用的是 <code>kb_scope = u&#123;uid&#125;_a&#123;aid&#125;</code>，少一维。那是「这个智能体的文档」，这份记忆是「这场对话被挤出窗口的旧轮」。两套 collection、两套生命周期，不能混。</p>
+<h3 id="1-3-一轮-一条-Human-及其后直到下一条-Human">1.3 一轮 = 一条 Human 及其后直到下一条 Human</h3>
+<p>压缩、归档、检索共用同一个切分：一轮从用户开口算起，收走后面的助手回复、工具调用、工具回注，直到下一条用户消息。<code>app/chat/memory_turns.py</code> 的 <code>group_turns</code> 是双指针，O(n)。</p>
+<p>稳定身份不是「第 3 轮」这种下标。<code>turn_key</code> 取轮首用户消息的数据库行 id。重生成会在同一条用户消息下插兄弟助手版本，下标会漂，行 id 不会。压缩状态、Milvus 过滤、归档去重，都挂在这个键上。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/chat/memory_turns.py</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">turn_keys_of</span>(<span class="hljs-params">messages: <span class="hljs-built_in">list</span>[BaseMessage], path_ids: <span class="hljs-built_in">list</span>[<span class="hljs-built_in">int</span>] | <span class="hljs-literal">None</span></span>) -&gt; <span class="hljs-built_in">list</span>[<span class="hljs-built_in">int</span>]:<br>    <span class="hljs-string">&quot;&quot;&quot;当前路径各轮的稳定身份（turn_key = 轮首用户消息的数据库行 id）。&quot;&quot;&quot;</span><br>    <span class="hljs-keyword">if</span> <span class="hljs-keyword">not</span> path_ids <span class="hljs-keyword">or</span> <span class="hljs-built_in">len</span>(path_ids) != <span class="hljs-built_in">len</span>(messages):<br>        <span class="hljs-keyword">return</span> []<br>    prefix, body = split_system_prefix(messages)<br>    pairs = <span class="hljs-built_in">list</span>(<span class="hljs-built_in">zip</span>(path_ids[<span class="hljs-built_in">len</span>(prefix):], body))<br>    <span class="hljs-keyword">return</span> [t[<span class="hljs-number">0</span>][<span class="hljs-number">0</span>] <span class="hljs-keyword">for</span> t <span class="hljs-keyword">in</span> group_turn_pairs(pairs) <span class="hljs-keyword">if</span> t]<br></code></pre></td></tr></table></figure>
+<p><code>path_ids</code> 与消息不等长时返回空列表，调用方退回旧的下标逻辑。这是兼容，不是主路径。</p>
+<hr>
+<h2 id="2-实现思路，以及为什么不换">2 实现思路，以及为什么不换</h2>
+<p>第 1 篇把记忆写成脚手架上的两步：压缩视图，再预注入。往下拆，每一步都是我在否决另一种更常见的做法。</p>
+<h3 id="2-1-短时上下文：怎么压缩，压完放哪">2.1 短时上下文：怎么压缩，压完放哪</h3>
+<p>这里的「压缩」不是 gzip，也不是把旧消息从库里删掉。它是：估算即将送给主模型的 prompt 太长时，用子模型把<strong>挤出窗口的旧轮</strong>写成一份摘要；原文仍在消息表，摘要只写进会话元数据；这一轮真正发给 <code>create_agent</code> 的，是现场拼出来的视图。</p>
+<p>主路径在 <code>CHAT_USE_SESSION_MEMORY</code> 和 <code>CHAT_COMPACT_ENABLED</code> 都开时，走 <code>build_compacted_model_messages</code>。</p>
+<h4 id="先分清三份东西">先分清三份东西</h4>
+<table>
+<thead>
+<tr>
+<th>东西</th>
+<th>存在哪</th>
+<th>压缩会不会改它</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>用户 / 助手 / 工具的<strong>原文</strong></td>
+<td><code>mg_chat_messages</code>（消息树，append-only）</td>
+<td><strong>不会。</strong> UI 回看、重生成、事后归档都读这里</td>
+</tr>
+<tr>
+<td><strong>摘要文本 + 覆盖了哪些轮</strong></td>
+<td>同一会话行 <code>mg_chat_sessions.metadata_json</code></td>
+<td><strong>会。</strong> 成功压缩才 <code>patch_session_metadata</code></td>
+</tr>
+<tr>
+<td><strong>模型本轮看见的列表</strong></td>
+<td>只存在于这次请求的内存里</td>
+<td>每轮重拼；那条 <code>【会话压缩摘要】</code> Human <strong>不</strong> <code>append_messages</code></td>
+</tr>
+</tbody>
+</table>
+<p>主路径写入的 JSON 长这样，最多留 4 条（照顾重生成分叉）：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs json"><span class="hljs-punctuation">&#123;</span><br>  <span class="hljs-attr">&quot;compact_states&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><br>    <span class="hljs-punctuation">&#123;</span><br>      <span class="hljs-attr">&quot;covered_turn_keys&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span><span class="hljs-number">12</span><span class="hljs-punctuation">,</span> <span class="hljs-number">18</span><span class="hljs-punctuation">,</span> <span class="hljs-number">25</span><span class="hljs-punctuation">]</span><span class="hljs-punctuation">,</span><br>      <span class="hljs-attr">&quot;summary&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;用户要做……已决定……未完成……&quot;</span><br>    <span class="hljs-punctuation">&#125;</span><br>  <span class="hljs-punctuation">]</span><br><span class="hljs-punctuation">&#125;</span><br></code></pre></td></tr></table></figure>
+<p><code>covered_turn_keys</code> 是已经被摘要掉的那几轮的轮首用户消息行 id。旧字段 <code>compact_summary</code> + <code>compact_until_turn_index</code> 现在只当兼容层用：写入侧在拿不到 turn_keys 时才写它；读取侧更宽容一点——metadata 里根本没有 <code>compact_states</code> 列表时，旧字段会被惰性映射成一条 state，保证老会话升级后不丢摘要。</p>
+<p>摘要<strong>不进</strong> Milvus。向量库里是离开窗口之后的<strong>原文切块</strong>，和这份摘要是两条线：摘要保目标与约束，向量保「那个数是 0.37」。</p>
+<h4 id="怎么压">怎么压</h4>
+<p>每轮进循环前跑一遍，步骤是固定的。</p>
+<p><strong>1. 按轮切开。</strong> 一轮 = 一条用户 Human + 其后直到下一条 Human 之前的助手 / 工具消息。</p>
+<p><strong>2. 读上次压到哪。</strong> 用当前路径的 <code>turn_key</code> 去 <code>compact_states</code> 里找最长前缀匹配，得到已有 <code>summary</code> 和 <code>keep_from</code>（从第几轮起仍保留原文）。没压过则 <code>keep_from = 0</code>，摘要为空。</p>
+<p><strong>3. 估算会不会爆。</strong> 用字符数，不接各家 tokenizer：</p>
+<figure class="highlight clean"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs clean">估算 = 工具粗估 <span class="hljs-number">8000</span> + <span class="hljs-keyword">system</span> + 已有摘要 + 原文窗口 + headroom <span class="hljs-number">12000</span><br></code></pre></td></tr></table></figure>
+<p>默认阈值 <code>CHAT_COMPACT_TRIGGER_CHARS = 80000</code>。不到阈值：<strong>不新压</strong>，只把已有摘要重放进去。</p>
+<p><strong>4. 超了，从尾巴往回留约 24000 字。</strong> <code>_choose_keep_from</code> 从最新一轮往旧的加，加到超过 <code>CHAT_COMPACT_KEEP_CHARS</code> 就停（最新一轮即使超预算也保留）。中间那段 <code>turns[旧 keep_from : 新 keep_from]</code> 叫 dropped——只是不再放进模型上下文，<strong>不是从数据库删</strong>。</p>
+<p><strong>5. 子模型写新摘要。</strong> <code>_run_summarizer</code> 把「已有摘要」和 dropped 的纯文本合成一份（输入侧先截到 60000 字），输出上限 4000 字。提示词要求保留目标、决定、未完成事项、文件名 / ID / 数字；禁止写入本轮检索开关、选档范围、附件列表。成功则写入 <code>compact_states</code>，<code>keep_from</code> 前移；失败则本轮只截断窗口，<strong>不改 metadata</strong>，下一轮再试。</p>
+<p><strong>6. 现场拼模型视图。</strong></p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/chat/compact.py  build_compacted_model_messages()</span><br>out = <span class="hljs-built_in">list</span>(prefix)                 <span class="hljs-comment"># 原来的 System</span><br><span class="hljs-keyword">if</span> summary:<br>    out.append(_summary_message(summary))  <span class="hljs-comment"># Human: 【会话压缩摘要】\n\n...</span><br><span class="hljs-keyword">for</span> t <span class="hljs-keyword">in</span> turns[keep_from:]:<br>    out.extend(t)                  <span class="hljs-comment"># 窗口内原文</span><br><span class="hljs-keyword">return</span> out<br></code></pre></td></tr></table></figure>
+<p>关掉压缩，才退回 <code>apply_sliding_window_turns</code>，只留最近 <code>CHAT_MEMORY_WINDOW_TURNS</code>（默认 10）轮，连摘要都不写。函数注释写的是：「主路径已改为按字符预算压缩（CHAT_COMPACT_ENABLED）；本函数仅作关闭压缩时的回退。」</p>
+<h4 id="用数字走一遍">用数字走一遍</h4>
+<p>假设已经聊了 20 轮，上次把 1–8 轮摘要过，窗口从第 9 轮开始。本轮估算 ≥ 80000：</p>
+<ol>
+<li>从第 20 轮往回留到大约 24000 字，比如新窗口从第 14 轮起。</li>
+<li>第 9–13 轮打成纯文本，和旧摘要一起交给子模型。</li>
+<li>新摘要写入 <code>mg_chat_sessions.metadata_json.compact_states</code>，<code>covered_turn_keys</code> 变成第 1–13 轮的行 id。</li>
+<li>主模型看见：摘要 Human + 第 14–20 轮原文。</li>
+<li><code>mg_chat_messages</code> 里 1–20 轮一行都在。</li>
+<li>助手落库后，归档线程才把已离开窗口、尚未进向量库的轮次写入 Milvus——那是下一节，不是压缩本身。</li>
+</ol>
+<pre><code class=" mermaid">flowchart LR
+  pg[mg_chat_messages 原文不动]
+  meta[mg_chat_sessions.metadata_json]
+  view[本次请求的模型视图]
+  pg --&gt; view
+  meta --&gt;|重放 summary| view
+  pg --&gt;|dropped 轮交给子模型| sum[新摘要]
+  sum --&gt; meta
+</code></pre>
+<p>不采用另外四条路。</p>
+<p><strong>永远最近 N 轮。</strong> 一轮里只要出现几次工具回注，10 轮的字符数就能把上下文撑满；早期约定、文件名、用户约束却整段消失。字符预算按「模型实际要吞多少字」触发，比按轮数公平。</p>
+<p><strong>只裁剪、不摘要。</strong> 窗口外的目标、未完成事项、关键实体会直接蒸发。摘要就是为了把这些留下来。</p>
+<p><strong>摘要覆盖原文。</strong> UI 要回看，归档要按原文切块，重生成要保留旧分支。所以原文必须留在消息表，压缩只改 metadata 和模型视图。</p>
+<p><strong>按 token 精确计数。</strong> 要为每个供应商接 tokenizer，还要处理多模态占位。字符预算够用：阈值远大于保留窗口，中间留了 tools 粗估和 12000 字 headroom，宁早压、不踩上限。</p>
+<h3 id="2-2-不用-LangGraph-Checkpointer-当短期记忆">2.2 不用 LangGraph Checkpointer 当短期记忆</h3>
+<p><code>create_agent</code> 在 Kura-AI 里不带 checkpointer。会话真相在 <code>app/chat/storage.py</code>：消息是树，<code>parent_id</code> 指向上一行，<code>selected_child_id</code> 指向当前选中的孩子。重生成走 <code>insert_assistant_version</code>，在同一条用户消息下插入兄弟助手版本，并改选中指针；旧分支完整留着。</p>
+<p>Checkpointer 按 <code>thread_id</code> 拍整张图的 State 快照，适合「同一条执行线程暂停再续」。它盖不住「同一会话多条分支、前端决定看哪条路径」。Kura-AI 要的短期记忆，是<strong>当前路径上的消息列表</strong>，不是 Agent 图的存档位。</p>
+<p>这也是为什么第 1 篇把「暂停恢复」做成 Redis Job SSE，而不是 LangGraph <code>interrupt()</code>。记忆层和执行层拆开：消息树管对话版本，Job 管这一轮生成能不能续传。</p>
+<h3 id="2-3-长期是会话归档，不是用户-Store">2.3 长期是会话归档，不是用户 Store</h3>
+<p>离开原文窗口的整轮，才会进入 Milvus。窗口边界由 <code>verbatim_keep_from_for_session</code> 读取压缩状态；还在窗口里的轮次，模型已经看见原文，不必再向量化。</p>
+<p>归档函数的注释几乎就是设计说明：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/chat/memory_archive.py</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">archive_session_memory</span>(<span class="hljs-params">user_id: <span class="hljs-built_in">int</span>, agent_id: <span class="hljs-built_in">int</span>, session_id: <span class="hljs-built_in">str</span></span>) -&gt; <span class="hljs-literal">None</span>:<br>    <span class="hljs-string">&quot;&quot;&quot;</span><br><span class="hljs-string">    将当前路径上已离开原文窗口且未归档的轮次增量写入 Milvus（按 turn_key 幂等去重）。</span><br><span class="hljs-string">    原文窗口由会话压缩 metadata（compact_states）决定，摘要本身不入库。</span><br><span class="hljs-string">    分叉后各分支共享前缀只归档一次；非当前路径的分支轮次不处理，切回后继续聊时自然归档。</span><br><span class="hljs-string">    &quot;&quot;&quot;</span><br></code></pre></td></tr></table></figure>
+<p>每轮先 <code>turn_to_text</code>：用户、助手、工具各有截断（8000 / 12000 / 2000 字），再按 <code>CHAT_MEMORY_CHUNK_MAX_CHARS</code>（默认 1400）切开。<code>chunk_id</code> 带会话摘要哈希和 <code>turn_key</code>，跨分支不撞车。嵌入与知识库同一套 <code>qwen3-vl-embedding</code>，写入独立集合 <code>kura_ai_chat_memory</code>。成功后把新 <code>turn_key</code> 并进 <code>memory_archived_turn_keys</code>。</p>
+<p><code>db_models.py</code> 里还留着一张 <code>ChatMemoryCursor</code>，按 <code>last_archived_turn_index</code> 记水位。代码已经不再读写它。下标水位过不了分支；改成 turn_key 集合之后，共享前缀自然幂等。</p>
+<p>不采用另外四条路。</p>
+<p><strong>跨会话用户画像。</strong> 「不吃辣」这种偏好，下一场新会话默认不继承。产品的隔离单元是会话：删会话就要能删干净，共享智能体也不能把提问者的闲聊写进属主的长期档案。要做用户级 Store，作用域、权限、遗忘都得另开一层，现在没有这层需求。</p>
+<p><strong>和知识库共用 collection。</strong> 知识库是 L3 叶子 + L4 图片 + Auto-merge 父块，按 <code>kb_scope</code> 活到智能体被删。记忆是整轮对话切块，按 <code>session_id</code> 活到会话被删，还要带 <code>turn_key</code>。schema 和生命周期都对不上。</p>
+<p><strong>把压缩摘要当记忆正文。</strong> 摘要擅长目标和约束，不擅长「那个数是 0.37」。向量库存原文切块，检索才能把数字、人名、代码片段捞回来。</p>
+<p><strong>一落库就全量向量化。</strong> 窗口内的轮次已经在 prompt 里。提前嵌入只是重复付费，还让检索集合掺进模型本就看得见的近文，顶掉更早的命中。</p>
+<h3 id="2-4-读路径：预注入-一次工具">2.4 读路径：预注入 + 一次工具</h3>
+<p>写入是增量归档，读出是两条互补通道，都只打<strong>当前路径上已归档</strong>的 <code>turn_key</code>。</p>
+<p><strong>预注入。</strong> <code>_prepare_to_invoke_messages</code> 用本轮用户输入跑 <code>proactive_session_memory_inject_text</code>，默认 top_k=3。有命中就拼进最后一条 Human 的「本轮上下文」，不进 System，也不落库——和选档范围、读图 caption、MCP 批准备注同一条纪律。流式路径里，这段预检索和知识库选档 <code>asyncio.gather</code>，算过一次的结果用 <code>skip_memory_retrieve</code> 跳过第二遍。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/chat/agent_prompt.py  _format_turn_context_block()</span><br><span class="hljs-keyword">if</span> (memory_inject <span class="hljs-keyword">or</span> <span class="hljs-string">&quot;&quot;</span>).strip():<br>    parts.append(<br>        <span class="hljs-string">&quot;【本回合根据用户最新输入自动检索的较早会话摘录（仅供参考；&quot;</span><br>        <span class="hljs-string">&quot;若仍不足可再调用 search_session_memory 工具）】\n\n&quot;</span><br>        + memory_inject.strip()<br>    )<br></code></pre></td></tr></table></figure>
+<p><strong>工具。</strong> <code>search_session_memory</code> 默认配置下始终挂在 <code>create_agent</code> 上（受 <code>CHAT_USE_SESSION_MEMORY</code> 门控，默认开）。工具描述把调用条件写死：指代在近文里找不到、追问早期事实、任务依赖多轮之前的上下文。近文已经有答案，或问题其实该走知识库 / 附件，就不要调。<code>try_acquire_memory_tool_slot</code> 每轮只许占用一次——发起即占位、失败不释放，超了返回 <code>TOOL_CALL_LIMIT_REACHED</code>。</p>
+<p>检索本身比知识库子图薄。子模型先做查询重写，把「那个」「上次」补成可检索的主题；失败则退回原句。然后 dense + 服务端 BM25，RRF 融合。过滤表达式同时锁 <code>memory_scope</code> 和 turn_key 白名单；白名单为空时写成 <code>turn_key in [-1]</code>，保证一次都命不中，而不是退化成「整个会话随便搜」。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/chat/milvus_memory.py</span><br><span class="hljs-keyword">def</span> <span class="hljs-title function_">memory_filter_expr</span>(<span class="hljs-params">memory_scope: <span class="hljs-built_in">str</span>, *, turn_keys: <span class="hljs-built_in">list</span>[<span class="hljs-built_in">int</span>] | <span class="hljs-literal">None</span> = <span class="hljs-literal">None</span></span>) -&gt; <span class="hljs-built_in">str</span>:<br>    esc = milvus_escape(memory_scope)<br>    expr = <span class="hljs-string">f&#x27;memory_scope == &quot;<span class="hljs-subst">&#123;esc&#125;</span>&quot;&#x27;</span><br>    <span class="hljs-keyword">if</span> turn_keys <span class="hljs-keyword">is</span> <span class="hljs-keyword">not</span> <span class="hljs-literal">None</span>:<br>        keys = <span class="hljs-string">&quot;,&quot;</span>.join(<span class="hljs-built_in">str</span>(<span class="hljs-built_in">int</span>(k)) <span class="hljs-keyword">for</span> k <span class="hljs-keyword">in</span> turn_keys) <span class="hljs-keyword">or</span> <span class="hljs-string">&quot;-1&quot;</span><br>        expr += <span class="hljs-string">f&quot; &amp;&amp; turn_key in [<span class="hljs-subst">&#123;keys&#125;</span>]&quot;</span><br>    <span class="hljs-keyword">return</span> expr<br></code></pre></td></tr></table></figure>
+<p>不采用另外三条路。</p>
+<p><strong>只预注入。</strong> 用户问法和归档用词对不上时，自动检索会空。工具是补救，也是模型看见「近文不够」之后的显式动作。</p>
+<p><strong>只靠 Agent 决定搜不搜。</strong> 多一轮 ReAct，首字延迟和工具配额都更贵。预注入把「很像在问旧事」的常见情况挡在循环外。</p>
+<p><strong>把 grade / rewrite 做成记忆子图。</strong> 第 3 篇的 RAG 子图要对付文档噪声和拒答。会话记忆的候选本来就是自己说过的话，重写加 hybrid 够用；再套一层打分，是在为少见的脏召回付固定税。</p>
+<h3 id="2-5-分支：turn-key-而不是-turn-index">2.5 分支：turn_key 而不是 turn_index</h3>
+<p>对话页允许重生成。压缩、归档、检索如果按下标对齐，切到兄弟版本就会拿错摘要、搜到旁支里的结论。</p>
+<p>三处都改挂 <code>turn_key</code>：</p>
+<table>
+<thead>
+<tr>
+<th>环节</th>
+<th>怎么用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>压缩</td>
+<td><code>compact_states[].covered_turn_keys</code> 必须是当前路径前缀；匹配最长的那条摘要</td>
+</tr>
+<tr>
+<td>归档</td>
+<td><code>chunk_id = mem_&#123;digest&#125;_k&#123;turn_key&#125;_c&#123;ci&#125;</code>；已在集合里的 key 跳过</td>
+</tr>
+<tr>
+<td>检索</td>
+<td><code>archived_turn_keys_on_path</code> = 当前路径 ∩ 已归档集合</td>
+</tr>
+</tbody>
+</table>
+<p>共享前缀只摘要一次、只嵌入一次。旁支轮次可以继续躺在 Milvus 里，但过滤表达式进不去。切回那条分支继续聊，归档会从当时的窗口外接着做。相关行为钉在 <code>tests/chat/test_branch_tree.py</code>：前缀匹配、非前缀拒绝、空白名单命中不到任何行。</p>
+<hr>
+<h2 id="3-优化">3 优化</h2>
+<p>脚手架能跑，还不等于长对话好用。下面这些是已经落地的，不是规划。</p>
+<h3 id="3-1-体验与延迟">3.1 体验与延迟</h3>
+<p><strong>预注入和选档并行。</strong> 流式路径里两段都要调子模型、都可能打外部服务。<code>iter_chat_stream_events</code> 用 <code>asyncio.gather</code> 包起来，少一段串行等待。第 3 篇写选档时提过同一处。</p>
+<p><strong>归档不挡 SSE。</strong> 助手正文先落库、先推给前端，再 <code>schedule_archive_session_memory</code>。默认 <code>CHAT_MEMORY_ARCHIVE_ASYNC=true</code>，daemon 线程跑嵌入和 insert。用户看见回复的时刻，不该排队等旧轮向量化。</p>
+<p><strong>思考区看得到记忆。</strong> 预注入、压缩、工具检索都会 <code>emit_rag_step</code>：预注入的步骤叫「会话记忆预注入」，压缩的步骤叫「会话压缩」（detail 是「已摘要较早对话，原文自轮次 N 起」），工具检索叫「会话记忆检索」。界面不是「后台悄悄丢了几轮」，而是能看到每一步。</p>
+<h3 id="3-2-性能与成本">3.2 性能与成本</h3>
+<p><strong>热路径不再 describe collection。</strong> <code>ChatMemoryMilvusManager</code> 在进程内记住 <code>_init_done</code> 和 <code>_has_bm25</code>。检索是对话热路径，不能每问都问 Milvus 一遍 schema。旧集合缺 BM25 时只走 dense，并打日志提醒跑 <code>python -m app.chat.migrate_memory_bm25</code>。迁移脚本拷标量和已有 dense，不重调 embedding。</p>
+<p><strong>同一轮 metadata 只读一次。</strong> 归档链路把 <code>get_session_metadata</code> 的结果传给 <code>verbatim_keep_from_for_session</code> 和已归档集合计算，避免压缩边界和水位线各查一遍库。</p>
+<p><strong>打杂不占主人格。</strong> 压缩摘要和记忆查询重写走 <code>_sub_llm_config_from_ua</code>，和第 1 篇的选档、RAG 打分同一套子模型配置。子 Key 配不齐就整份回退主配置，不混搭 endpoint。</p>
+<p>配置旋钮集中在 <code>app/settings/config.py</code>，默认值本身就是在讲策略：总开关打开、压缩优先于滑窗、触发远大于保留、预注入比工具更窄、归档默认异步。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/settings/config.py</span><br>CHAT_USE_SESSION_MEMORY: <span class="hljs-built_in">bool</span> = <span class="hljs-literal">True</span><br>CHAT_MEMORY_WINDOW_TURNS: <span class="hljs-built_in">int</span> = <span class="hljs-number">10</span>          <span class="hljs-comment"># 仅关压缩时生效</span><br>CHAT_COMPACT_ENABLED: <span class="hljs-built_in">bool</span> = <span class="hljs-literal">True</span><br>CHAT_COMPACT_TRIGGER_CHARS: <span class="hljs-built_in">int</span> = <span class="hljs-number">80000</span><br>CHAT_COMPACT_KEEP_CHARS: <span class="hljs-built_in">int</span> = <span class="hljs-number">24000</span><br>CHAT_MEMORY_CHUNK_MAX_CHARS: <span class="hljs-built_in">int</span> = <span class="hljs-number">1400</span><br>CHAT_MEMORY_SEARCH_TOP_K: <span class="hljs-built_in">int</span> = <span class="hljs-number">5</span><br>CHAT_MEMORY_PROACTIVE_INJECT: <span class="hljs-built_in">bool</span> = <span class="hljs-literal">True</span><br>CHAT_MEMORY_PROACTIVE_TOP_K: <span class="hljs-built_in">int</span> = <span class="hljs-number">3</span><br>CHAT_MEMORY_ARCHIVE_ASYNC: <span class="hljs-built_in">bool</span> = <span class="hljs-literal">True</span><br></code></pre></td></tr></table></figure>
+<h3 id="3-3-检索质量与降级">3.3 检索质量与降级</h3>
+<p><strong>服务端 BM25 替换进程内词表。</strong> 旧实现把稀疏向量算在本地，进程重启词表会漂、IDF 会歪。现在和知识库一样，用 Milvus 的 <code>bm25_fn</code>。查询侧直接传文本。</p>
+<p><strong>单块不要太长。</strong> 1400 字的上限是在「一轮太长会变成一条什么都像的向量」和「切太碎会丢掉邻句」之间折的。Tool / AI 在入库前先截断，避免一次工具回注把整块占满。</p>
+<p><strong>失败必须可继续。</strong> 重写失败用原 query；压缩失败本轮只截断，下一轮再试摘要；没有嵌入密钥则预注入返回 <code>None</code>、工具返回「未配置嵌入服务」、归档直接 return。记忆是增强，不是对话的前置条件。</p>
+<p>没有 TTL，也没有重要性衰减。遗忘的单位是会话：删会话，向量按 <code>memory_scope</code> 整段清掉。这和「作用域是会话」是同一条合同。</p>
+<hr>
+<h2 id="4-对照与收束">4 对照与收束</h2>
+<p>把教科书标签和 Kura-AI 实装置在同一张表里，会更清楚「我选的是哪一层，改的是哪一层」：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>教科书 / 常见做法</th>
+<th>Kura-AI 实装</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>短期记忆</td>
+<td>State + <code>thread_id</code> + Checkpointer</td>
+<td>当前路径消息树 + 字符预算压缩视图</td>
+</tr>
+<tr>
+<td>长期记忆</td>
+<td>跨线程 Store / 用户画像</td>
+<td>仅当前会话的 Milvus 归档，按 <code>memory_scope</code> 隔离</td>
+</tr>
+<tr>
+<td>上下文治理</td>
+<td>裁剪 / 删除 / 摘要三选一</td>
+<td>原文永不因压缩删除；摘要进 metadata；旧轮原文另存向量</td>
+</tr>
+<tr>
+<td>写入时机</td>
+<td>「请记住」实时写，或后台抽偏好</td>
+<td>离开原文窗口才增量归档，摘要本身不入库</td>
+</tr>
+<tr>
+<td>读出时机</td>
+<td>每次把 Store 全倒进 prompt</td>
+<td>预注入 top 3 + 每轮最多一次工具</td>
+</tr>
+<tr>
+<td>分支</td>
+<td>通常假设单线程线性历史</td>
+<td><code>turn_key</code> 前缀匹配，旁支不可检索</td>
+</tr>
+<tr>
+<td>与知识库</td>
+<td>有时混进同一个向量库</td>
+<td>独立 collection，生命周期跟会话走</td>
+</tr>
+</tbody>
+</table>
+<p>三句话收束。</p>
+<p><strong>作用域先于数据库。</strong> 先回答「这条信息属于这场对话还是这个用户」，再选 PostgreSQL 还是 Milvus。Kura-AI 选了会话。</p>
+<p><strong>原文树和模型视图必须拆开。</strong> UI、重生成、惰性重归档依赖完整树；主模型只能看见预算内的摘要加近文。用 Checkpointer 把两者捆成一份快照，分支会先裂开。</p>
+<p><strong>窗口外的事实用检索补，不用把历史全塞回 prompt。</strong> 摘要保目标，向量保细节，工具保漏网。三层叠在一起，才是项目里现在这套长短期记忆。</p>
+<p>Agent 怎么推理、知识库怎么建、开了库之后怎么搜，前三篇已经写过。这一篇要收住的是：同一场对话变长以后，什么留下、什么归档、什么按需回来。</p>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Kura-AI/" class="category-chain-item">Kura-AI</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Kura-AI/" class="print-no-link">#Kura-AI</a>
+      
+        <a href="/tags/%E8%AE%B0%E5%BF%86/" class="print-no-link">#记忆</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Kura-AI」项目中长短期记忆是如何设计的</div>
+      <div>https://marisamagic.github.io/2026/09/05/20260905_Kura-AI_长短期记忆/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年9月5日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/09/05/20260904_Kura-AI_%E5%A4%9A%E6%A8%A1%E6%80%81%E7%9F%A5%E8%AF%86%E5%BA%93/" title="「Kura-AI」项目中多模态知识库是如何构建的">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「Kura-AI」项目中多模态知识库是如何构建的</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/09/05/20260904_Kura-AI_Agent%E6%8E%A8%E7%90%86%E8%8C%83%E5%BC%8F/" title="「Kura-AI」项目中 Agent 采用了什么推理范式？如何设计的">
+                        <span class="hidden-mobile">「Kura-AI」项目中 Agent 采用了什么推理范式？如何设计的</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+  <script>
+  Fluid.utils.createScript('https://lib.baomitu.com/mermaid/8.14.0/mermaid.min.js', function() {
+    mermaid.initialize({"theme":"default"});
+
+    Fluid.utils.listenDOMLoaded(function() {
+      Fluid.events.registerRefreshCallback(function() {
+        if ('mermaid' in window) {
+          mermaid.init();
+        }
+      });
+    });
+  });
+</script>
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>
