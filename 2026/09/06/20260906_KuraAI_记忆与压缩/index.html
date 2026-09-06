@@ -1,0 +1,868 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Kura-AI 把变长对话拆成两层：近期原文加一份滚动摘要，当作短期工作记忆；被挤出窗口的整轮再切块写入独立向量集合，当作长期记忆。压缩按字符预算触发，不删库里的原文。摘要不进向量库。读回来靠本轮预注入，不够再调一次 search_session_memory。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Kura-AI」长短期记忆与超长上下文压缩">
+<meta property="og:url" content="https://marisamagic.github.io/2026/09/06/20260906_KuraAI_%E8%AE%B0%E5%BF%86%E4%B8%8E%E5%8E%8B%E7%BC%A9/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="Kura-AI 把变长对话拆成两层：近期原文加一份滚动摘要，当作短期工作记忆；被挤出窗口的整轮再切块写入独立向量集合，当作长期记忆。压缩按字符预算触发，不删库里的原文。摘要不进向量库。读回来靠本轮预注入，不够再调一次 search_session_memory。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
+<meta property="article:published_time" content="2026-09-06T14:01:30.149Z">
+<meta property="article:modified_time" content="2026-09-06T14:05:51.649Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="Kura-AI">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
+  
+  
+  
+  <title>「Kura-AI」长短期记忆与超长上下文压缩 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Kura-AI」长短期记忆与超长上下文压缩"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-09-06 22:01" pubdate>
+          2026年9月6日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          3.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          31 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Kura-AI」长短期记忆与超长上下文压缩</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>⭐ Kura-AI 项目链接: <a target="_blank" rel="noopener" href="https://github.com/MarisaMagic/Kura-AI">https://github.com/MarisaMagic/Kura-AI</a></p>
+<h2 id="0-前言">0 前言</h2>
+<p>这篇文章讲的是对话变长以后，Kura-AI <strong>还让模型看见什么</strong>。近期的原话怎样收成一份摘要，被挤出窗口的整轮怎样归档，以及「之前那个订单号」这种指代题怎样捞回来。</p>
+<p>Kura-AI 把这件事拆成两层。短期工作记忆是送给主模型的那份视图：一份滚动摘要，加上最近一段原文。长期记忆是已经离开原文窗口的整轮对话，切块后写入独立的向量集合。外层 Agent 只决定要不要调 <code>search_session_memory</code>、query 填什么。压缩阈值、归档水位、预注入都在服务端做完。</p>
+<p>记忆是<strong>这一次会话里已经说过的话</strong>。属主知识库里预先入库的退款说明，走 <code>search_knowledge_base</code>；本会话刚上传的 PDF，走附件工具。三者不要混。同一会话里，用户早先说过「订单号是 <code>GP-2026-8841</code>，按开通未满 7 天退」，隔了许多轮再问「之前那个订单号是多少？」——近期原文窗口里往往已经看不见这句话；压缩摘要可能还留着线索，精确编号要靠归档检索。</p>
+<hr>
+<h2 id="1-按字符预算压缩，不用固定-N-轮">1 按字符预算压缩，不用固定 N 轮</h2>
+<h3 id="1-1-策略选择">1.1 策略选择</h3>
+<p><strong>上下文按估算字符触发压缩</strong>，留下最近一段原文，更早的轮次收成一份可重放的摘要。不在库里改写历史。触发看的不是 token 数，也不是「满了 10 轮」，而是一份粗估的 prompt 长度。</p>
+<p>压缩只在主循环开始前做一次。工具跑完新产生的回包，这一轮不再压。最后一轮原文永远留下，避免把用户正在问的那句话也摘要掉。</p>
+<h3 id="1-2-如何实现">1.2 如何实现</h3>
+<p>入口是 <code>build_compacted_model_messages</code>。默认 <code>CHAT_COMPACT_ENABLED</code> 打开。估算公式把几块加在一起：工具 schema 粗估 8000、system 人设和检索纪律、已有摘要、原文窗口，再留 12000 给工具回包。加起来达到 <strong>80000</strong> 字符才压；压完后从后往前留大约 <strong>24000</strong> 字符原文。关掉压缩，才回退到最近 10 轮的滑动窗口。记忆总开关也关着时，连窗口都不切，全量历史进模型。</p>
+<p>一轮是一条用户消息，加上其后直到下一条用户消息之前的助手和工具回复。被挤出的轮次打成纯文本，和「已有摘要」一起交给子模型，<code>temperature</code> 为 0，滚成一份不超过 4000 字的新摘要。提示要求留下目标、决定、未完成事项，以及文件名、URL、ID、数字这类实体；不要写入本轮检索开关、选档范围或附件名单，也不要抄知识库或网页的大段原文。</p>
+<p>摘要写成一条独立的 Human，插在原文窗口前面，标题是 <code>【会话压缩摘要】</code>。本轮用户原话仍是最后一条。附件名单、读图描述、记忆摘录都贴在那一条上，不入库，也就不会被下次摘要吃掉。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs text">【会话压缩摘要】<br><br>用户要查 GPT Plus 年费退款。早先报过订单号 GP-2026-8841，约定按开通未满 7 天处理。<br><br>（最近若干轮原文……）<br><br>之前那个订单号是多少？<br></code></pre></td></tr></table></figure>
+<p>这份视图只影响送给主模型的消息。<code>storage</code> 里的原文只追加、不删、不替换。刷新页面仍看得到早先那句订单号。摘要写入 session metadata 的 <code>compact_states</code>，最多留 4 条，按当前路径的 <code>turn_key</code> 前缀匹配：共享前缀复用同一份摘要，分叉后各走各的。<code>turn_key</code> 是该轮用户消息的行 id。</p>
+<p>摘要失败（没有密钥、模型空输出、调用异常）时，本轮仍按新窗口截断原文，<strong>不更新 metadata</strong>。下次再试滚摘要。前端步骤会写成「本轮仅截断较早原文」。</p>
+<h3 id="1-3-为什么这样做">1.3 为什么这样做</h3>
+<p><strong>按字符预算压，不按固定轮数。</strong> 一轮里可能有很长的工具回包，十轮也可能远超窗口；短轮对话里，十轮又往往还没到该扔的时候。固定 10 轮会在短轮时浪费，在长轮时提前丢掉关键信息。</p>
+<p><strong>不是 token 计数。</strong> 项目里没有 tiktoken 一类的计数器。用字符近似真实 prompt，中英文和图片会有偏差，但够用来决定「该不该再挤一轮」。工具 schema 和回包余量算进估算，是因为压缩不会在工具循环里再跑一次。</p>
+<p><strong>摘要进 metadata，原文留在库里。</strong> 前端历史仍要完整。把旧消息从库里删掉换成摘要，重新生成、分叉、用户回看都会对不上。模型看不见的，是视图，不是存储。</p>
+<p><strong>失败不写坏摘要。</strong> 空摘要一旦落进 metadata，后面每一轮都会带着它重放。本轮先硬切，水位不前进，下次还有机会滚出一份能用的。</p>
+<p><strong>摘要是独立 Human，不进人设。</strong> 写进 system，人设会被一份经常变动的长文撑开，外部对话也更容易被当成指令。插在窗口最前、用户原话仍在最后，本轮材料和压缩摘要才分得开。</p>
+<h3 id="1-4-其它方案">1.4 其它方案</h3>
+<ol>
+<li>
+<p><strong>只留最近 N 轮，不做摘要</strong>。</p>
+<ul>
+<li>优点：实现短，也不依赖子模型。</li>
+<li>缺点：「之前那个订单号」如果刚好落在第 11 轮，模型手里什么都没有。硬切没有给关键实体留一份可重放的线索。</li>
+</ul>
+</li>
+<li>
+<p><strong>把旧消息从库里删掉，换成摘要</strong>。</p>
+<ul>
+<li>优点：库更瘦，模型视图和存储一致。</li>
+<li>缺点：用户回看、重新生成、切到另一条分支时，原文没了。现在只换送给主模型的那一份。</li>
+</ul>
+</li>
+<li>
+<p><strong>压缩失败也写入空摘要</strong>。</p>
+<ul>
+<li>优点：水位能往前走，后面不再反复撞同一段旧文。</li>
+<li>缺点：坏摘要会锁死后面每一轮。宁肯本轮只截断，下次再试。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="2-离开窗口的整轮，增量归档进独立集合">2 离开窗口的整轮，增量归档进独立集合</h2>
+<h3 id="2-1-策略选择">2.1 策略选择</h3>
+<p><strong>只有压缩已经不再送给主模型的那些轮，才写入 <code>kura_ai_chat_memory</code></strong>。按 <code>turn_key</code> 幂等去重。摘要本身不入库。对话落库后默认在后台做，不挡第一个字。</p>
+<p>关掉压缩时，水位线仍读 compact 的 metadata，通常还是 0，<strong>几乎不会归档</strong>。工具说明书里仍写着「滑动窗口之前」，实际能搜到的是：原文窗口之前、并且已经写入归档水位的那些轮。</p>
+<h3 id="2-2-如何实现">2.2 如何实现</h3>
+<p>助手消息写入存储之后，调用 <code>schedule_archive_session_memory</code>。默认 <code>CHAT_MEMORY_ARCHIVE_ASYNC</code> 打开，丢进后台线程。归档函数先问 <code>verbatim_keep_from_for_session</code>：压缩声明从哪一轮开始还留原文。只处理「下标小于这个水位、且 <code>turn_key</code> 还不在 <code>memory_archived_turn_keys</code> 里」的整轮。</p>
+<p>每一轮先 <code>turn_to_text</code>：用户、助手、工具各打成一段纯文本，图片和附件变成占位，不把像素写进向量。再按默认 1400 字硬切，没有重叠。嵌入复用知识库同一套多模态服务，只算文本。集合是独立的 <code>kura_ai_chat_memory</code>，隔离键是 <code>memory_scope = u&#123;user&#125;_a&#123;agent&#125;_s&#123;session&#125;</code>。检索时还要再加当前路径上已归档的 <code>turn_key</code>，旁支轮次即使同 scope 也滤掉。</p>
+<p>分叉时，共享前缀只归档一次。切回旧分支再聊，水位里还没有的那些轮会继续补。删会话、删智能体时按 scope 清向量。库里还有一张 <code>mg_chat_memory_cursor</code>，已经不再写入，现行水位在 session metadata 的 turn_key 集合上。</p>
+<p>没有 embedding 密钥就跳过归档。压缩失败、metadata 没前进时，本轮被硬切掉的那些轮也暂时不进集合，下一轮压缩成功后再补。</p>
+<h3 id="2-3-为什么这样做">2.3 为什么这样做</h3>
+<p><strong>水位跟压缩走，窗口里的轮次不归档。</strong> 近期原文主模型已经看得见。再嵌一遍，等于给同一段话付两次嵌入，检索时还要和近轮抢名次。</p>
+<p><strong>摘要不进向量库。</strong> 摘要是给主模型省窗口的，已经丢掉了不少细节。把这份损失过的文本再向量化，长期记忆里就只剩「好像提过一个订单号」，精确的 <code>GP-2026-8841</code> 反而找不到。归档写的是被挤出轮次的原话。</p>
+<p><strong>独立集合，按会话隔离。</strong> 和知识库共用一张表，会把「用户说过的话」和「属主文档」混在一起。记忆键带上 <code>session</code>，换一个会话就看不见这串订单号，这是对的。</p>
+<p><strong>后台归档，不挡第一个字。</strong> 嵌入和插入可能慢。对话已经落库，用户正在等下一句；归档失败只打日志，下次按 <code>turn_key</code> 再试，不会把半成品标成已归档。</p>
+<p><strong>本轮刚挤出的轮次，本轮还搜不到。</strong> 压缩发生在调用主模型之前，归档发生在整轮结束之后。预注入和工具读的是上一轮及更早已入库的块。隔一轮再问「之前那个订单号」，才稳。</p>
+<h3 id="2-4-其它方案">2.4 其它方案</h3>
+<ol>
+<li>
+<p><strong>每一轮都归档，包括仍在原文窗口里的</strong>。</p>
+<ul>
+<li>优点：刚说过的话立刻能搜，也不必等压缩。</li>
+<li>缺点：近轮原文和向量里是同一段话。预注入再贴一遍，上下文重复，嵌入费用也上去。</li>
+</ul>
+</li>
+<li>
+<p><strong>记忆写入知识库那个集合</strong>。</p>
+<ul>
+<li>优点：少维护一套 schema 和混合检索。</li>
+<li>缺点：隔离键少了 session，分享智能体时可能搜到别人会话里的订单号。文档检索和对话检索也会互相抢召回。</li>
+</ul>
+</li>
+<li>
+<p><strong>把压缩摘要也当成记忆块写入</strong>。</p>
+<ul>
+<li>优点：主模型正在看的那份线索，检索也能打到。</li>
+<li>缺点：摘要会覆盖原话里的编号和约束。现在只归档原话，摘要留给短期视图重放。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="3-预注入摘录，不够再调一次工具">3 预注入摘录，不够再调一次工具</h2>
+<h3 id="3-1-策略选择">3.1 策略选择</h3>
+<p><strong>每轮用当前问句先捞几条较早摘录</strong>，写进本轮 Human。仍不够，模型再调 <code>search_session_memory</code>，同一轮只许成功一次。答案已经出现在最近原文里，或者该查知识库、该读附件时，不必调。</p>
+<h3 id="3-2-如何实现">3.2 如何实现</h3>
+<p>预注入走 <code>proactive_session_memory_inject_text</code>，默认 top 3。流式路径里和知识库选档并行预取，用的是<strong>上一轮已经归档</strong>的 <code>turn_key</code>。有命中就拼进本轮上下文块，标题写明「仅供参考；若仍不足可再调用 <code>search_session_memory</code>」。这块不入库。</p>
+<p>工具只有一个参数 <code>query</code>。先 <code>try_acquire_memory_tool_slot</code>，占不到就回 <code>TOOL_CALL_LIMIT_REACHED</code>，要求用已有结果作答。过了配额，先把「那个 / 上次」改写成适合检索历史的短句，再做混合检索，默认 top 5。过滤条件是当前 <code>memory_scope</code>，加上当前路径上已归档的 <code>turn_key</code>。没有嵌入密钥，工具回「会话记忆检索不可用」。无命中则说较早对话里没有相关片段。</p>
+<p>问「之前那个订单号是多少？」时，大致是这样：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs text">用户早先：订单号是 GP-2026-8841，按开通未满 7 天退。<br>（中间许多轮……窗口里已经没有这句话）<br><br>本轮预注入可能已经带上：<br>[1] 轮次 2：<br>用户: 订单号是 GP-2026-8841，按开通未满 7 天退。<br><br>若预注入没命中，模型再调：<br>search_session_memory(query=&quot;GPT Plus 退款订单号 GP&quot;)<br></code></pre></td></tr></table></figure>
+<p>改写失败就用用户原话。检索异常当成没有命中，循环不拆。系统提示里没有单独的「记忆失败不得编造」纪律，约束写在工具说明书里：近轮正文里找得到就别调。</p>
+<h3 id="3-3-为什么这样做">3.3 为什么这样做</h3>
+<p><strong>指代题不应等用户说「检索历史」。</strong> 「之前那个订单号」就是在问窗口外面的事实。预注入用当前问句先捞一把，主模型第一跳往往已经够答。</p>
+<p><strong>摘录进本轮 Human，不进 system。</strong> 旧对话是外部文本。写进人设，模型更容易把几年前的一句偏好当成长期指令。跟在用户问句后面，只对这一问有效，刷新后再 <code>load</code> 也不会把摘录当成用户原话。</p>
+<p><strong>工具每轮只许成功一次。</strong> 记忆没有本轮开关，但有次数槽。模型若为同一句指代连调两次，第二次应停下来用已有片段作答，而不是把归档当知识库那样改写再搜。</p>
+<p><strong>先改写再检索。</strong> 「那个订单号」单独做向量检索，打不中早轮里的 <code>GP-2026-8841</code>。改写成「GPT Plus 退款订单号」，语义和字面都更近。改写失败仍用原句，总比这一轮空着强。</p>
+<p><strong>只搜当前路径上已归档的轮。</strong> 另一条重新生成的旁支里，用户可能报过另一个号。不过滤 <code>turn_key</code>，模型会把分叉里的话当成这一条线的事实。</p>
+<h3 id="3-4-其它方案">3.4 其它方案</h3>
+<ol>
+<li>
+<p><strong>不做预注入，全靠模型自己调工具</strong>。</p>
+<ul>
+<li>优点：少一次嵌入和一次改写，首字更快。</li>
+<li>缺点：模型不一定记得去调。指代题更容易在近轮原文里瞎猜一个号。</li>
+</ul>
+</li>
+<li>
+<p><strong>把预注入写进 system</strong>。</p>
+<ul>
+<li>优点：每轮都能在最前面看到。</li>
+<li>缺点：人设被一份变动的摘录撑长；旧对话进了 system，注入风险更大。</li>
+</ul>
+</li>
+<li>
+<p><strong>记忆检索不限次数</strong>。</p>
+<ul>
+<li>优点：第一次没命中还可以换个说法再搜。</li>
+<li>缺点：没有次数槽，模型会在循环里反复打同一份归档。现在预注入已经先捞过，工具再补一次够了。</li>
+</ul>
+</li>
+<li>
+<p><strong>不做 query 改写，原句直接检索</strong>。</p>
+<ul>
+<li>优点：少一次子模型调用。</li>
+<li>缺点：「那个」「上次」几乎没有字面可对。订单号这种题，改写就是为了把指代补全。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="收束">收束</h2>
+<p>近期靠原文加滚动摘要，远期靠归档向量。压缩不删库，归档不写摘要，检索只看当前路径上已经离开窗口的那些轮。主模型开始前压一次，工具循环里不再压；刚挤出的轮次要等本轮结束后入库。订单号还在近轮原文里，不必搜记忆；已经只剩摘要线索时，先看预注入，不够再调一次工具。</p>
+<pre><code class=" mermaid">graph TD
+    A[&quot;估算 prompt 字符&quot;] --&gt; B&#123;&quot;达到 80000&quot;&#125;
+    B --&gt;|是| C[&quot;滚动摘要写入 metadata&quot;]
+    B --&gt;|否| D[&quot;保留近期原文&quot;]
+    C --&gt; D
+    D --&gt; E[&quot;预注入已归档摘录&quot;]
+    E --&gt; F[&quot;create_agent&quot;]
+    F --&gt; G&#123;&quot;还要 search_session_memory&quot;&#125;
+    G --&gt;|是| H[&quot;改写 + 混合检索 每轮 1 次&quot;]
+    H --&gt; F
+    G --&gt;|否| I[&quot;助手落库&quot;]
+    I --&gt; J[&quot;后台归档离开窗口的整轮&quot;]
+</code></pre>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Kura-AI/" class="category-chain-item">Kura-AI</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Agent/" class="print-no-link">#Agent</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/tags/Kura-AI/" class="print-no-link">#Kura-AI</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Kura-AI」长短期记忆与超长上下文压缩</div>
+      <div>https://marisamagic.github.io/2026/09/06/20260906_KuraAI_记忆与压缩/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年9月6日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/09/06/20260906_KuraAI_%E9%99%84%E4%BB%B6%E8%AF%BB%E5%8F%96/" title="「Kura-AI」附件读取工具设计">
+                        <span class="hidden-mobile">「Kura-AI」附件读取工具设计</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+  <script>
+  Fluid.utils.createScript('https://lib.baomitu.com/mermaid/8.14.0/mermaid.min.js', function() {
+    mermaid.initialize({"theme":"default"});
+
+    Fluid.utils.listenDOMLoaded(function() {
+      Fluid.events.registerRefreshCallback(function() {
+        if ('mermaid' in window) {
+          mermaid.init();
+        }
+      });
+    });
+  });
+</script>
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

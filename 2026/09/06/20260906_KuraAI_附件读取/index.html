@@ -1,0 +1,945 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Kura-AI 的主 Agent 只决定调哪一件附件工具、attachment_id 和 query 填什么。本会话刚上传的文件不会自动进向量库：名单写进本轮上下文，search 抽全文后只把命中片段回给模型，read 只切文首。图片不走这三把工具，带检索时先单独看图，再让主循环只拿描述去调工具。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Kura-AI」附件读取工具设计">
+<meta property="og:url" content="https://marisamagic.github.io/2026/09/06/20260906_KuraAI_%E9%99%84%E4%BB%B6%E8%AF%BB%E5%8F%96/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="Kura-AI 的主 Agent 只决定调哪一件附件工具、attachment_id 和 query 填什么。本会话刚上传的文件不会自动进向量库：名单写进本轮上下文，search 抽全文后只把命中片段回给模型，read 只切文首。图片不走这三把工具，带检索时先单独看图，再让主循环只拿描述去调工具。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
+<meta property="article:published_time" content="2026-09-06T13:34:41.722Z">
+<meta property="article:modified_time" content="2026-09-06T13:52:59.117Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="Kura-AI">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
+  
+  
+  
+  <title>「Kura-AI」附件读取工具设计 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Kura-AI」附件读取工具设计"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-09-06 21:34" pubdate>
+          2026年9月6日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          4.7k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          40 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Kura-AI」附件读取工具设计</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>⭐ Kura-AI 项目链接: <a target="_blank" rel="noopener" href="https://github.com/MarisaMagic/Kura-AI">https://github.com/MarisaMagic/Kura-AI</a></p>
+<h2 id="0-前言">0 前言</h2>
+<p>这篇文章讲的是 Kura-AI <strong>会话附件怎么被模型读到</strong>：名单从哪里来，长文档怎样定位中间的段落，短文档怎样抽出文首正文，以及图片为什么不走这三把工具。</p>
+<p>外层 Agent 只决定调 <code>list_session_attachments_brief</code>、<code>search_session_attachment</code> 还是 <code>read_session_attachment</code>，以及 <code>attachment_id</code> / <code>query</code> 填什么。抽正文、分词打分、从文首截断、按会话隔离，都在工具函数里做完。三件套在组 Agent 时<strong>始终挂上</strong>，没有「本轮用附件」这种开关，也<strong>没有次数槽</strong>。知识库每轮只许成功一次，联网搜索、读页、搜图各自有上限；附件读的是本会话已经落盘的文件，拦的是权限和体积，不是外网配额。</p>
+<p>四条边界先说清楚。第一，循环开始前，本会话附件的元数据已经写进本轮 Human，list 只是这份名单不够用时的兜底。第二，历史里文档是 <code>file_ref</code>，图片是 <code>image_ref</code>，不内联正文。第三，图片不走这三把工具：后面还要选检索类工具时，先单独看图；只聊天、不检索时，图直接进多模态。第四，本会话刚传的文件不会自动进向量库。属主库里预先入库的退款说明，走 <code>search_knowledge_base</code>；公开网页上的报价，走联网三件套。用户刚上传的 <code>GPT-Plus订阅说明.pdf</code>，才是这三把工具的事。</p>
+<hr>
+<h2 id="1-list-session-attachments-brief：名单已经在本轮里">1 <code>list_session_attachments_brief</code>：名单已经在本轮里</h2>
+<h3 id="1-1-策略选择">1.1 策略选择</h3>
+<p>循环开始前，<strong>先把本会话已上传附件的元数据写进本轮 Human</strong>。<strong>list 只在「多份文档里要挑目标，而本轮块又不够用」时才调</strong>。本轮块里已经有同一份名单，就不要为相同信息再调一次。</p>
+<p>模型填不了范围。<code>user_id</code>、<code>agent_id</code>、<code>session_id</code> 关在工具闭包里。list 没有参数；search 和 read 只留 <code>attachment_id</code> 和检索词。<code>attachment_id</code> 必须来自这份名单，不能让模型自己编一个 UUID。</p>
+<h3 id="1-2-如何实现">1.2 如何实现</h3>
+<p>上传是先落盘再发消息。<code>POST /user-agent/chat/attachments/upload</code> 做完扩展名白名单和魔数校验，写入 MinIO 前缀 <code>user_agent_uploads/user_&#123;id&#125;/agent_&#123;id&#125;/&#123;session&#125;/</code>，并在 <code>mg_chat_attachments</code> 记一行。单文件默认 15MB，会话合计 80MB，每会话最多 80 个。随后聊天请求带上 <code>attachment_ids</code>。历史里文档写成 <code>file_ref</code>，图片写成 <code>image_ref</code>，正文不跟进去。</p>
+<p>真正给模型看的名单，出在 <code>format_attachment_hint</code>。它只列事实：<code>attachment_id</code>、文件名、<code>kind</code>、字节数。这份字符串由 <code>_format_turn_context_block</code> 拼进最后一条 Human，<strong>不入库</strong>。刷新页面再 <code>load</code>，历史上只剩用户原话和引用，不会把临时文件清单当成用户说过的话。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs text">刚上传的说明里，开通未满 7 天怎么全额退？<br><br>【本轮上下文（仅本回合有效）】<br>本轮不要调用 web_search、fetch_url、web_image_search、<br>search_knowledge_base、search_knowledge_by_image。<br><br>本会话中用户已上传的附件（元数据）：<br>- attachment_id=a1b2c3… 文件名=GPT-Plus订阅说明.pdf 类型=document 大小=248832 字节<br></code></pre></td></tr></table></figure>
+<p><code>make_session_attachment_tools</code> 把当前请求的三元组焊进闭包。读任何一份附件，都先按 <code>user_id + agent_id + session_id</code> 对行；对不上就当无权，不区分「没有」和「别人的」。list 本身没有参数，空会话回「本会话暂无附件。」</p>
+<h3 id="1-3-为什么这样做">1.3 为什么这样做</h3>
+<p><strong>名单写进本轮 Human，不写进会话历史。</strong> <code>attachment_id</code> 是系统发的十六进制，模型编不出来。跟在用户问句后面，模型看见的是「这一问能用哪几份文件」。写进人设会把一份经常变动的清单抬成长期指令；写进历史，压缩和重新生成时会把它当成用户真的说过的话。</p>
+<p><strong>list 只是兜底，不是每次必调。</strong> 本轮块里已经有同一份元数据。再调一次，拿到的还是这几行，白白占掉一跳工具调用。多份文档里要挑目标、而本轮块被截短或没带上时，才值得再要一份。</p>
+<p><strong>范围关在闭包里，模型只看见 id。</strong> 猜到另一个会话的 UUID，也对不上三元组，工具只回「附件不存在或无权访问」。不必把属主、会话这些字段交给模型填。</p>
+<p><strong>上传文件不自动进向量库。</strong> 会话附件是这一次对话里的私货，生命周期跟会话走。和知识库共用对象存储客户端，但前缀分开：附件在 <code>user_agent_uploads/</code>，知识库文档在 <code>user_agent_docs/</code>。刚传上来的说明如果立刻切块、算向量，用户删掉会话之后，库里还会留下一份不该留下的退款条款。</p>
+<h3 id="1-4-其它方案">1.4 其它方案</h3>
+<ol>
+<li>
+<p><strong>每次读附件前都强制调用 list</strong>。</p>
+<ul>
+<li>优点：模型手里永远有一份刚查过的名单，也不必解释本轮块。</li>
+<li>缺点：名单在循环开始前就已经在 Human 里。再调一次只是重复同一段元数据，长对话里会先把工具次数耗在列目录上。</li>
+</ul>
+</li>
+<li>
+<p><strong>把全文预读进本轮 Human</strong>。</p>
+<ul>
+<li>优点：模型第一跳就能看见正文，不必再调 search 或 read。</li>
+<li>缺点：一份 15MB 的 PDF 抽出来往往远超上下文。大多数问题只用得到其中一段，把整份说明塞进去，既贵也容易把退款条款淹没在目录和免责声明里。</li>
+</ul>
+</li>
+<li>
+<p><strong>用户一上传，就按知识库流水线入库</strong>。</p>
+<ul>
+<li>优点：附件和属主库走同一套检索，也不必维护三件套。</li>
+<li>缺点：本会话的临时文件和智能体长期资料混在一起。会话删了，向量行还在；别人分享这个智能体时，也可能搜到访客刚传的私人说明。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="2-search-session-attachment：长文档先定位">2 <code>search_session_attachment</code>：长文档先定位</h2>
+<h3 id="2-1-策略选择">2.1 策略选择</h3>
+<p>不确定答案在文首还是文尾时，先对 <strong>这一份</strong> 附件做 <strong>关键词检索</strong>。search 会抽全文，<strong>但只把命中片段回给模型</strong>；它是看中间和文尾的主路径，不是给 read 当翻页器。不用于图片，也不替代知识库里的混合检索。</p>
+<p>query 由模型按用户意图压成关键词或短语。<code>attachment_id</code> 必须来自本轮名单或 list 的返回。</p>
+<h3 id="2-2-如何实现">2.2 如何实现</h3>
+<p>入口在 <code>search_session_attachment</code>。模型可以填 <code>attachment_id</code>、<code>query</code>，还可以选填 <code>top_k</code>（默认 5，上限 20）和 <code>max_snippet_chars</code>（默认 800，夹在 200–4000）。闭包里的三元组模型看不见。</p>
+<p>真正打分的是 <code>search_attachment_text_bm25</code>。先按和 read 同一条路径抽出全文，再切成块长 800、重叠 120 的窗口，对<strong>这一次抽出来的语料</strong>做 Okapi BM25（<code>k1=1.5</code>，<code>b=0.75</code>）。中文走 jieba，没装 jieba 就按字切；英文按空白切。正文超过 50 万字，只索引前面这一段，并在结果里注明后面没参与检索。命中后左右扩约 200 字，再压到片段上限。PDF 用抽页时记下的 <code>page_starts</code>，给一个大致页码。</p>
+<p>还是「刚上传的说明里，开通未满 7 天怎么全额退？」。模型应把 query 写成「开通未满 7 天 全额退」，而不是把整句用户问题原样塞进去。命中大致长这样：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs text">BM25 检索命中（共取 top 5 条），query=&#x27;开通未满 7 天 全额退&#x27;<br><br>--- 命中 #1 (页码≈12 char=[18420,19110) chunk=[18200,19000) score=8.4310) ---<br>开通未满 7 天可全额退；超过 7 天按剩余整月折算。<br><br>提示：若需更多连续正文，可调用 read_session_attachment；长文档建议先本检索再按需精读。<br></code></pre></td></tr></table></figure>
+<p>最后那句提示容易让人以为 read 能翻到第 12 页接着读。做不到。read 没有 <code>offset</code>、没有 <code>page</code>、也没有 <code>start_char</code>，再调一次仍然从字符 0 切。第 12 页的连续句子，以这段扩窗片段为准。</p>
+<p>图片附件在抽全文时就会被拒绝，回的是「该附件为图片……无法以文本工具读取」。空 query、分词后为空、正文为空，各有一句中文错误，没有 <code>TOOL_*</code> 那种稳定前缀。</p>
+<h3 id="2-3-为什么这样做">2.3 为什么这样做</h3>
+<p><strong>search 会抽全文，但只把命中片段回给模型。</strong> 服务端和 read 走同一条抽取，最多索引前 50 万字；模型看到的是大约 5 条、每条默认 800 字的扩窗，不是整份 PDF。中间和文尾靠这些片段，不靠 read 翻页。退款条款若写在第 12 页，只读默认的 12000 字，模型看见的仍是封面和目录。</p>
+<p><strong>只对这一份、这一次抽出的全文打分。</strong> 语料当场分块、当场算 IDF，不写进向量集合，也不跨请求复用。应用重启之后，下一次调用会重新抽、重新分词，不会留下旧编号去对一份已经不存在的索引。知识库要服务许多智能体、许多文件，词表必须跟集合走；会话附件没有这个包袱。</p>
+<p><strong>不把附件叶子写入知识库集合。</strong> 刚上传的说明和属主长期资料不是同一种东西。写进 <code>kura_ai_kb</code>，就要带 <code>kb_scope</code>、算 embedding、还要决定会话删了谁来清向量。为一次对话里的一份 PDF 做这些，比进程内 BM25 重得多。</p>
+<p><strong>图片不走这把工具。</strong> 截图里的退款条件是画面，不是可分词的正文。抽纯文本会得到空页或乱码，再打 BM25 没有意义。</p>
+<h3 id="2-4-其它方案">2.4 其它方案</h3>
+<ol>
+<li>
+<p><strong>只保留 read，不提供 search</strong>。</p>
+<ul>
+<li>优点：少一把工具，模型不用判断「该搜还是该读」。</li>
+<li>缺点：长 PDF 中间的条款永远落在文首窗口外面。问「开通未满 7 天怎么退」，模型只能根据封面胡猜。</li>
+</ul>
+</li>
+<li>
+<p><strong>给 read 加上 page / offset，让 search 负责指路、read 负责续读</strong>。</p>
+<ul>
+<li>优点：命中第 12 页之后，可以抽出更长一段连续正文。</li>
+<li>缺点：参数表多两个字段，模型会填错页码或编一个对不上的偏移。当前实现把「看中间」收在 search 的扩窗片段里，read 只负责文首。</li>
+</ul>
+</li>
+<li>
+<p><strong>把附件切成叶子，写入 <code>kura_ai_kb</code></strong>。</p>
+<ul>
+<li>优点：和知识库共用混合检索，也不必维护一份进程内 BM25。</li>
+<li>缺点：临时文件和长期库混盘。会话一删，向量行和对象存储还要对齐清理；访客上传的私人说明也可能进到属主的检索范围。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="3-read-session-attachment：按需抽文首">3 <code>read_session_attachment</code>：按需抽文首</h2>
+<h3 id="3-1-策略选择">3.1 策略选择</h3>
+<p>已知 <code>attachment_id</code>，而且需要的是 <strong>文首连续正文、短文档或表格</strong> 时，再调 read。图片直接拒绝。长文档的中间段落以 search 的片段为准，不要指望 read 按命中位置续读。</p>
+<h3 id="3-2-如何实现">3.2 如何实现</h3>
+<p>参数是 <code>attachment_id</code>，以及可选的 <code>max_chars</code>。默认 12000，运行时夹在 1000 到 50000 之间。先按三元组取行，再按扩展名分流：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>怎么抽</th>
+<th>额外限制</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.txt</code> / <code>.md</code></td>
+<td>对象字节按 UTF-8 解码</td>
+<td>无页</td>
+</tr>
+<tr>
+<td><code>.pdf</code></td>
+<td>下到临时文件，<code>PyPDFLoader</code> 按页拼接</td>
+<td>记下每页起始下标，给 search 用</td>
+</tr>
+<tr>
+<td><code>.docx</code></td>
+<td><code>Docx2txtLoader</code></td>
+<td>无页</td>
+</tr>
+<tr>
+<td><code>.csv</code> / <code>.xlsx</code> / <code>.xls</code></td>
+<td>pandas 读成表再 <code>to_string()</code></td>
+<td>最多 2000 行</td>
+</tr>
+<tr>
+<td><code>kind=image</code></td>
+<td>不抽</td>
+<td>返回说明，让模型走多模态</td>
+</tr>
+</tbody>
+</table>
+<p>PDF 和 Office 解析库要本地路径，所以先 <code>download_temp</code>，退出后删临时文件。抽完只切 <code>text[:max_chars]</code>；超长追加「…（已截断）」。对象在、库行在、文件丢了，回「附件文件已丢失。」对不上三元组，回「附件不存在或无权访问。」</p>
+<p>短文档，比如只有两页的订阅说明，12000 字往往够把退款段一起带上，这时直接 read 比先 search 更合适。说明书也写了这一点：用户只要文首少量内容，不必先检索。</p>
+<h3 id="3-3-为什么这样做">3.3 为什么这样做</h3>
+<p><strong>历史只留 <code>file_ref</code>，正文按需再取。</strong> 一份 PDF 抽出来经常上万字。写进会话历史，压缩、记忆和重新生成都会反复带着它。用户问的是「刚上传的说明里怎么退」，大多数时候只要其中一段，不必把整份文件变成这句话的一部分。</p>
+<p><strong>默认窗口从文首切开。</strong> 封面、目录、表头和写在前面的条款，12000 字通常够看。再往后不是把默认值加到 5 万，而是先 search。5 万仍然是硬顶，防止模型把 <code>max_chars</code> 填成整份文档的长度。</p>
+<p><strong>表格在解析层就丢掉第 2001 行之后。</strong> 会话附件不是数据仓库。把整张上万行的费用明细塞进上下文，search 和 read 都扛不住；2000 行够核对表头和前几页数字。</p>
+<p><strong>失败回中文句子，不拆循环。</strong> 「错误：附件不存在或无权访问。」进 <code>ToolMessage</code> 之后，模型可以改口，不必把整轮打成 500。现况没有 <code>TOOL_*</code> 前缀，和知识库、联网那套稳定错误码不是同一形态，循环照样收得住。</p>
+<h3 id="3-4-其它方案">3.4 其它方案</h3>
+<ol>
+<li>
+<p><strong>给 read 加上 page / offset</strong>。</p>
+<ul>
+<li>优点：search 命中第 12 页之后，可以抽出更长的连续正文。</li>
+<li>缺点：模型会填错页码。当前把中间段落交给 search 的扩窗，read 只保证文首这一截是稳的。</li>
+</ul>
+</li>
+<li>
+<p><strong>每次发消息都把全文内联进 Human</strong>。</p>
+<ul>
+<li>优点：第一跳就能引用，也不必解释两把工具的分工。</li>
+<li>缺点：上下文被一份临时 PDF 占满。问句还在，退款段却可能已经被截到窗口外面。</li>
+</ul>
+</li>
+<li>
+<p><strong>失败也做成 <code>TOOL_*</code> 前缀</strong>。</p>
+<ul>
+<li>优点：和知识库、联网的纪律可以对齐，System 能点名这些码。</li>
+<li>缺点：附件没有本轮开关，也没有次数槽，禁用码和超额码没有落点。现况用中文错误句，模型仍能据实改口。</li>
+</ul>
+</li>
+<li>
+<p><strong>允许这把工具读图</strong>。</p>
+<ul>
+<li>优点：三件套看起来更「完整」，图片和 PDF 走同一入口。</li>
+<li>缺点：抽纯文本读不了截图。读图是另一件事，不该塞进按扩展名分流的正文抽取。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="4-两阶段读图：caption-不是第四把工具">4 两阶段读图：caption 不是第四把工具</h2>
+<h3 id="4-1-策略选择">4.1 策略选择</h3>
+<p>本轮带了图片，后面还要选检索类工具时，<strong>先单独看图，再让主 Agent 只拿描述去调工具</strong>。只聊天、不检索时，图直接进多模态，不预读。</p>
+<p>这不是第四把附件工具。三件套的 description 写明：<code>kind</code> 为 image 不要调；用户消息里已经附上的图，直接根据图像回答。</p>
+<h3 id="4-2-如何实现">4.2 如何实现</h3>
+<p>门控在 <code>_should_run_vision_caption</code>。四个条件要同时成立：配置 <code>CHAT_VISION_CAPTION_ENABLED</code> 打开（默认开）、智能体 <code>supports_vision</code>、本轮开了知识库或联网或已经加载了 MCP、最后一条 Human 里有 <code>image_ref</code>。只开附件、不开检索类工具，走原生多模态，不跑这一段。</p>
+<p>阶段 1 用无工具的视觉模型。System 要求结合用户问题描述画面，把图里的文字、数字、日期尽量转写准确，认不出的专名不要编。同步路径走 <code>generate_image_caption</code>，流式路径走 <code>iter_image_caption_chunks</code>。超时默认 60 秒，描述默认截到约 1200 字。失败则空字符串，退回单阶段带图。</p>
+<p>阶段 2 若描述非空：<code>expand_images=False</code>，所有 <code>image_ref</code> 变成短占位；描述写进本轮块，并套上 <code>guard_untrusted_content</code>。主模型看不见原图像素，只看见这段文字。描述不进 Human 的入库内容；思考区会留一份给前端回放，下一轮 <code>load</code> 不会把 caption 当用户原话再喂回去。</p>
+<p>用户本会话上传一张退款页截图，问「这张图里退款条件怎么写的？」，同时又开了知识库。阶段 1 可能写出「图中写着开通未满 7 天可全额退」。阶段 2 的主模型用这句话去搜库或作答，不必在同一次调用里既看图又选工具。</p>
+<p>未开视觉却传图片，<code>build_storable_human_content</code> 会直接拒绝，进不了对话。</p>
+<h3 id="4-3-为什么这样做">4.3 为什么这样做</h3>
+<p><strong>「看图 + 选工具」不挤在同一次调用里。</strong> 带图的请求本身就慢。再让模型同时决定要不要搜知识库、要不要联网，既容易漏掉图上的字，也会把第一跳拖得很长。先单独看图，主循环就可以是纯文本。</p>
+<p><strong>只在后面还要检索时才预读。</strong> 用户只是问「这张图是什么」，原生多模态一次就能答。再跑一轮 caption，等于为同一张图付两次视觉调用。门控把知识库、联网、MCP 算进条件，就是为了挡住这条浪费。</p>
+<p><strong>描述进本轮块，不进会话历史。</strong> 截图里的字是外部内容，隔离之后才能给主模型看。写进历史，压缩和重新生成会把它当成已经确认的事实；图上如果看错了一个日期，后面几轮都会跟着错。</p>
+<p><strong>三件套读不了 <code>kind=image</code>。</strong> 抽纯文本没有画面。把读图做成 <code>read_image</code>，模型还要再选一次工具，等于把阶段 1 又暴露回主循环。</p>
+<h3 id="4-4-其它方案">4.4 其它方案</h3>
+<ol>
+<li>
+<p><strong>始终原生多模态，带图选工具</strong>。</p>
+<ul>
+<li>优点：少一次预读，实现更短。</li>
+<li>缺点：看图和选 <code>search_knowledge_base</code> / <code>web_search</code> 挤在同一次慢调用里。图上的退款数字容易漏，第一跳也更贵。</li>
+</ul>
+</li>
+<li>
+<p><strong>挂一把 <code>read_image</code> 给主 Agent</strong>。</p>
+<ul>
+<li>优点：和 PDF 的 read 对称，模型可以自己决定什么时候看图。</li>
+<li>缺点：本轮已经带了图，再调一次才能读，纯属重复。现在把看图放在启动前，主模型第一跳就已经有描述。</li>
+</ul>
+</li>
+<li>
+<p><strong>把 caption 写入历史</strong>。</p>
+<ul>
+<li>优点：下一轮不用再看图，调试时也能看见当时理解成了什么。</li>
+<li>缺点：看错的字会变成会话事实。现在只在本轮块里用一次，思考区留给前端回放，入库的仍是 <code>image_ref</code>。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="收束">收束</h2>
+<p>三件套读的是本会话文件，读图是启动前的预读。list 看名单，search 定位中间和文尾，read 抽文首窗口。图片不走这三把：后面还要检索，就先看图再纯文本循环；只聊天，就直接带图。刚上传的说明不会自动进向量库，也没有本轮开关和次数槽。猜错的 <code>attachment_id</code> 对不上三元组，工具回一句中文错误，循环继续。</p>
+<p>问「刚上传的说明里，开通未满 7 天怎么全额退？」，名单已在本轮块里，长文档先 search；短文档可以直接 read。问「这张图里退款条件怎么写的？」，不要调这三把工具。</p>
+<pre><code class=" mermaid">graph TD
+    A[&quot;先 upload 再带 attachment_ids&quot;] --&gt; B[&quot;本轮 hint / 可选 caption&quot;]
+    B --&gt; C[&quot;create_agent 始终挂三件套&quot;]
+    C --&gt; D&#123;&quot;模型选哪一件&quot;&#125;
+    D --&gt;|list| E[&quot;同一份元数据&quot;]
+    D --&gt;|search| F[&quot;这一份全文 BM25&quot;]
+    D --&gt;|read| G[&quot;从文首截断&quot;]
+    E --&gt; H[&quot;字符串回喂&quot;]
+    F --&gt; H
+    G --&gt; H
+    H --&gt; C
+</code></pre>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Kura-AI/" class="category-chain-item">Kura-AI</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Agent/" class="print-no-link">#Agent</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/tags/Kura-AI/" class="print-no-link">#Kura-AI</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Kura-AI」附件读取工具设计</div>
+      <div>https://marisamagic.github.io/2026/09/06/20260906_KuraAI_附件读取/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年9月6日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/09/06/20260906_KuraAI_%E8%AE%B0%E5%BF%86%E4%B8%8E%E5%8E%8B%E7%BC%A9/" title="「Kura-AI」长短期记忆与超长上下文压缩">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「Kura-AI」长短期记忆与超长上下文压缩</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/09/06/20260906_KuraAI_%E8%81%94%E7%BD%91%E6%90%9C%E7%B4%A2/" title="「Kura-AI」联网搜索工具设计">
+                        <span class="hidden-mobile">「Kura-AI」联网搜索工具设计</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+  <script>
+  Fluid.utils.createScript('https://lib.baomitu.com/mermaid/8.14.0/mermaid.min.js', function() {
+    mermaid.initialize({"theme":"default"});
+
+    Fluid.utils.listenDOMLoaded(function() {
+      Fluid.events.registerRefreshCallback(function() {
+        if ('mermaid' in window) {
+          mermaid.init();
+        }
+      });
+    });
+  });
+</script>
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

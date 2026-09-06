@@ -1,0 +1,974 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Kura-AI 的主 Agent 只决定调哪一件联网工具、参数填什么。web_search 会按有没有代理、有没有博查密钥选择搜索引擎，先多召回再重排，再按权威度和时效加权，最后自动读前三条的正文。用户或搜索结果给出了具体网址，才用 fetch_url 精读那一页。要配图时走另一条工具 web_image_search，留下几张 https 图，并给出现成的 Markdown。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Kura-AI」联网搜索工具设计">
+<meta property="og:url" content="https://marisamagic.github.io/2026/09/06/20260906_KuraAI_%E8%81%94%E7%BD%91%E6%90%9C%E7%B4%A2/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="Kura-AI 的主 Agent 只决定调哪一件联网工具、参数填什么。web_search 会按有没有代理、有没有博查密钥选择搜索引擎，先多召回再重排，再按权威度和时效加权，最后自动读前三条的正文。用户或搜索结果给出了具体网址，才用 fetch_url 精读那一页。要配图时走另一条工具 web_image_search，留下几张 https 图，并给出现成的 Markdown。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
+<meta property="article:published_time" content="2026-09-06T11:42:37.431Z">
+<meta property="article:modified_time" content="2026-09-06T13:25:09.281Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="Kura-AI">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
+  
+  
+  
+  <title>「Kura-AI」联网搜索工具设计 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Kura-AI」联网搜索工具设计"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-09-06 19:42" pubdate>
+          2026年9月6日 晚上
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          45 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Kura-AI」联网搜索工具设计</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>⭐ Kura-AI 项目链接: <a target="_blank" rel="noopener" href="https://github.com/MarisaMagic/Kura-AI">https://github.com/MarisaMagic/Kura-AI</a></p>
+<h2 id="0-前言">0 前言</h2>
+<p>这篇文章讲的是 Kura-AI <strong>联网三件套在工具里面怎么工作</strong>：文字搜索怎样选引擎、怎样把一堆网页排成五条，指定链接怎样读正文，以及搜图为什么不跟网页搜索走同一条链。</p>
+<p>外层 Agent 只决定调 <code>web_search</code>、<code>fetch_url</code> 还是 <code>web_image_search</code>，以及参数里填什么。搜哪个引擎、失败了换哪一档、要不要重排、读不读页，都在工具函数里做完。本轮开了联网，三件套会一起挂上，但各有独立的调用次数上限：文字搜索每轮 2 次，读指定页每轮 3 次，搜图每轮 2 次。超过上限不会把对话打断，工具会返回次数用尽的前缀，要求用已经拿到的结果作答。</p>
+<p>没有检索质量子图，也不会在工具里改写用户问题再循环打分。换一种说法再搜，靠的是模型在这一次调用里填写 <code>extra_query</code>，而不是工具自己再开一轮大模型。</p>
+<hr>
+<h2 id="1-web-search：先召回，再排，再读前几条">1 <code>web_search</code>：先召回，再排，再读前几条</h2>
+<h3 id="1-1-策略选择">1.1 策略选择</h3>
+<p><strong>文字联网搜索做成一条固定流水线</strong>。先按运行环境选搜索引擎，尽量多捞一些候选；同一意图如果模型给了第二种说法，两路并行搜完再按网址合并。然后丢掉明显的词典垃圾页，用博查的语义重排看「问题和这条结果到底有多相关」，再用主机结构信号和发布时间做软加权，最后只留五条给模型。五条里默认再打开前三条网页，把主文摘一段进来；读失败就保留搜索引擎给的摘要。</p>
+<p>这条链里没有向量库，也没有倒数排名融合。两路查询是拼在一起去重，不是按名次加权。</p>
+<h3 id="1-2-如何实现">1.2 如何实现</h3>
+<p>入口是 <code>make_web_search_tool</code> 里的 <code>_web_search</code>。模型可以填 <code>query</code>，还可以选填 <code>freshness</code>、<code>site</code>、<code>extra_query</code>。时效如果模型没填，就看服务端配置；配置也是 <code>auto</code> 时，再按问句里的时间词推断：今天对应 <code>oneDay</code>，本周对应 <code>oneWeek</code>，本月或「最新 / 近期」对应 <code>oneMonth</code>，今年对应 <code>oneYear</code>，其余不限。<code>site</code> 只接受主机名，例如 <code>openai.com</code>，不要带协议和路径。</p>
+<p>真正调度引擎的是 <code>web_search_providers.py</code> 的 <code>_run_search</code>。默认 <code>WEB_SEARCH_PROVIDER=auto</code>，超时 15 秒，每路最多召回 15 条（<code>WEB_SEARCH_CANDIDATE_COUNT</code>），最终交给模型的是 5 条（<code>WEB_SEARCH_MAX_RESULTS</code>）。地区配置 <code>WEB_SEARCH_REGION=cn-zh</code> 只作用于 ddgs；博查没有地区参数，必应 HTML 这一档写死中文市场。ddgs 在无代理时默认走 bing 后端，有代理时才交给库自己选。</p>
+<table>
+<thead>
+<tr>
+<th>条件</th>
+<th>尝试顺序</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>配置了 <code>WEB_SEARCH_PROXY</code></td>
+<td>ddgs → 博查（有密钥才走）→ 解析 <a target="_blank" rel="noopener" href="http://cn.bing.com">cn.bing.com</a> 的 HTML</td>
+</tr>
+<tr>
+<td>无代理，且有博查密钥</td>
+<td>博查 → bing_html</td>
+</tr>
+<tr>
+<td>无代理，也没有密钥</td>
+<td>ddgs（backend 默认 bing）→ bing_html</td>
+</tr>
+</tbody>
+</table>
+<p>强制写成 <code>bocha</code>、<code>ddgs</code> 或 <code>bing_html</code> 时不降级，失败就整次搜索失败。auto 才会在这一档结果被词典过滤、去重后变成空列表时，换下一档。</p>
+<p>问「今年 GPT Plus 年费多少？」时，时效多半会落到 <code>oneYear</code>。博查在限定时效后如果一条都没有，会再用 <code>noLimit</code> 搜一次，避免「今年」把所有页面滤空。<code>site</code> 在 ddgs 和 bing 上会拼进查询词，形如 <code>site:openai.com</code>；博查走接口的 <code>include</code>，查询词本身不加站点。如果模型同时给了 <code>extra_query</code>「ChatGPT Plus 订阅价格」，<code>_run_searches</code> 最多起两路线程并行搜，按 URL 去重后截到 50 条。一路抛异常不会拖垮另一路。召回之后会丢掉标题里带「组词 / 拼音 / 释义」这类词典垃圾的条目，再交给重排。</p>
+<p>流水线可以看成下面这张表。重排和读页都发生在引擎返回之后，主模型看不见中间名单。</p>
+<table>
+<thead>
+<tr>
+<th>步骤</th>
+<th>做什么</th>
+<th>默认规模</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>召回</td>
+<td>按 auto 选引擎；可选第二路 <code>extra_query</code></td>
+<td>每路最多 15，合并后截到 50</td>
+</tr>
+<tr>
+<td>预过滤</td>
+<td>丢掉词典垃圾，按 URL 去重</td>
+<td>—</td>
+</tr>
+<tr>
+<td>语义重排</td>
+<td>博查 <code>gte-rerank</code>；失败按原序</td>
+<td>最低分 0.2</td>
+</tr>
+<tr>
+<td>软加权</td>
+<td>权威度 0.25，有时间意图时再加新近度 0.15</td>
+<td>截到 5</td>
+</tr>
+<tr>
+<td>自动读页</td>
+<td>前 3 条抓 HTML 主文；失败留摘要</td>
+<td>8 秒，摘录 2000 字</td>
+</tr>
+</tbody>
+</table>
+<p>网页重排走博查 <code>gte-rerank</code>，密钥和网页搜索是同一把 <code>WEB_SEARCH_BOCHA_API_KEY</code>。开关 <code>WEB_SEARCH_RERANK_ENABLED</code> 默认打开；没有密钥就跳过。送进去的文档是标题、站点、日期和摘要，截到 1000 字。接口失败则按引擎原来的顺序继续。默认最低分是 0.2，低于阈值的单条丢掉；如果全部低于阈值，工具按没有结果处理，返回 <code>WEB_SEARCH_NO_RESULTS</code>。</p>
+<p>重排之后还要做一次软加权，写在 <code>apply_authority_ranking</code> 里。权威度只看跨领域成立的结构信号：是不是 <code>.gov</code> / <code>.edu</code> 这类后缀、是不是 https、路径是不是很浅、标题和主机是否对得上查询词。仓库里没有品牌或媒体域名表。问句带时间意图，或者 freshness 不是 <code>noLimit</code> 时，再按 <code>datePublished</code> 加新近度：七天内最高，超过一年明显降低，没有日期记 0.5。默认权威度权重 0.25，新近度权重 0.15，剩下的给相关分。相关分优先用重排分；没有重排分就用当前名单里的位次。两项附加权重加起来超过 0.9 时，会按比例压回去，避免相关分被挤没。</p>
+<p class="katex-block "><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mrow><mi mathvariant="normal">f</mi><mi mathvariant="normal">i</mi><mi mathvariant="normal">n</mi><mi mathvariant="normal">a</mi><mi mathvariant="normal">l</mi></mrow><mo>=</mo><msub><mi>w</mi><mrow><mi mathvariant="normal">r</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">l</mi></mrow></msub><mo>⋅</mo><mrow><mi mathvariant="normal">r</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">l</mi></mrow><mo>+</mo><msub><mi>w</mi><mrow><mi mathvariant="normal">a</mi><mi mathvariant="normal">u</mi><mi mathvariant="normal">t</mi><mi mathvariant="normal">h</mi></mrow></msub><mo>⋅</mo><mrow><mi mathvariant="normal">a</mi><mi mathvariant="normal">u</mi><mi mathvariant="normal">t</mi><mi mathvariant="normal">h</mi></mrow><mo>+</mo><msub><mi>w</mi><mrow><mi mathvariant="normal">r</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">c</mi></mrow></msub><mo>⋅</mo><mrow><mi mathvariant="normal">r</mi><mi mathvariant="normal">e</mi><mi mathvariant="normal">c</mi></mrow></mrow><annotation encoding="application/x-tex">\mathrm{final}=w_{\mathrm{rel}}\cdot \mathrm{rel}+w_{\mathrm{auth}}\cdot \mathrm{auth}+w_{\mathrm{rec}}\cdot \mathrm{rec}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord"><span class="mord mathrm">final</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.5945em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02691em;">w</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0269em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">rel</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7778em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord mathrm">rel</span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.5945em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02691em;">w</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0269em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">auth</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7778em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord mathrm">auth</span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.5945em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02691em;">w</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.0269em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight"><span class="mord mathrm mtight">rec</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.4306em;"></span><span class="mord"><span class="mord mathrm">rec</span></span></span></span></span></span></p>
+<p>排完截到 5 条，再对前 3 条做自动读页（<code>WEB_SEARCH_READ_TOP_N</code>）。单次超时 8 秒，整轮读页还有 15 秒总时限，最多三个并发。正文最多读 512KB，摘录 2000 字；抽主文时会去掉脚本和页脚，优先看 <code>article</code> / <code>main</code>。抽出来的主文短于 80 字算失败。失败不丢这一条，摘要还在。前几条都读失败时，会往后补，直到成功数够 3，或者名单用尽。只允许公网 http(s)，内网地址过不了校验。无代理时读页走固定出口的客户端；配了代理则请求也走代理，并且不信任环境变量里别的代理设置。</p>
+<p>回给模型的是编号摘要：标题、站点、发布日期、URL、引擎摘要，读成功时再加一段正文摘录。引用必须按 <code>[来源N]</code> 标注。整段输出会包进非可信隔离，并再受工具回包的总长度上限约束，避免把整页 HTML 原样塞进上下文。引擎整体失败则是 <code>WEB_SEARCH_FAILED</code>，要求如实说明，不得编造链接。</p>
+<p>一条读成功的结果看起来大致是这样。站点、日期和正文摘录不一定每条都有。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs text">[1] ChatGPT Plus 帮助<br>站点: OpenAI<br>发布: 2026-03-01<br>URL: https://help.openai.com/...<br>摘要: …<br>正文摘录: …<br></code></pre></td></tr></table></figure>
+<h3 id="1-3-为什么这样做">1.3 为什么这样做</h3>
+<p><strong>召回、重排、读页这条链必须在工具里做完。</strong> 搜索引擎面对的是整个公开网页，结果里会混进词典、转载和过期报价。主模型每轮只有两次搜索配额，经不起「先搜、再请模型判断、再搜」。这条链里没有向量库，也没有倒数排名融合——公开网页不是本地叶子块。</p>
+<p><strong>先按运行环境选引擎，而不是绑死一家。</strong> 国内环境经常没有代理。博查提供带时效和站点参数的 JSON 接口，适合做无代理时的主路径；有代理时再把 ddgs 放前面，后端可以走到更多搜索源。解析必应中文版 HTML 是最后一档，不依赖第三方密钥，但页面一改解析就脆。强制单源适合排障，不适合作为对话默认。</p>
+<p><strong>同一意图的第二种说法，用 <code>extra_query</code> 收在这一次调用里。</strong> 文字搜索每轮只许成功两次，同一意图再调一次会很快顶到上限。问「GPT Plus 年费」时，第二路写成「ChatGPT Plus 订阅价格」，往往能补上第一路没打到的官方页。两路按网址去重，不是按名次加权。</p>
+<p><strong>语义重排之后，再用权威度和发布时间做软加权。</strong> 引擎顺序经常把词典页和转载排在官方说明前面。权威度不维护品牌名单：「哪些媒体可信」会过期，也会和产品绑定。<code>.gov</code> / <code>.edu</code> 和浅路径这些信号在不同领域都还站得住。问句带时间意图时再加新近度，避免过期报价压过今年的说明。</p>
+<p><strong>默认只读前三条，读失败保留摘要。</strong> 搜索引擎给的摘要经常截半句，价格、日期和免责声明尤其容易被裁掉。五条全读会把这一轮拖得很长，一条都不读则模型只能拿着残句作答。对话不会因为对方站点超时而整轮空白。</p>
+<p><strong>重排失败按原序继续。</strong> 工具要先保证有结果可引用，而不是先保证排序完美。全部低于阈值才按没有结果处理。</p>
+<h3 id="1-4-其它方案">1.4 其它方案</h3>
+<ol>
+<li>
+<p><strong>只绑定一个搜索引擎</strong>。</p>
+<ul>
+<li>优点：实现短，排障时只看一家的返回，也不必解释 auto 的三张表。</li>
+<li>缺点：密钥没配、代理不通、或者这一家当天限流，整轮就空了。auto 降级是为了在国内常见网络条件下还能搜到东西。</li>
+</ul>
+</li>
+<li>
+<p><strong>不做语义重排，只按引擎返回的顺序截断</strong>。</p>
+<ul>
+<li>优点：少一次 HTTP，第一个字出现得更快，也不依赖博查重排额度。</li>
+<li>缺点：词典页、聚合转载和问答站经常排在官方说明前面。问年费时，模型更容易先看见过期转载，再据此报一个已经作废的数字。</li>
+</ul>
+</li>
+<li>
+<p><strong>五条结果每一条都读页</strong>。</p>
+<ul>
+<li>优点：正文更齐，摘要骗人的机会更少。</li>
+<li>缺点：五次外站请求叠在 15 秒总时限里，慢站会把整轮卡住。默认只读前三条，后面两条仍有标题和摘要，模型若要精读可以再调 <code>fetch_url</code>。</li>
+</ul>
+</li>
+<li>
+<p><strong>不在搜索工具里读页，全部交给模型再调一次读页工具</strong>。</p>
+<ul>
+<li>优点：搜索链路更短，读页失败也不会和搜索绑在一次调用里。</li>
+<li>缺点：文字搜索每轮只有两次配额。模型若先搜再逐条读，次数会先被搜占满，指定链接反而读不成。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="2-fetch-url：有具体网址才深读">2 <code>fetch_url</code>：有具体网址才深读</h2>
+<h3 id="2-1-策略选择">2.1 策略选择</h3>
+<p>自动读页解决的是「搜索结果够不够看」。用户直接丢过来一个 http(s) 链接，或者模型已经拿到某条搜索结果、要精读那一页，才用 <code>fetch_url</code>。没有网址时不应调用它去「碰运气」。</p>
+<h3 id="2-2-如何实现">2.2 如何实现</h3>
+<p>参数只有 <code>url</code>。函数复用 <code>web_search_reader.py</code> 的 <code>fetch_page</code>：先做公网地址校验，再抓 HTML、抽主文。跳转最多跟 3 次，非 HTML 会拒绝。摘录上限是 4000 字，比搜索链里自动读页的 2000 字更长，因为这一次调用就是冲着「把这一页读清楚」去的。成功时固定编成 <code>[1]</code>，并要求引用标成 <code>[来源1]</code>，URL 必须和返回值逐字一致。失败返回 <code>FETCH_URL_FAILED</code>，不得编造正文。前端来源里这一条的 <code>read_ok</code> 为真。</p>
+<p>本轮配额是 3 次，和 <code>web_search</code> 分开计数。本轮如果没有开联网，调用会被禁用，返回禁用前缀。空字符串、或不是 http(s) 的地址，会直接以错误句返回，不发起请求。</p>
+<p>还是「今年 GPT Plus 年费多少？」。搜索结果里如果出现官方帮助中心的一条 URL，模型应调 <code>fetch_url</code> 打开那一页，而不是换个关键词再搜一遍。用户自己把帮助页链接贴进对话时，也应直接读，不必先走搜索引擎。工具说明书里把这两件事写在「何时使用」里：有具体网址，或者搜索已经给出了要精读的那一条。</p>
+<h3 id="2-3-为什么这样做">2.3 为什么这样做</h3>
+<p><strong>有具体网址才深读，没有网址不应拿它去碰运气。</strong> 用户贴过来的链接如果先拿去搜，既浪费一次搜索配额，也可能搜到另一份转载。年费页的转载常常改日期、改价格，直接打开用户给的那条 URL，至少知道读的是哪一页。</p>
+<p><strong>摘录上限提到 4000 字，高于搜索链里的 2000 字。</strong> 搜索链不能把五条结果全部读完，延迟和失败面都太大。指定一页精读，才能在模型已经知道网址时把字数加长，而不拖慢每一次普通搜索。</p>
+<p><strong>和自动读页共用 <code>fetch_page</code>，公网校验也一样。</strong> 避免出现「搜索能打开、指定链接却绕过检查」的缝。内网、localhost 和需要登录的页面不在范围内：工具不能变成内网探测口；登录墙后面的正文本来也抽不出来，与其返回半页登录框，不如如实说打不开。</p>
+<p><strong>配额和 <code>web_search</code> 分开，每轮 3 次。</strong> 搜索两次用尽之后，仍应能再读两三页已经搜到的地址。没有独立次数槽，精读会被搜索配额先占满。</p>
+<h3 id="2-4-其它方案">2.4 其它方案</h3>
+<ol>
+<li>
+<p><strong>没有 <code>fetch_url</code>，只靠搜索链自动读前三条</strong>。</p>
+<ul>
+<li>优点：少一个工具，模型不用判断「该搜还是该读」。</li>
+<li>缺点：用户贴过来的链接没有落点；搜索结果里排在第四、第五的页面也读不到更长的摘录。官方帮助页若排在后面，自动读页够不着。</li>
+</ul>
+</li>
+<li>
+<p><strong>搜索返回的每一条 URL 都自动精读</strong>。</p>
+<ul>
+<li>优点：模型每次都能看见较长正文，也不必再想要不要调读页工具。</li>
+<li>缺点：五次外站请求叠在搜索调用里，首字更慢，失败面也更大。现在把「随便看一眼」和「指定深读」拆开。</li>
+</ul>
+</li>
+<li>
+<p><strong>允许模型填写任意 URL，不做公网校验</strong>。</p>
+<ul>
+<li>优点：内网文档、预发环境也能读。</li>
+<li>缺点：工具会变成对内网的开放代理。当前校验就是为了把读页限制在公开网页。需要登录的 SaaS 后台同样不该从这条工具进去。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="3-web-image-search：先多捞图，再按画面和来源留下几张">3 <code>web_image_search</code>：先多捞图，再按画面和来源留下几张</h2>
+<h3 id="3-1-策略选择">3.1 策略选择</h3>
+<p><strong>文字搜图是另一条工具</strong>，不和网页搜索共用必应 HTML 解析、自动读页，也不走博查那套网页摘要重排。<strong>只接受 https 图片</strong>。先多召回，滤掉过小的缩略图，有视觉重排模型时再按「这张图和查询词是否相关」打分，然后和来源、尺寸加权，留下六张。前四张直接给出现成的 Markdown 图片行，模型应原样复制到回答里，不要改地址。</p>
+<p>查新闻、价格、政策请用 <code>web_search</code>。搜图的 query 要用专名加画面词，而不是「这张图」「类似图片」。</p>
+<h3 id="3-2-如何实现">3.2 如何实现</h3>
+<p>参数是 <code>query</code>，以及可选的 <code>extra_query</code>。两路同样并行合并。例如 query 写「GPT Plus 订阅页」，<code>extra_query</code> 写「ChatGPT Plus 官方定价截图」，两路图会按地址去重后排在一起。调度在 <code>_run_image_search</code>：默认有博查密钥就先走博查图搜，没有再走 ddgs。这条顺序<strong>不看有没有代理</strong>，和文字搜索的 auto 不同。强制 <code>bocha</code> 或 <code>ddgs</code> 时不降级。无论文字搜索的 provider 怎么写，搜图都不会去解析 bing 的 HTML。博查图搜的时效写死为不限制，也没有 <code>site</code> 参数。</p>
+<p>每路最多召回 18 张（<code>WEB_IMAGE_SEARCH_CANDIDATE_COUNT</code>），只留 https，并按图片地址去重。随后丢掉长边小于 240 像素、且宽高已知的缩略图；如果筛完一张都不剩，仍退回原来的缩略图，避免整轮空白。本轮回答里已经用过的图片地址会被去掉，减少同一张图反复贴。</p>
+<table>
+<thead>
+<tr>
+<th>步骤</th>
+<th>做什么</th>
+<th>默认规模</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>召回</td>
+<td>博查图搜，没有密钥再走 ddgs；可选第二路</td>
+<td>每路最多 18</td>
+</tr>
+<tr>
+<td>预过滤</td>
+<td>只要 https，去重，滤小图</td>
+<td>长边 240</td>
+</tr>
+<tr>
+<td>视觉重排</td>
+<td>模型名含 <code>vl-rerank</code> 才走；图用 URL</td>
+<td>失败按原序</td>
+</tr>
+<tr>
+<td>融合截断</td>
+<td>相关分 + 来源权威度 + 尺寸</td>
+<td>留下 6 张</td>
+</tr>
+<tr>
+<td>交给模型</td>
+<td>前 4 张现成 Markdown，后 2 张只给地址</td>
+<td><code>MARKDOWN_COUNT=4</code></td>
+</tr>
+</tbody>
+</table>
+<p>视觉重排复用对话里已经配好的 <code>RERANK_MODEL</code>、<code>RERANK_API_KEY</code>、<code>RERANK_BINDING_HOST</code>。三者都有，且模型名里包含 <code>vl-rerank</code>，才会走 DashScope 多模态重排。图用 https 原图 URL 送进去，不转成本地文件再编码。对方如果拒绝按 URL 拉图，这一路会记失败，按筛选后的原序继续。没有网页重排那种最低分门槛，单张分低也不会整批发空。</p>
+<p>最后按相关分、来源页权威度、尺寸做融合，尺寸默认权重 0.15。没有宿主页的条目会略减分。宿主页落在常见聚合站上会再减一截，落在更干净的图床上会略加分。截到 6 条时，如果干净来源已经够数，聚合站会被挤出名单；不够数才把它们补在后面。前 4 条带 <code>![说明](https://...)</code>，后面两条只给标题和地址。失败前缀是 <code>WEB_IMAGE_SEARCH_FAILED</code>，一张可用 https 图都没有则是 <code>WEB_IMAGE_SEARCH_NO_RESULTS</code>。搜图成功时，图片来源会合并进本轮已经有的网页来源，不会把刚才的搜索结果冲掉。</p>
+<p>配额每轮 2 次，和文字搜索分开。本轮没开联网，同样会被禁用。</p>
+<h3 id="3-3-为什么这样做">3.3 为什么这样做</h3>
+<p><strong>搜图是另一条工具，不走必应 HTML、不自动读页、也不走网页摘要重排。</strong> 网页摘要重排只看见标题和一段文字，判断不了画面是不是用户要的那张订阅页截图。再抓一遍宿主页既慢，也帮不上选图。时效和站点参数也不往搜图上搬：图搜引擎对「今年」「只要 <a target="_blank" rel="noopener" href="http://openai.com">openai.com</a>」的支持参差不齐，硬套文字搜索的 freshness 容易整路空掉。</p>
+<p><strong>只接受 https，先多召回，再滤掉过小的缩略图。</strong> 缩略图和聚合站会把回答撑满广告和水印。筛完一张都不剩时仍退回原来的缩略图，避免整轮空白。</p>
+<p><strong>有视觉重排模型时，按画面和查询词是否相关打分。</strong> 密钥复用已有的重排配置，少维护一组凭证；模型名必须带 <code>vl-rerank</code>，普通文本重排模型接上去没有意义。图用 URL 送进去，搜到的本来就是外链，不必先下载到应用自己的对象存储再编码。</p>
+<p><strong>前四张给出现成的 Markdown 图片行。</strong> 模型自己拼地址时，经常改协议、加参数，或者把外链改成站点内部的媒体路径。后面两张只给地址，是给模型一个「不够再看」的余地，又不把六张图都铺进回答。</p>
+<p><strong>图片来源合并进本轮已经有的网页来源。</strong> 同一轮里先搜网页再搜图时，如果覆盖而不是合并，前端只剩下几张图，刚才的五条网页引用会消失，用户点不开 <code>[来源N]</code>。</p>
+<p><strong>配额和文字搜索分开，每轮 2 次。</strong> 查新闻、价格、政策应走 <code>web_search</code>；搜图不应占掉那两次文字搜索。</p>
+<h3 id="3-4-其它方案">3.4 其它方案</h3>
+<ol>
+<li>
+<p><strong>搜网页，再从结果页里抽图</strong>。</p>
+<ul>
+<li>优点：少一条工具，引擎也只用一套。</li>
+<li>缺点：搜索结果页上的图经常是图标、广告和作者头像，和「GPT Plus 订阅页长什么样」对不上。</li>
+</ul>
+</li>
+<li>
+<p><strong>不做视觉重排，只按引擎返回的顺序截断</strong>。</p>
+<ul>
+<li>优点：少一次外呼，不依赖多模态重排模型。</li>
+<li>缺点：引擎排序看的是页面，不是画面。专名对上了、构图完全不对的图，仍会排在前面。</li>
+</ul>
+</li>
+<li>
+<p><strong>只回图片 URL，让模型自己拼 Markdown</strong>。</p>
+<ul>
+<li>优点：工具输出更短。</li>
+<li>缺点：模型会改写括号里的地址，前端预览和用户看到的图就对不上。现成行是为了减少这一步走样。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="收束">收束</h2>
+<p>联网三件套分开做事。<code>web_search</code> 负责把公开网页找出来、排好、读前几条；<code>fetch_url</code> 负责打开已经知道的那一个地址；<code>web_image_search</code> 负责留下几张能直接贴进回答的图。次数上限分开计算，本轮开了联网才能用。搜索引擎可以换档，重排和读页失败都按「还有结果就继续」处理；真正没有可用结果时，用稳定前缀要求如实说明，不要编链接，也不要编图片。</p>
+<p>问「今年 GPT Plus 年费多少？」通常先走文字搜索；看见官方帮助页再精读；若用户还想看订阅按钮长什么样，再走搜图。三条链不要拧成一次调用。</p>
+<p>在线主路径如下：</p>
+<pre><code class=" mermaid">graph TD
+    A[&quot;web_search&quot;] --&gt; B[&quot;run_searches&quot;]
+    B --&gt; C[&quot;博查 rerank&quot;]
+    C --&gt; D[&quot;权威度 / 新近度&quot;]
+    D --&gt; E[&quot;读前 3 条&quot;]
+    E --&gt; F[&quot;编号摘要回给 Agent&quot;]
+    G[&quot;fetch_url&quot;] --&gt; H[&quot;读指定页&quot;]
+    I[&quot;web_image_search&quot;] --&gt; J[&quot;召回图&quot;]
+    J --&gt; K[&quot;VL 重排 + 尺寸&quot;]
+</code></pre>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Kura-AI/" class="category-chain-item">Kura-AI</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Agent/" class="print-no-link">#Agent</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/tags/Kura-AI/" class="print-no-link">#Kura-AI</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Kura-AI」联网搜索工具设计</div>
+      <div>https://marisamagic.github.io/2026/09/06/20260906_KuraAI_联网搜索/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年9月6日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                      <a href="/2026/09/06/20260906_KuraAI_%E9%99%84%E4%BB%B6%E8%AF%BB%E5%8F%96/" title="「Kura-AI」附件读取工具设计">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「Kura-AI」附件读取工具设计</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/09/06/20260906_KuraAI_AgenticRAG/" title="「Kura-AI」Agentic RAG 检索设计">
+                        <span class="hidden-mobile">「Kura-AI」Agentic RAG 检索设计</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+  <script>
+  Fluid.utils.createScript('https://lib.baomitu.com/mermaid/8.14.0/mermaid.min.js', function() {
+    mermaid.initialize({"theme":"default"});
+
+    Fluid.utils.listenDOMLoaded(function() {
+      Fluid.events.registerRefreshCallback(function() {
+        if ('mermaid' in window) {
+          mermaid.init();
+        }
+      });
+    });
+  });
+</script>
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

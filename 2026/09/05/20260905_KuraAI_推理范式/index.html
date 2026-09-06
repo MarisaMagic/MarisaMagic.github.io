@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
 <meta property="article:published_time" content="2026-09-05T08:58:39.781Z">
-<meta property="article:modified_time" content="2026-09-06T03:48:50.437Z">
+<meta property="article:modified_time" content="2026-09-06T13:11:18.502Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="Agent">
@@ -257,7 +257,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          2.8k 字
+          3.3k 字
         
       </span>
     
@@ -268,7 +268,7 @@
         
         
         
-          24 分钟
+          28 分钟
         
       </span>
     
@@ -329,7 +329,11 @@
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/chat/agent_service.py · build_model_and_agent</span><br><span class="hljs-keyword">from</span> langchain.agents <span class="hljs-keyword">import</span> create_agent<br><br>agent_kwargs = &#123;<br>    <span class="hljs-string">&quot;model&quot;</span>: model,<br>    <span class="hljs-string">&quot;tools&quot;</span>: tools,<br>    <span class="hljs-string">&quot;system_prompt&quot;</span>: system_prompt,<br>&#125; <br>agent = create_agent(**agent_kwargs)<br></code></pre></td></tr></table></figure>
 <p>本轮如果开了知识库，循环通常走两轮就结束。模型不会输出 Thought / Action 这种文本，服务端也就没什么可解析的：</p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs text">产品：GPT Plus<br>本轮：知识库开 / 联网关<br>用户：GPT Plus 年费怎么退？<br><br>第 1 轮模型 → tool_calls:<br>  search_knowledge_base(query=&quot;GPT Plus 年费退款&quot;)<br>工具回喂 → [来源1] 开通未满 7 天可全额退，超过则按剩余整月折算……<br>第 2 轮模型 → （不再要工具）<br>  根据知识库，开通未满 7 天可全额退；超过 7 天按剩余整月折算。[来源1]<br></code></pre></td></tr></table></figure>
-<h3 id="1-3-其它方案">1.3 其它方案</h3>
+<h3 id="1-3-为什么这样做">1.3 为什么这样做</h3>
+<p><strong>下一步交给原生工具调用，而不是一段自由文本。</strong> 调哪个工具、参数填什么，写在结构化字段里，服务端就不必再解析 Thought / Action 这种格式。主流对话模型已经支持 Function Calling；自己写解析器，还要处理格式漂移、半截流式和多工具并行，后面很难维护。</p>
+<p><strong>循环交给 <code>create_agent</code>，项目里不另写调度器。</strong> Kura-AI 要管住的是本轮能不能调、最多调几次、模型能看见哪些材料，不是自己实现一套 Thought-Action-Observation。LangChain / LangGraph 已经把「工具跑完再喂回模型、没有 tool_calls 就出正式回答」这条环跑稳了。</p>
+<p><strong>不另加 Planner，也不在主循环外包一层反思。</strong> 当前主要是知识问答，真正要拦住的是检索互斥和工具次数。再加一次规划或 critic，等于每轮多一次完整调用，延迟和 token 都会上去；这些约束写在本轮策略和工具返回值里更划算。</p>
+<h3 id="1-4-其它方案">1.4 其它方案</h3>
 <ol>
 <li>
 <p><strong>手写 ReAct 文本循环</strong>（模型输出 Thought / Action / Observation，服务端解析后再拼回去）。</p>
@@ -370,9 +374,10 @@
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><code class="hljs text">TOOL_DISABLED_THIS_TURN: search_knowledge_base is not enabled for this turn.<br></code></pre></td></tr></table></figure>
 <p>本轮已经成功检索过一次，再调就会返回 <code>TOOL_CALL_LIMIT_REACHED</code>。系统会要求模型拿已有结果作答，而不是再搜一遍。</p>
 <h3 id="2-3-为什么这样做">2.3 为什么这样做</h3>
-<p><strong>延迟。</strong> 项目中不会按开关去重建 <code>create_agent</code>。工具 schema 保持稳定，模型就不用在「上一轮还有 <code>web_search</code>，这一轮突然没了」之间来回猜工具名。</p>
-<p><strong>可控，也省 token。</strong> 知识库每轮只允许成功占用 1 次，记忆检索同样 1 次；联网搜索、读页、搜图各自有上限。MCP 外部工具在系统里也有次数限制，避免模型在循环里反复调用。</p>
-<p><strong>失败怎么处理。</strong> 工具被禁用，或者次数用完，都返回带错误码的字符串（<code>TOOL_DISABLED_THIS_TURN</code> / <code>TOOL_CALL_LIMIT_REACHED</code>）。循环不会中断，模型被要求据此不再调用工具，而不是抛异常把整轮打掉。系统提示里的检索纪律会点名这些错误码，要求如实说「未找到」，而不是让模型编造来源。</p>
+<p><strong>工具列表始终挂在 Agent 上。</strong> 组 Agent 时不会按用户勾选拆掉知识库或联网。相邻两轮如果工具集合来回变，模型更容易编一个已经卸掉的名字；schema 保持稳定，就不必在「上一轮还有 <code>web_search</code>，这一轮突然没了」之间来回猜。</p>
+<p><strong>本轮能不能用，靠策略拦住。</strong> 用户勾选的「用知识库 / 用联网」是执行层的开关，不是组装层的装卸。模型仍可能发出一次不该发的 <code>tool_calls</code>，但检索不会跑，外网也不会被刷。</p>
+<p><strong>开关和次数上限一起拦。</strong> 知识库和记忆每轮只许成功占用 1 次，联网搜索、读页、搜图各自有上限。没有次数槽，模型会在循环里反复刷同一把工具；只靠开关、不管次数，同一轮里仍可能把接口打满。</p>
+<p><strong>拦住以后回错误码，不拆循环。</strong> <code>TOOL_DISABLED_THIS_TURN</code> 和 <code>TOOL_CALL_LIMIT_REACHED</code> 进 <code>ToolMessage</code> 之后，模型才有机会改口，如实说「这轮不能搜 / 已经搜过了」。抛异常会把整轮打成 500，对话要的不是这个。</p>
 <h3 id="2-4-其它方案">2.4 其它方案</h3>
 <ol>
 <li>
@@ -400,18 +405,11 @@
 <p>发给模型的最后一条 Human 长这样。刷新页面再 <code>load</code>，历史上只剩第一句：</p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs text">GPT Plus 年费怎么退？<br><br>【本轮上下文（仅本回合有效）】<br>本轮允许调用 search_knowledge_base / search_knowledge_by_image；<br>不要调用 web_search / fetch_url / web_image_search。<br><br>【本回合知识库检索范围】已限定在：<br>- `GPT-Plus退款说明.pdf`<br>调用 search_knowledge_base 时只传 query。<br></code></pre></td></tr></table></figure>
 <h3 id="3-3-为什么这样做">3.3 为什么这样做</h3>
-<p>把本轮的工具限制、知识库范围（如果有）写进 <code>system_prompt</code> 其实也能跑。最后没有这么做，主要是这几个原因：</p>
-<ul>
-<li>
-<p><strong>角色不一样。</strong> system 放的是人设和长期纪律。知识库文档范围、读图结果、记忆摘录，是「这一问临时带上的材料」，更适合跟在用户问句后面。</p>
-</li>
-<li>
-<p><strong>外部内容不该进 system。</strong> 读图描述、记忆摘录、用户上传的附件、超长上下文压缩出来的摘要，本质上都是外部拿来的文本。这些东西写进人设，模型更容易把它们当成指令。</p>
-</li>
-<li>
-<p><strong>先用轻量子模型圈好文档。</strong> 主循环开始前，先用一次轻量模型调用，把检索范围定到例如 <code>GPT-Plus退款说明.pdf</code>，再写进本轮块并注入检索工具。主模型第一轮就可以直接搜，不用先空转一轮去试「该查哪几份文档」。</p>
-</li>
-</ul>
+<p><strong>长期纪律放进 system。</strong> 人设，以及「什么时候允许搜知识库、怎么标知识库来源」，每一轮都成立，适合写在 <code>system_prompt</code> 里。把本轮才有的文档清单也塞进去，人设会被一份经常变动的材料撑得很长。</p>
+<p><strong>本轮材料接在用户原话后面。</strong> 选中的文档范围、附件提示、读图描述、记忆摘录，只对这一问有效。跟在「GPT Plus 年费怎么退？」后面，模型看见的是「这一句问的是什么、这一轮能用哪些材料」，而不是把临时清单抬成长期指令。</p>
+<p><strong>外部文本不进 system。</strong> 读图描述、记忆摘录、用户上传的附件、超长上下文压出来的摘要，都是外面拿来的。这些东西写进人设，模型更容易把它们当成新的系统指令。</p>
+<p><strong>会话历史只留用户原话。</strong> 检索出来的、临时拼上去的附加材料如果入库，压缩、记忆和重新生成时，系统会把这块当成用户真的说过的话。刷新页面再 <code>load</code>，历史上只应剩下第一句。</p>
+<p><strong>检索范围在主循环开始前圈好。</strong> 先用一次轻量子模型调用，把范围定到例如 <code>GPT-Plus退款说明.pdf</code>，再写进本轮块并注入检索工具。主模型第一轮就可以直接搜，不用先空转一轮去试「该查哪几份文档」。</p>
 <h3 id="3-4-其它方案">3.4 其它方案</h3>
 <ol>
 <li>

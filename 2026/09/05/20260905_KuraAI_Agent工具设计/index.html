@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
 <meta property="article:published_time" content="2026-09-05T13:55:56.192Z">
-<meta property="article:modified_time" content="2026-09-06T03:48:58.929Z">
+<meta property="article:modified_time" content="2026-09-06T13:11:35.672Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="Agent">
@@ -257,7 +257,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          4.3k 字
+          4.7k 字
         
       </span>
     
@@ -268,7 +268,7 @@
         
         
         
-          37 分钟
+          40 分钟
         
       </span>
     
@@ -320,9 +320,9 @@
 <p>工具对模型是一份契约：LLM 决定调用什么工具、填写什么参数。首先是需要大模型拥有原生的 Function Calling 能力，其次还需要工具函数有完整的 <code>name</code>、<code>description</code> 和 <code>args_schema</code>。模型只负责决定调哪个工具、参数填什么。工具内部具体执行逻辑、次数上限、接口凭据都在服务端，模型既看不到，也改不了。</p>
 <p>每个部分告诉模型「这轮该不该调工具」，分工是这样的：</p>
 <ul>
-<li><strong>System</strong>：主要包括预定人设和长期纪律。知识库开着时，它会告诉模型：引用要怎么标，工具报了错误码时该怎么跟用户说。</li>
-<li><strong>本轮 Human</strong>：主要包括当前这轮对话允许调用哪些工具。如果有知识库检索，会展示只传 <code>query</code> 的提示和已经圈定的检索文档范围（由轻量级子模型调用得到）。这些部分会临时拼接到当前这轮对话 Human 消息的后面，但是不会持久化存储到数据库。</li>
-<li><strong>工具 description / schema</strong>：主要是工具的说明书，包括什么时候该调、什么时候不该调、参数怎么填写。特别的，知识库检索工具没有 file_key 参数，文档检索范围在智能体启动前，就会通过一次轻量级子模型调用提前注入 RAG 检索流程。</li>
+<li><strong>System</strong>：主要包括 <strong>预定人设和长期纪律</strong>。知识库开着时，它会告诉模型：引用要怎么标，工具报了错误码时该怎么跟用户说。</li>
+<li><strong>本轮 Human</strong>：主要包括当前这轮对话 <strong>允许调用哪些工具</strong>。如果有知识库检索，会展示只传 <code>query</code> 的提示和已经圈定的检索文档范围（由轻量级子模型调用得到）。这些部分会临时拼接到当前这轮对话 Human 消息的后面，但是不会持久化存储到数据库。</li>
+<li><strong>工具 description / schema</strong>：主要是 <strong>工具的说明书</strong>，包括什么时候该调、什么时候不该调、参数怎么填写。特别的，知识库检索工具没有 file_key 参数，文档检索范围在智能体启动前，就会通过一次轻量级子模型调用提前注入 RAG 检索流程。</li>
 <li><strong>工具函数</strong>：LLM 如果调用了不该调用的工具，工具会返回 <code>TOOL_DISABLED_THIS_TURN</code> 或 <code>TOOL_CALL_LIMIT_REACHED</code>。</li>
 </ul>
 <p>工具列表始终挂着，本轮能不能用靠返回值拦住。挂载策略不在这里展开。挂到 <code>create_agent</code> 上的工具分两类：系统自己带的，以及按智能体配置加载的 MCP。</p>
@@ -384,7 +384,7 @@
 </tbody>
 </table>
 <p><strong>已支持的可扩展 MCP 外部工具</strong></p>
-<p>智能体的配置中启用了哪些 MCP 远程服务，就作为 <code>extra_tools</code> 追加进来；也可以自己填一个远程地址。下面是预置商店里已经接好的服务，一键添加即可。名字和参数表跟远端走，和系统工具重名就跳过。共享会话默认不加载属主的 MCP。具体怎么容错、怎么确认，第 4 节再写。</p>
+<p>智能体的配置中启用了哪些 MCP 远程服务，就 <strong>作为 <code>extra_tools</code> 追加进来</strong>；也可以自己填一个远程地址。下面是预置商店里已经接好的服务，一键添加即可。名字和参数表跟远端走，和系统工具重名就跳过。共享会话默认不加载属主的 MCP。具体怎么容错、怎么确认，第 4 节再写。</p>
 <table>
 <thead>
 <tr>
@@ -395,27 +395,27 @@
 </thead>
 <tbody>
 <tr>
-<td>Context7</td>
+<td><a target="_blank" rel="noopener" href="https://context7.com/">Context7</a></td>
 <td>查较新的开发文档和代码示例</td>
 <td>默认不弹</td>
 </tr>
 <tr>
-<td>Tavily Search</td>
+<td><a target="_blank" rel="noopener" href="https://www.tavily.com/">Tavily Search</a></td>
 <td>实时搜网页、抽正文</td>
 <td>默认不弹</td>
 </tr>
 <tr>
-<td>Exa Search</td>
+<td><a target="_blank" rel="noopener" href="https://exa.ai/">Exa Search</a></td>
 <td>语义搜网页和技术文档</td>
 <td>默认不弹</td>
 </tr>
 <tr>
-<td>GitHub</td>
+<td><a target="_blank" rel="noopener" href="https://github.com/">GitHub</a></td>
 <td>仓库、Issue、PR 相关操作</td>
 <td>写操作会先停下来问用户</td>
 </tr>
 <tr>
-<td>Hugging Face</td>
+<td><a target="_blank" rel="noopener" href="https://huggingface.co/">Hugging Face</a></td>
 <td>查模型、数据集、Spaces</td>
 <td>默认不弹</td>
 </tr>
@@ -435,8 +435,9 @@
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/kb/search_tool.py · make_search_knowledge_tool</span><br><span class="hljs-keyword">class</span> <span class="hljs-title class_">_SearchKbArgs</span>(<span class="hljs-title class_ inherited__">BaseModel</span>):<br>    query: <span class="hljs-built_in">str</span> = Field(description=<span class="hljs-string">&quot;用于检索的自然语言问题或关键词，应与用户意图一致。&quot;</span>)<br></code></pre></td></tr></table></figure>
 <p>description 会再补一句：「本回合可检索的文档范围已由系统预先确定，你只需传 query，不要尝试指定文件名或换库。」本轮 Human 里也会写同一句话，并列出已经圈好的 <code>file_key</code>。两处都是软约束；硬约束是 schema 里根本没有这个字段。</p>
 <h3 id="1-3-为什么这样做">1.3 为什么这样做</h3>
-<p>少一个参数，就少一次幻觉。如果让模型自己填 <code>file_key</code>，它很容易编一个已经卸掉的文件名，或者跟前置选档对着干。范围放进闭包，主模型第一轮就可以直接搜，不用先空转一轮去试「该查哪几份文档」。</p>
-<p>description 是模型选工具时真正会读的说明书。<code>web_search</code> 把「何时不要用」写进去，包括「知识库已经开了就别搜网」这个互斥的系统约束；<code>search_session_memory</code> 把「答案已经在近轮里就别调」写进去。这些话 System 里未必点得这么操作化，工具自己说更准。</p>
+<p><strong>description 写清何时用、何时不要用。</strong> 模型选工具时真正会读的是这份说明书。<code>web_search</code> 把「知识库已经开了就别搜网」写进去，<code>search_session_memory</code> 把「答案已经在近轮里就别调」写进去。这些话 System 里未必点得这么操作化，工具自己说更准。</p>
+<p><strong>schema 只留模型该填的字段。</strong> 少一个参数，就少一次幻觉。范围、开关、属主知识库是哪一个，都不该出现在参数表里；一旦交给模型，本轮互斥就从硬约束变成软请求。</p>
+<p><strong>检索范围关在闭包里，不让模型填 <code>file_key</code>。</strong> 该查哪几份文档，对话开始前就已经由选档子模型圈好。如果让模型自己填，它很容易编一个已经卸掉的文件名，或者跟前置选档对着干。主模型第一跳只需决定「要不要搜、搜什么词」。</p>
 <h3 id="1-4-其它方案">1.4 其它方案</h3>
 <ol>
 <li>
@@ -457,7 +458,7 @@
 <hr>
 <h2 id="2-返回值是给模型的下一句指令">2 返回值是给模型的下一句指令</h2>
 <h3 id="2-1-策略选择">2.1 策略选择</h3>
-<p>工具一律回<strong>字符串</strong>。其中知识库检索调用成功时带编号来源，失败时带<strong>稳定错误码</strong>。循环不会因为一次禁用或空结果停掉，模型被要求据此改口，而不是再猜一遍。</p>
+<p>工具一律回 <strong>字符串</strong>。其中知识库检索调用成功时带编号来源，失败时带 <strong>稳定错误码</strong>。循环不会因为一次禁用或空结果停掉，模型被要求据此改口，而不是再猜一遍。</p>
 <p>「GPT Plus 年费怎么退？」如果知识库里真没有退款说明，工具不会丢一段低相关摘录让模型硬编。二次检索和逐块打分都过不了，就回 <code>KNOWLEDGE_BASE_NO_RELEVANT_INFO</code>，并写明：如实告诉用户没有资料，不要引用片段，也不要编知识库结论。</p>
 <h3 id="2-2-如何实现">2.2 如何实现</h3>
 <p>工具禁用和工具调用次数用完，文案出在 <code>app/chat/tools.py</code>。</p>
@@ -469,9 +470,10 @@
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs text">Retrieved Chunks:<br>检索结果：1 个文档<br><br>[1] GPT-Plus退款说明.pdf (Page 2)<br>开通未满 7 天可全额退；超过 7 天按剩余整月折算。<br></code></pre></td></tr></table></figure>
 <p>工具内部的异常也不会砸进 Agent 循环。检索出错时返回 <code>知识库检索出错：&#123;e&#125;</code> 这类字符串，循环继续，模型还有机会对人说一声失败。</p>
 <h3 id="2-3-为什么这样做">2.3 为什么这样做</h3>
-<p>错误码是写给模型的下一句指令，不是写给日志的。<code>Do not call ...</code>、<code>不得编造任何搜索结果</code>，和 System 里点名的码对上，模型才知道该停、该改口、该如实说「没找到」。</p>
-<p>编号来源是给引用用的。模型不必自己发明 <code>[来源1]</code>，也不必改写图片地址。图片行如果让模型拼接，它很容易把文档名、页码或 <code>stored_relpath</code> 填进括号里；工具把可复制的那一行写死，引用纪律才执行得下去。</p>
-<p>返回字符串而不是抛异常，循环才能把这句话收成 <code>ToolMessage</code>。对话要的是「这轮不能搜 / 库里没有」，而不是前端一个 500 错误。</p>
+<p><strong>工具一律回字符串。</strong> 循环才能把这句话收成 <code>ToolMessage</code>。成功和失败都回 JSON，模型还要再理解一套结构；流式路径上，一段带「下一步该怎么做」的纯文本更稳。</p>
+<p><strong>成功时带编号来源。</strong> 模型不必自己发明 <code>[来源1]</code>，也不必改写图片地址。图片行如果让模型拼接，它很容易把文档名、页码或 <code>stored_relpath</code> 填进括号里；工具把可复制的那一行写死，引用纪律才执行得下去。</p>
+<p><strong>失败时回稳定错误码。</strong> <code>Do not call ...</code>、<code>不得编造任何搜索结果</code>，和 System 里点名的码对上，模型才知道该停、该改口、该如实说「没找到」。错误码是写给模型的下一句指令，不是写给日志的。</p>
+<p><strong>禁用或空结果不拆循环。</strong> 对话要的是「这轮不能搜 / 库里没有」，而不是前端一个 500 错误。知识库里真没有退款说明时，丢一段低相关摘录只会让模型硬编。</p>
 <h3 id="2-4-其它方案">2.4 其它方案</h3>
 <ol>
 <li>
@@ -507,8 +509,10 @@
 <p>这些计数挂在 <code>_RequestState</code> 上，经 ContextVar 按请求分发。并发对话互不可见，不会把别人的检索次数或 RAG 上下文串过来。每轮入口会清零计数，再 <code>set_turn_tool_policy</code> 写下本轮开关。没有「新建一个状态对象」的 API，靠清计数和改开关复用当前请求的那一份。</p>
 <p>选档、记忆预注入、读图都发生在智能体启动之前。主模型看不见选档过程，也传不了 <code>file_key</code>。读图是两阶段 caption，不是再挂一把 <code>read_image</code>。</p>
 <h3 id="3-3-为什么这样做">3.3 为什么这样做</h3>
-<p>函数里的检查和说明书必须对得上。description 写了「每轮最多一次」，函数就真的只允许成功一次；Human 写了「不要调 web_search」，函数就真的回禁用码。软约束负责指路，硬拦负责兜底。模型仍可能发出一次不该发的 <code>tool_calls</code>，但检索不会跑，外网也不会被刷。</p>
-<p>状态按请求隔离，是因为工具函数可能跑在 <code>to_thread</code> 或执行器里。ContextVar 会把同一份 <code>_RequestState</code> 带过去，同步路径又在单线程内，所以跨用户串扰被挡住了。如果做成进程里一个全局计数器，两个人同时问「年费怎么退？」就会抢同一把槽。</p>
+<p><strong>先问本轮开没开，再看次数还够不够。</strong> 开关管的是「这轮该不该调」，次数管的是「已经调过还能不能再调」。两关都过了才跑检索或外部 API，模型仍可能发出一次不该发的 <code>tool_calls</code>，但检索不会跑，外网也不会被刷。</p>
+<p><strong>这些检查写在工具函数里。</strong> description 写了「每轮最多一次」，函数就真的只允许成功一次；Human 写了「不要调 web_search」，函数就真的回禁用码。软约束负责指路，硬拦负责兜底。规则和返回给模型的那句话写在一起，比散落在图外的中间件里更近。</p>
+<p><strong>不同工具用不同的上限。</strong> 知识库和记忆每轮 1 次，联网搜索、搜图默认 2 次，读页默认 3 次，以图检索跟附件张数走。一套全局次数切不平这些规则。</p>
+<p><strong>计数按请求隔离。</strong> 工具函数可能跑在 <code>to_thread</code> 或执行器里，ContextVar 会把同一份 <code>_RequestState</code> 带过去。做成进程里一个全局计数器，两个人同时问「年费怎么退？」就会抢同一把槽。</p>
 <h3 id="3-4-其它方案">3.4 其它方案</h3>
 <ol>
 <li>
@@ -531,14 +535,16 @@
 <h3 id="4-1-策略选择">4.1 策略选择</h3>
 <p>外部工具也必须遵守这份契约：<strong>列表尽量稳定，失败回字符串，高风险先停下来</strong>。MCP 不是另一套 Agent，只是 <code>extra_tools</code>。单服务挂了不能把整张表拆掉，也不能让共享用户的一句话去驱动属主凭据。</p>
 <h3 id="4-2-如何实现">4.2 如何实现</h3>
-<p>加载在 <code>load_agent_mcp_tools</code>。只拉该智能体已启用的服务；连不上时记下错误，对话继续。若缓存里还有上次成功的 schema，就挂一层 stub，调用时返回 <code>MCP_UNAVAILABLE</code>，名字和参数表还在。没有缓存，这个服务跳过，别的继续。工具名和内置九个名字冲突，或者彼此重名，直接跳过，避免把 <code>web_search</code> 换掉。</p>
+<p>加载在 <code>load_agent_mcp_tools</code>。<strong>只拉该智能体已启用的服务</strong>；连不上时记下错误，对话继续。若缓存里还有上次成功的 schema，就挂一层 stub，调用时返回 <code>MCP_UNAVAILABLE</code>，名字和参数表还在。没有缓存，这个服务跳过，别的继续。工具名和内置九个名字冲突，或者彼此重名，直接跳过，避免把 <code>web_search</code> 换掉。</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/mcp_client/service.py · _stub_mcp_tools_from_snapshot</span><br>err_text = <span class="hljs-string">f&quot;MCP_UNAVAILABLE: 服务「<span class="hljs-subst">&#123;server_name&#125;</span>」当前不可用：<span class="hljs-subst">&#123;error[:<span class="hljs-number">200</span>]&#125;</span>&quot;</span><br><span class="hljs-comment"># stub 的 name / description / args_schema 与上次成功快照一致</span><br><span class="hljs-comment"># 真正调用只返回上面这句，不连远程</span><br></code></pre></td></tr></table></figure>
 <p>每把远程工具还会再包两层。<code>_guard_mcp_tool_output</code> 把字符串当非可信内容隔离、截断。<code>wrap_mcp_tool_with_confirmation</code> 看这是不是高风险写操作：annotation 里 <code>destructiveHint</code> 为真，或名字、描述命中 create / delete / push 这类词，就先不执行，返回 <code>MCP_CONFIRMATION_REQUIRED pending_id=...</code>，让模型停下来请用户确认。同一参数重复提交会复用已有 pending；本轮确认条数到顶，则回 <code>MCP_CONFIRMATION_LIMIT_REACHED</code>。</p>
 <p>共享会话默认不加载属主 MCP。<code>_mcp_tools_allowed_for</code> 写得很清楚：这些工具带着属主预置的请求头，模型会自主调用。共享用户的对话或注入文本一旦能驱动它们，就是在用属主身份做事。默认关着，可用 <code>SHARE_CHAT_ALLOW_OWNER_MCP_TOOLS</code> 打开，但不推荐。知识库正好相反——共享会话仍检索发布者的库，只是不加载发布者的 MCP。</p>
 <h3 id="4-3-为什么这样做">4.3 为什么这样做</h3>
-<p>模型已经见过这些工具名。服务抖动时如果整表消失，下一跳它仍可能编一个刚卸掉的名字。stub 留下 schema，回来的是一句带错误码的人话，和内置工具的禁用码是同一思路。</p>
-<p>高风险确认把「先执行再解释」改成「先停再问」。远程工具的副作用在 Kura-AI 进程外面，回滚不了；返回确认码、等 <code>pending_id</code> 批准后再跑一次，比在 System 里写「请谨慎调用」要硬。</p>
-<p>输出当非可信内容，是因为 MCP 回的是外部文本。它和知识库原文、网页正文一样，不能被模型当成新的系统指令。记忆检索目前没有这层包裹，因为它来自本会话已经归档的对话，不是外部服务。</p>
+<p><strong>列表尽量稳定，挂了留 stub，不把整张表拆掉。</strong> 模型已经见过这些工具名。服务抖动时如果整表消失，下一跳它仍可能编一个刚卸掉的名字。stub 留下 schema，回来的是一句 <code>MCP_UNAVAILABLE</code>，和内置工具的禁用码是同一思路。</p>
+<p><strong>失败回字符串，不把整轮对话打断。</strong> 单服务连不上只记错误，别的工具继续。MCP 不是另一套 Agent，只是 <code>extra_tools</code>，失败形态应和系统工具对齐。</p>
+<p><strong>高风险写操作先停下来问用户。</strong> 远程工具的副作用在 Kura-AI 进程外面，回滚不了。返回确认码、等 <code>pending_id</code> 批准后再跑一次，比在 System 里写「请谨慎调用」要硬。只读的 <code>get</code> / <code>list</code> 不必每次打断对话。</p>
+<p><strong>共享会话默认不加载属主 MCP。</strong> 这些工具带着属主预置的请求头，模型会自主调用。共享用户的一句话一旦能驱动它们，就是在用属主身份做事。知识库可以继续检索发布者的库，凭据不能跟着走。</p>
+<p><strong>输出当非可信内容。</strong> MCP 回的是外部文本，和知识库原文、网页正文一样，不能被模型当成新的系统指令。</p>
 <h3 id="4-4-其它方案">4.4 其它方案</h3>
 <ol>
 <li>

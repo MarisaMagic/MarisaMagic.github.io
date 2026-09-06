@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
 <meta property="article:published_time" content="2026-09-05T16:53:56.374Z">
-<meta property="article:modified_time" content="2026-09-06T05:57:07.906Z">
+<meta property="article:modified_time" content="2026-09-06T13:18:50.564Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="Agent">
@@ -257,7 +257,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          5.4k 字
+          5.7k 字
         
       </span>
     
@@ -268,7 +268,7 @@
         
         
         
-          46 分钟
+          48 分钟
         
       </span>
     
@@ -359,7 +359,7 @@
 <p><strong>叶子进 Milvus。</strong> 真正拿去近邻搜索的，是「开通未满 7 天可全额退」这类 L3 短句，以及同一页抽出来的 L4 图。集合只要把这件事做稳：写入 dense 向量，由服务端按 <code>text</code> 算出 BM25，再按 <code>kb_scope</code>、<code>filename</code> 先圈定范围再搜。全站共用一个 <code>kura_ai_kb</code>，隔离写在字段上，schema、HNSW 和 BM25 Function 只建一次。启动时预热的也是这一份，不必每来一个智能体就再建一张表。</p>
 <p><strong>父块进 PostgreSQL。</strong> L1 / L2 不是拿来搜的。检索打中那句退款叶子之后，若要把整段退款规则一并读给模型，后文会按 <code>chunk_id</code> 回表，把更大的 L2、L1 捞回来。入库时只有 L3 / L4 会走 embedding；父块用 <code>Text</code> 存全文就够。把 1800 字的根块再向量化一遍，既多花钱，也会和短叶子抢召回。Milvus 的 <code>text</code> 字段上限是 2000 字符，本来就是给可检索的短叶子用的，不是给大段正文准备的。</p>
 <p><strong>原件进 MinIO。</strong> <code>kb_service.py</code> 模块头写得很直白：文档和图片本体存对象存储，PostgreSQL 只留元数据。上传上限 50MB，原 PDF 要下载、抽图要按路径取，这些按对象 key 处理更合适。向量行里只留 <code>image_path</code> 这类字符串，不把整份文件塞进集合。应用用的 MinIO 和 Milvus 内部那套是分开的，互不抢盘。</p>
-<p>不做一张独立的知识库实体表，是因为「这份库是谁的」用 <code>kb_scope</code> 就能定下来。共享集合省运维，代价是每条写入都必须带对隔离键。被分享的人没有管理入口，对话里搜到的仍是属主那一份——隔离键比再复制一份库更合适。</p>
+<p><strong>不做一张独立的知识库实体表。</strong> 「这份库是谁的」用 <code>kb_scope</code> 就能定下来。共享集合省运维，代价是每条写入都必须带对隔离键。被分享的人没有管理入口，对话里搜到的仍是属主那一份——隔离键比再复制一份库更合适。</p>
 <h3 id="1-4-其它方案">1.4 其它方案</h3>
 <ol>
 <li>
@@ -388,12 +388,12 @@
 <h2 id="2-三级分块，叶子进向量库">2 三级分块，叶子进向量库</h2>
 <h3 id="2-1-策略选择">2.1 策略选择</h3>
 <p>文档切分走的是 <strong>按页递归、按自然边界下刀切块</strong>。先把 PDF 的一页、Excel 的一张表、或 txt / md 的整篇当成一个切分单位，再用三套字符级 <code>RecursiveCharacterTextSplitter</code>（<strong>递归字符切分</strong>：先找段落，找不到再找句子）嵌套切出 L1 → L2 → L3。</p>
-<p>这里其实有两层递归：分隔符从粗到细试，直到这块能塞进这一层的窗口；层级上则是页切完 L1，再对每个 L1 切 L2，再对每个 L2 切 L3。某一层的文本如果已经不超过窗口，就原样留下，不再往下切——但三层还是都会各写一行，不会因为够短就跳过 L2 或 L3。</p>
-<p>页内不按 Markdown 标题切，也不按 token 切。知识库里大量是 PDF 和 Word，没有可靠的 heading 树；<code>.md</code> 也和 txt 走同一条 <code>_load_text_pages</code>，不会先抽一级、二级标题。页和页之间也不合并，短页就是一页一条链，长页才在页内分出多个根。</p>
-<p>分隔符的意图是：段落 → 换行 → 中英文句号问号 → 逗号顿号 → 空格 → 实在不行再硬切。相邻块大约重叠 13%，避免一句话被拦腰截成两半之后两边都检索不上。</p>
-<p><strong>检索只打叶子。</strong> 细的 L3 用来近邻搜索，粗的 L1 / L2 留在 PostgreSQL，命中碎了再升到更大上下文——那是后文 Auto-merge 的事，构建阶段先把父子关系留下。PDF 和 Word 里抽出的图单独做成 L4，整张一块，不参与这段文本切分。</p>
+<p>这里其实有 <strong>两层递归</strong>：分隔符从粗到细试，直到这块能塞进这一层的窗口；层级上则是页切完 L1，再对每个 L1 切 L2，再对每个 L2 切 L3。某一层的文本如果已经不超过窗口，就原样留下，不再往下切——但三层还是都会各写一行，不会因为够短就跳过 L2 或 L3。</p>
+<p><strong>页内不按 Markdown 标题切，也不按 token 切</strong>。知识库里大量是 PDF 和 Word，没有可靠的 heading 树；<code>.md</code> 也和 txt 走同一条 <code>_load_text_pages</code>，不会先抽一级、二级标题。页和页之间也不合并，短页就是一页一条链，长页才在页内分出多个根。</p>
+<p><strong>分隔符策略</strong> 主要是：段落 → 换行 → 中英文句号问号 → 逗号顿号 → 空格 → 实在不行再硬切。相邻块大约重叠 13%，避免一句话被拦腰截成两半之后两边都检索不上。</p>
+<p><strong>只检索叶子块。</strong> 细的 L3 块用来 ANN 近邻搜索语义相似度高的向量，粗的 L1 / L2 块留在 PostgreSQL，命中碎了再升到更大上下文——那是后文 Auto-merge 的事，构建阶段先把父子关系留下。PDF 和 Word 里抽出的图单独做成 L4，整张一块，不参与这段文本切分。</p>
 <h3 id="2-2-如何实现">2.2 如何实现</h3>
-<p>默认 <code>chunk_size=900</code>、<code>chunk_overlap=90</code>，推导出三层窗口。重叠大约都是窗口的 13%，落在常见的 10%～20% 区间里：</p>
+<p>默认 <code>chunk_size=900</code>、<code>chunk_overlap=90</code>，推导出三层窗口。<strong>重叠大约都是窗口的 13%</strong>，落在常见的 10%～20% 区间里：</p>
 <table>
 <thead>
 <tr>
@@ -405,25 +405,25 @@
 </thead>
 <tbody>
 <tr>
-<td>L1</td>
+<td><strong>L1</strong></td>
 <td>根块 / 粗上下文</td>
 <td>1800</td>
 <td>240</td>
 </tr>
 <tr>
-<td>L2</td>
+<td><strong>L2</strong></td>
 <td>中间父块</td>
 <td>900</td>
 <td>120</td>
 </tr>
 <tr>
-<td>L3</td>
+<td><strong>L3</strong></td>
 <td>检索叶子</td>
 <td>450</td>
 <td>60</td>
 </tr>
 <tr>
-<td>L4</td>
+<td><strong>L4</strong></td>
 <td>图片叶子</td>
 <td>整张图</td>
 <td>无</td>
@@ -449,25 +449,25 @@
 </thead>
 <tbody>
 <tr>
-<td>PDF</td>
+<td><strong>PDF</strong></td>
 <td><code>PyPDFLoader</code> 抽文本，PyMuPDF 抽图</td>
 <td>每页独立三级切</td>
 <td>小于 100×100 丢掉</td>
 </tr>
 <tr>
-<td>Word</td>
+<td><strong>Word</strong></td>
 <td><code>Docx2txtLoader</code> + <code>python-docx</code> 抽图</td>
 <td>按 loader 的页</td>
 <td>有，位置只能估算</td>
 </tr>
 <tr>
-<td>Excel</td>
+<td><strong>Excel</strong></td>
 <td>每个可见 sheet 转 Markdown 表</td>
 <td>一 sheet 当一页</td>
 <td>不抽</td>
 </tr>
 <tr>
-<td>TXT / MD</td>
+<td><strong>TXT / MD</strong></td>
 <td>整文件当成 <code>page=0</code></td>
 <td>同一套三级切</td>
 <td>无</td>
@@ -476,9 +476,11 @@
 </table>
 <p>只接受 pdf / docx / doc / xlsx / xls / txt / md。代码文件进不来。<code>chunk_id</code> 带上 scope、文件名指纹、页码和层级。文本叶子长得像 <code>u1_a3::&#123;fingerprint&#125;::p2::l3::0</code>，图片再加 <code>::i&#123;序号&#125;</code>。图文关联写在图片行的 <code>related_text_ids</code> 里：PDF 优先按页面位置找图上方最近的 L3；对不上坐标的，按阅读序配对。同一页如果有流程图，会再出一块 L4，并记下它关联了哪几个 L3。</p>
 <h3 id="2-3-为什么这样做">2.3 为什么这样做</h3>
-<p>语义被切断，往往不是字丢了，而是一句话被拆成两半之后，每一半单独看都不够像答案。退款说明里如果写成「开通未满 7 天可全额退，超过则按剩余整月折算」，切刀刚好落在逗号上，前半只有「可全额退」，后半只有「按剩余整月折算」——问「年费怎么退」，两边的相关度都可能不够，检索会两边都落空。</p>
-<p>只叠一层固定窗口，解决不了这件事。块太大，退款条款和免责声明挤在一起，相似度会被冲淡；块太小，模型看见的是半句话。Kura-AI 把三件事叠在一起：<strong>递归边界尽量停在段和句上，相邻块重叠约 13% 把跨界的半句补回去，细叶子负责检索、粗父块负责把上下文捞回来。</strong></p>
-<p>L1 / L2 不向量化，检索只检索 L3 叶子块（特别的，还有 L4 图片块），命中多个上级分块的子块，才会 Auto-merge 合并成大的文档块作为检索结果返回。另外，也少算两层 embedding，集合也更小。图不能单独当文档上传：没有页内位置，就挂不上旁边的文字。</p>
+<p><strong>按页递归，按自然边界下刀。</strong> 语义被切断，往往不是字丢了，而是一句话被拆成两半之后，每一半单独看都不够像答案。退款说明里如果写成「开通未满 7 天可全额退，超过则按剩余整月折算」，切刀刚好落在逗号上，前半只有「可全额退」，后半只有「按剩余整月折算」——问「年费怎么退」，两边都可能检索不上。分隔符从段落试到句子，是为了让切刀尽量停在句号和换行上，而不是停在词中间。</p>
+<p><strong>页内不按 Markdown 标题切，也不按 token 切。</strong> 知识库里大量是 PDF 和 Word，没有可靠的 heading 树；<code>.md</code> 也和 txt 走同一条加载路径。一套按页、按段落和句子的切法，才能覆盖现在允许的全部格式。</p>
+<p><strong>相邻块大约重叠 13%。</strong> 切刀再小心，仍可能落在句中。重叠把跨界的半句补进下一块，前一块带着后半句的开头，后一块带着前半句的尾巴，两边才都还有机会被找到。</p>
+<p><strong>只检索叶子，父块不向量化。</strong> 块太大，退款条款和免责声明这样的类似文本挤在一起，相似度会被冲淡；块太小，模型看见的是半句话。细的 L3 / L4 负责被找到，粗的 L1 / L2 留在 PostgreSQL，命中够密再升段。少算两层 embedding，集合也更小。</p>
+<p><strong>图不能单独当文档上传。</strong> 没有页内位置，就挂不上旁边的文字，后文也补不回同页关联。PDF / Word 里抽出的图做成 L4，整张一块，不参与这段文本切分。</p>
 <h3 id="2-4-其它方案">2.4 其它方案</h3>
 <ol>
 <li>
@@ -516,13 +518,15 @@
 <p>一份文件落库以后长这样：</p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs text">GPT-Plus退款说明.pdf<br> ├─ mg_kb_documents        1 行（content_hash、叶子数）<br> ├─ mg_kb_parent_chunks    L1 / L2 全文<br> ├─ kura_ai_kb             L3 文本 + L4 图片<br> ├─ mg_kb_images           抽图索引 + related_text_ids<br> └─ MinIO                  原件 + 抽图<br></code></pre></td></tr></table></figure>
 <p>写入拆成两段，写在 <code>app/kb/multimodal_milvus_writer.py</code> 的文件头里：<code>embed_documents</code> 只算稠密向量，<code>write_documents</code> 才 insert。文本按 <code>EMBEDDING_BATCH_SIZE=10</code> 一批；图一张一请求，失败填零向量，不中断整篇。单次嵌入 HTTP 超时 90 秒，避免 SDK 默认 300 秒把任务挂死。稀疏那一侧不用客户端填数，insert 带上 <code>text</code> 即可，集合里的 <code>bm25_fn</code> 会现场算好。</p>
-<p>检索真正用到的字段是 <code>dense_embedding</code>（HNSW + 内积）和 <code>bm25_sparse</code>。隔离、文件名、层级、内容类型都是普通字段，给过滤用。<code>filename</code> 是展示名，主要用于删除和选档。分词用的是内置 <code>standard</code> 分析器：英文按词切开，中文精确的单字对上主要还是靠稠密向量兜底。</p>
+<p>检索真正用到的字段是 <code>dense_embedding</code>（<strong>HNSW + 内积</strong>）和 <code>bm25_sparse</code>。隔离、文件名、层级、内容类型都是普通字段，给过滤用。<code>filename</code> 是展示名，主要用于删除和选档。分词用的是内置 <code>standard</code> 分析器：英文按词切开，中文精确的单字对上主要还是靠稠密向量兜底。</p>
 <h3 id="3-3-为什么这样做">3.3 为什么这样做</h3>
-<p>图片和文本采用同一套多模态向量化，文本查询也能检索到相似度高的图片。退款说明里如果有一张流程图，问「年费怎么退」不一定非要先命中旁边的句子。</p>
-<p>服务端 BM25 是后来补上的。BM25 要两样东西：一份词表，给每个词编一个编号；以及 IDF，也就是这个词在多少篇文档里出现过——越稀有，越能把文档区分开，「的」几乎每篇都有，权重接近零，「退款」只在少数叶子里，权重就高。旧方案把这两样放在 Kura-AI 进程的内存里，先算出每个叶子的稀疏向量（一串「词编号 → 权重」），再写进 Milvus。查询时也必须用同一份词表，编号对得上才能搜到。</p>
-<p>词表活在进程里，不跟集合绑死。应用一重启，内存清空，词表往往要按当时库里的文档重新建。重建顺序、后来新上传的文件只要有一点不一样，「退款」就可能从 42 号变成 87 号。库里旧叶子还写着「42 号很重要」，查询却按 87 号去对，对错了号。这就是注释里说的跨重启索引漂移：索引还在，语义编号已经换了。多开几个进程时，每份词表还可以各编各的，同一句查询编出来的编号都不一样。</p>
-<p>IDF 还会慢慢对不齐。它依赖写入那一刻整个库有多少篇、这个词出现在几篇里。后来又传了二十份文档，「退款」从很稀有变成挺常见，新查询按新库算权重，旧叶子里却还是老数字，对不齐就是 IDF 失真。</p>
-<p>现在改成客户端只写原文 <code>text</code>。Milvus 在插入时自己生成 <code>bm25_sparse</code>，查询也直接喂这句话，由同一套函数编码。词表和 IDF 跟集合走，不跟 Python 进程走，应用重启，编号不会换。<code>migrate_bm25.py</code> 换的是集合的 schema，不是 embedding 模型：已经算过的 1536 维稠密向量原样搬到新集合，不再打 DashScope；旧的进程内稀疏向量丢掉，插入时带上 <code>text</code>，由 <code>bm25_fn</code> 重新生成。</p>
+<p><strong>文本和图共用同一套多模态稠密向量。</strong> 问「年费怎么退」，既要撞上写着「全额退款」的句子，也要撞上同一页里那张退款流程图。各用一套 embedding，文本查询就打不到图，还要维护两套维度和两套失败重试。现在都是 1536 维，入库和检索只走一条路。</p>
+<p><strong>稠密向量由客户端算完再写入。</strong> 语义相似度这一路跟 embedding 模型绑定，必须在插入前算好。图一张一请求，失败填零向量，不中断整篇。</p>
+<p><strong>BM25 稀疏向量交给服务端 Function。</strong> BM25 要两样东西：<strong>一份词表</strong>，给每个词编一个编号；以及 <strong>IDF</strong>，也就是这个词在多少篇文档里出现过（<strong>文档出现频率</strong>）——越稀有，越能把文档区分开，「的」几乎每篇都有，权重接近零，「退款」只在少数叶子里，权重就高。旧方案把这两样放在 Kura-AI 进程的内存里，先算出每个叶子的稀疏向量（一串「词编号 → 权重」），再写进 Milvus。查询时也必须用同一份词表，编号对得上才能搜到。</p>
+<p><strong>词表跟进程走，重启一次编号就会漂。</strong> 应用一重启，内存清空，词表往往要按当时库里的文档重新建。重建顺序、后来新上传的文件只要有一点不一样，「退款」就可能从 42 号变成 87 号。库里旧叶子还写着「42 号很重要」，查询却按 87 号去对，对错了号。这就是跨重启索引漂移：索引还在，语义编号已经换了。多开几个进程时，每份词表还可以各编各的，同一句查询编出来的编号都不一样。</p>
+<p><strong>IDF 也会慢慢对不齐。</strong> 它依赖写入那一刻整个库有多少篇、这个词出现在几篇里。后来又传了二十份文档，「退款」从很稀有变成挺常见，新查询按新库算权重，旧叶子里却还是老数字，对不齐就是 IDF 失真。</p>
+<p><strong>所以客户端只写原文 <code>text</code>。</strong> Milvus 在插入时自己生成 <code>bm25_sparse</code>，查询也直接喂这句话，由同一套函数编码。词表和 IDF 跟集合走，不跟 Python 进程走，应用重启，编号不会换。<code>migrate_bm25.py</code> 换的是集合的 schema，不是 embedding 模型：已经算过的 1536 维稠密向量原样搬到新集合，不再打 DashScope；旧的进程内稀疏向量丢掉，插入时带上 <code>text</code>，由 <code>bm25_fn</code> 重新生成。</p>
+<p><strong>图片块的 <code>text</code> 是空的。</strong> 词法检索基本只服务文本叶子；图主要靠同一空间里的稠密向量被找到。问「GPT Plus」靠字面召回句子，问「年费怎么退」靠语义召回句子和图。</p>
 <h3 id="3-4-其它方案">3.4 其它方案</h3>
 <ol>
 <li>
@@ -553,14 +557,15 @@
 <p>一份文档同时存储在四层：Milvus 里的叶子、PostgreSQL 里的父块和文档行、Redis 里的父块缓存，以及 MinIO 里的原件和抽图。这几套存储之间没有外键，也没有 <code>ON DELETE CASCADE</code>。删一份文件、清空一个智能体、或者用同名文件覆盖，都只能由应用按 <code>kb_scope</code> 和文件名，一层一层清干净。</p>
 <p><strong>同名替换不是「先删再解析」，而是先建好再级联删除旧的数据。</strong> 新版本还没算完向量之前，对话里仍能搜到旧的退款说明；只有新叶子确实正常写入数据库，旧的数据才会被安全清除。</p>
 <h3 id="4-2-如何实现">4.2 如何实现</h3>
-<p>上传接口只负责受理。<code>POST /kb/upload</code> 做完魔数校验和 50MB 上限，立刻返回 <code>task_id</code>。解析和嵌入会堵住事件循环，所以丢进 <code>kb_job</code> 的线程池，最多 8 路并行。进度按阶段往前走：<code>queued → parsing → chunking → embedding → writing</code>。</p>
+<p>上传接口只负责受理。<code>POST /kb/upload</code> 做完魔数校验（<strong>文件类型校验</strong>）和 50MB 上限，立刻返回 <code>task_id</code>。解析和嵌入会堵住事件循环，所以丢进 <code>kb_job</code> 的线程池，最多 8 路并行。进度按阶段往前走：<code>queued → parsing → chunking → embedding → writing</code>。</p>
 <p>真正入库的是 <code>run_ingest_pipeline_sync</code>。注释把顺序写死了：解析和全部向量都成功之前，不碰正在用的旧数据；成功之后才进替换临界区，删旧、写父块、插入叶子、补图片元数据、最后写下文档行。</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/kb/kb_service.py · run_ingest_pipeline_sync</span><br><span class="hljs-comment"># 「先处理后替换」：</span><br><span class="hljs-comment"># - 解析 + 全部向量生成成功之前不碰旧数据</span><br><span class="hljs-comment"># - 成功后进入替换临界区：删旧 → 父块 → 叶子插入 → 图片元数据 → 文档行</span><br></code></pre></td></tr></table></figure>
-<p>如果这份 <code>GPT-Plus退款说明.pdf</code> 的内容哈希没变，直接标 <code>unchanged</code> 跳过，省掉一次 embedding。内容变了，才用 Redis 的 NX 锁走进临界区，后完成的那一次生效，避免两个人同时传同名文件把半成品交错写进去。失败、超时或用户取消，只清掉这次的临时文件，旧文档原样留着。</p>
-<p>用户主动删掉这一份时，走 <code>delete_kb_document</code>：先按 <code>kb_scope</code> 和文件名删向量，再删父块和缓存，再删文档行，再删抽图——同名替换时可以把新图正在用的 key 排除掉，免得刚传上去的图被一起清掉——最后删原件。删整个智能体时，<code>delete_user_agent</code> 在 <code>obj.delete()</code> 之后调用 <code>purge_kb_for_scope</code>，按 scope 把上面这几步做完。账号删除目前不走这条清空。</p>
+<p>如果这份 <code>GPT-Plus退款说明.pdf</code> 的内容 <strong>哈希没变</strong>，直接标 <code>unchanged</code> <strong>跳过</strong>，省掉一次 embedding。内容变了，才用 Redis 的 NX 锁走进临界区，后完成的那一次生效，避免两个人同时传同名文件把半成品交错写进去。失败、超时或用户取消，只清掉这次的临时文件，旧文档原样留着。</p>
+<p><strong>用户主动删掉某一个文档时</strong>，走 <code>delete_kb_document</code>：<strong>先按 <code>kb_scope</code> 和文件名删向量</strong>，再删 <strong>父块和缓存</strong>，<strong>再删文档行</strong>，<strong>再删抽图</strong>——同名替换时可以把新图正在用的 key 排除掉，免得刚传上去的图被一起清掉——最后删原件。删整个智能体时，<code>delete_user_agent</code> 在 <code>obj.delete()</code> 之后调用 <code>purge_kb_for_scope</code>，按 scope 把上面这几步做完。账号删除目前不走这条清空。</p>
 <h3 id="4-3-为什么这样做">4.3 为什么这样做</h3>
-<p>嵌入是整条流水线里最慢、也最贵的一步。如果一上来先把旧行删掉，再去解析和算向量，超时或用户点了取消，对话这边就会出现空档：刚才还能搜到的退款说明突然没了，进度条上却只看得到失败。先把新版本完整准备好，再替换，空档只会落在「删旧到写新」这一小段临界区里。</p>
-<p>PostgreSQL、Milvus、MinIO、Redis 也没有统一事务。数据库里就算给三张表加上外键，也管不到向量集合和对象存储。所以删除只能写在应用层，按层清。图片对象的 key 带了内容哈希，同名文件覆盖时删旧图，才不会误伤刚写进去的新图。</p>
+<p><strong>同名替换先建好，再级联删除旧数据。</strong> 嵌入是整条流水线里最慢、也最贵的一步。如果一上来先把旧行删掉，再去解析和算向量，超时或用户点了取消，刚才还能搜到的退款说明突然没了，进度条上却只看得到失败。先把新版本完整准备好，再替换，空档只会落在「删旧到写新」这一小段临界区里。</p>
+<p><strong>四套存储没有外键，也没有统一事务。</strong> PostgreSQL 里就算给三张表加上 <code>ON DELETE CASCADE</code>，也管不到 Milvus 和 MinIO。删一份文件、清空一个智能体，都只能由应用按 <code>kb_scope</code> 和文件名，一层一层清干净。</p>
+<p><strong>图片对象的 key 带内容哈希。</strong> 同名文件覆盖时要删旧图，新图正在用的 key 必须排除掉，才不会把刚写进去的图一起清掉。</p>
 <h3 id="4-4-其它方案">4.4 其它方案</h3>
 <ol>
 <li>

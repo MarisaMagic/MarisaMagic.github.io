@@ -246,6 +246,252 @@
     
     
       <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2026/09/06/20260906_KuraAI_%E8%AE%B0%E5%BF%86%E4%B8%8E%E5%8E%8B%E7%BC%A9/" target="_self">
+          <img src="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「Kura-AI」长短期记忆与超长上下文压缩">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/09/06/20260906_KuraAI_%E8%AE%B0%E5%BF%86%E4%B8%8E%E5%8E%8B%E7%BC%A9/" target="_self">
+          「Kura-AI」长短期记忆与超长上下文压缩
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2026/09/06/20260906_KuraAI_%E8%AE%B0%E5%BF%86%E4%B8%8E%E5%8E%8B%E7%BC%A9/" target="_self">
+        <div>
+          Kura-AI 把变长对话拆成两层：近期原文加一份滚动摘要，当作短期工作记忆；被挤出窗口的整轮再切块写入独立向量集合，当作长期记忆。压缩按字符预算触发，不删库里的原文。摘要不进向量库。读回来靠本轮预注入，不够再调一次 search_session_memory。
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-09-06 22:01" pubdate>
+              2026-09-06
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Kura-AI/" class="category-chain-item">Kura-AI</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+              <a href="/tags/Agent/">#Agent</a>
+            
+              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/">#大模型</a>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/Kura-AI/">#Kura-AI</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2026/09/06/20260906_KuraAI_%E9%99%84%E4%BB%B6%E8%AF%BB%E5%8F%96/" target="_self">
+          <img src="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「Kura-AI」附件读取工具设计">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/09/06/20260906_KuraAI_%E9%99%84%E4%BB%B6%E8%AF%BB%E5%8F%96/" target="_self">
+          「Kura-AI」附件读取工具设计
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2026/09/06/20260906_KuraAI_%E9%99%84%E4%BB%B6%E8%AF%BB%E5%8F%96/" target="_self">
+        <div>
+          Kura-AI 的主 Agent 只决定调哪一件附件工具、attachment_id 和 query 填什么。本会话刚上传的文件不会自动进向量库：名单写进本轮上下文，search 抽全文后只把命中片段回给模型，read 只切文首。图片不走这三把工具，带检索时先单独看图，再让主循环只拿描述去调工具。
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-09-06 21:34" pubdate>
+              2026-09-06
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Kura-AI/" class="category-chain-item">Kura-AI</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+              <a href="/tags/Agent/">#Agent</a>
+            
+              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/">#大模型</a>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/Kura-AI/">#Kura-AI</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2026/09/06/20260906_KuraAI_%E8%81%94%E7%BD%91%E6%90%9C%E7%B4%A2/" target="_self">
+          <img src="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「Kura-AI」联网搜索工具设计">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/09/06/20260906_KuraAI_%E8%81%94%E7%BD%91%E6%90%9C%E7%B4%A2/" target="_self">
+          「Kura-AI」联网搜索工具设计
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2026/09/06/20260906_KuraAI_%E8%81%94%E7%BD%91%E6%90%9C%E7%B4%A2/" target="_self">
+        <div>
+          Kura-AI 的主 Agent 只决定调哪一件联网工具、参数填什么。web_search 会按有没有代理、有没有博查密钥选择搜索引擎，先多召回再重排，再按权威度和时效加权，最后自动读前三条的正文。用户或搜索结果给出了具体网址，才用 fetch_url 精读那一页。要配图时走另一条工具 web_image_search，留下几张 https 图，并给出现成的 Markdown。
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-09-06 19:42" pubdate>
+              2026-09-06
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Kura-AI/" class="category-chain-item">Kura-AI</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+              <a href="/tags/Agent/">#Agent</a>
+            
+              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/">#大模型</a>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/Kura-AI/">#Kura-AI</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
         <a href="/2026/09/06/20260906_KuraAI_AgenticRAG/" target="_self">
           <img src="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「Kura-AI」Agentic RAG 检索设计">
         </a>
@@ -760,246 +1006,6 @@
             <i class="iconfont icon-date"></i>
             <time datetime="2026-08-26 15:30" pubdate>
               2026-08-26
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/LangChain/" class="category-chain-item">LangChain</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/AI/">#AI</a>
-            
-              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/">#大模型</a>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-              <a href="/tags/LangChain/">#LangChain</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-      <div class="col-12 col-md-4 m-auto index-img">
-        <a href="/2026/08/26/20260826_LangChain%E5%B7%A5%E5%85%B7%E6%B3%A8%E5%86%8C/" target="_self">
-          <img src="https://sukicdn.com/wyx/i/2026/08/24/185sw.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「LangChain」LangChain 如何为 Agent 注册工具？">
-        </a>
-      </div>
-    
-    <article class="col-12 col-md-8 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/08/26/20260826_LangChain%E5%B7%A5%E5%85%B7%E6%B3%A8%E5%86%8C/" target="_self">
-          「LangChain」LangChain 如何为 Agent 注册工具？
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt " href="/2026/08/26/20260826_LangChain%E5%B7%A5%E5%85%B7%E6%B3%A8%E5%86%8C/" target="_self">
-        <div>
-          在 LangChain 中给 Agent 注册工具，本质是同时做两件事：向模型提供一份「工具说明」（名称、用途、参数 Schema，模型据此选工具并生成参数），向运行时提供一个「可执行函数」（LangChain 据此真正执行）。这份说明不是普通注释，而是模型与业务代码之间的「调用合同」——描述模糊模型会选错工具，参数缺约束模型会生成无法执行的数据。定义方式有四种，随复杂度上升而非互相竞争：名称、类
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-08-26 00:13" pubdate>
-              2026-08-26
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/LangChain/" class="category-chain-item">LangChain</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/AI/">#AI</a>
-            
-              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/">#大模型</a>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-              <a href="/tags/LangChain/">#LangChain</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-      <div class="col-12 col-md-4 m-auto index-img">
-        <a href="/2026/08/24/20260824_LangChain%E6%9E%84%E5%BB%BAAgent/" target="_self">
-          <img src="https://sukicdn.com/wyx/i/2026/08/24/185sw.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「LangChain」使用 LangChain 构建 Agent 的核心步骤？">
-        </a>
-      </div>
-    
-    <article class="col-12 col-md-8 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/08/24/20260824_LangChain%E6%9E%84%E5%BB%BAAgent/" target="_self">
-          「LangChain」使用 LangChain 构建 Agent 的核心步骤？
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt " href="/2026/08/24/20260824_LangChain%E6%9E%84%E5%BB%BAAgent/" target="_self">
-        <div>
-          构建一个能上线的 Agent 不是把模型和工具拼起来跑通一次调用，而是走完「边界 → 能力 → 约束 → 组装 → 状态 → 交互 → 验证」七步工程链路：先明确任务边界——能做什么、禁止做什么、何时停止、什么算成功（比如订单客服 Agent 可以查订单、解释物流，但退款必须等人工审批）；再选支持工具调用与结构化输出的模型，把数据库、搜索、业务 API 封装成职责单一、Schema 清晰的 Too
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-08-24 23:55" pubdate>
-              2026-08-24
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/LangChain/" class="category-chain-item">LangChain</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/AI/">#AI</a>
-            
-              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/">#大模型</a>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-              <a href="/tags/LangChain/">#LangChain</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-      <div class="col-12 col-md-4 m-auto index-img">
-        <a href="/2026/08/24/20260824_LangChain%E5%BA%95%E5%B1%82%E6%9E%B6%E6%9E%84/" target="_self">
-          <img src="https://sukicdn.com/wyx/i/2026/08/24/185sw.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「LangChain」LangChain 的底层架构与实现原理是什么？">
-        </a>
-      </div>
-    
-    <article class="col-12 col-md-8 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/08/24/20260824_LangChain%E5%BA%95%E5%B1%82%E6%9E%B6%E6%9E%84/" target="_self">
-          「LangChain」LangChain 的底层架构与实现原理是什么？
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt " href="/2026/08/24/20260824_LangChain%E5%BA%95%E5%B1%82%E6%9E%B6%E6%9E%84/" target="_self">
-        <div>
-          当前 LangChain v1 不再是「把 Prompt、模型和解析器串成 Chain」的工具，而是一套面向 Agent 的分层开发框架：langchain-core 用 Message、Model、Tool、Runnable 等标准协议统一组件（各模型厂商的独立集成包负责把请求与响应适配到协议上），应用层可以相对统一地切换模型和工具；Runnable 统一 invoke、异步、批处理与流式调用，
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-08-24 13:28" pubdate>
-              2026-08-24
             </time>
           </div>
         
