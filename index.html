@@ -246,6 +246,88 @@
     
     
       <div class="col-12 col-md-4 m-auto index-img">
+        <a href="/2026/09/06/20260906_KuraAI_%E7%9F%A5%E8%AF%86%E5%BA%93%E6%9E%84%E5%BB%BA/" target="_self">
+          <img src="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「Kura-AI」知识库构建设计">
+        </a>
+      </div>
+    
+    <article class="col-12 col-md-8 mx-auto index-info">
+      <h2 class="index-header">
+        
+        <a href="/2026/09/06/20260906_KuraAI_%E7%9F%A5%E8%AF%86%E5%BA%93%E6%9E%84%E5%BB%BA/" target="_self">
+          「Kura-AI」知识库构建设计
+        </a>
+      </h2>
+
+      
+      <a class="index-excerpt " href="/2026/09/06/20260906_KuraAI_%E7%9F%A5%E8%AF%86%E5%BA%93%E6%9E%84%E5%BB%BA/" target="_self">
+        <div>
+          Kura-AI 没有单独的知识库实体表，也没有按用户各建一个向量集合。知识库挂在单个智能体上，隔离靠 kb_scope，全站共用一个 Milvus 集合 kura_ai_kb。文档先按页再按段落和句子切成父子树，相邻块大约重叠 13%，只有叶子进向量库；父块和图片索引进 PostgreSQL，原件进对象存储。同名替换先算完全部向量再删旧。删除没有数据库外键，按层清向量、父块、元数据和文件。
+        </div>
+      </a>
+
+      <div class="index-btm post-metas">
+        
+          <div class="post-meta mr-3">
+            <i class="iconfont icon-date"></i>
+            <time datetime="2026-09-06 00:53" pubdate>
+              2026-09-06
+            </time>
+          </div>
+        
+        
+          <div class="post-meta mr-3 d-flex align-items-center">
+            <i class="iconfont icon-category"></i>
+            
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Kura-AI/" class="category-chain-item">Kura-AI</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+          </div>
+        
+        
+          <div class="post-meta">
+            <i class="iconfont icon-tags"></i>
+            
+              <a href="/tags/AI/">#AI</a>
+            
+              <a href="/tags/Agent/">#Agent</a>
+            
+              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/">#大模型</a>
+            
+              <a href="/tags/LLM/">#LLM</a>
+            
+              <a href="/tags/Kura-AI/">#Kura-AI</a>
+            
+          </div>
+        
+      </div>
+    </article>
+  </div>
+
+  <div class="row mx-auto index-card">
+    
+    
+      <div class="col-12 col-md-4 m-auto index-img">
         <a href="/2026/09/05/20260905_KuraAI_Agent%E5%B7%A5%E5%85%B7%E8%AE%BE%E8%AE%A1/" target="_self">
           <img src="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「Kura-AI」Agent 工具设计">
         </a>
@@ -915,86 +997,6 @@
           <div class="post-meta mr-3">
             <i class="iconfont icon-date"></i>
             <time datetime="2026-08-20 13:03" pubdate>
-              2026-08-20
-            </time>
-          </div>
-        
-        
-          <div class="post-meta mr-3 d-flex align-items-center">
-            <i class="iconfont icon-category"></i>
-            
-
-<span class="category-chains">
-  
-  
-    
-      <span class="category-chain">
-        
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
-  
-  
-    <span>></span>
-    
-  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Agent-Tool/" class="category-chain-item">Agent Tool</a>
-  
-  
-
-  
-
-      </span>
-    
-  
-</span>
-
-          </div>
-        
-        
-          <div class="post-meta">
-            <i class="iconfont icon-tags"></i>
-            
-              <a href="/tags/AI/">#AI</a>
-            
-              <a href="/tags/Agent/">#Agent</a>
-            
-              <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/">#大模型</a>
-            
-              <a href="/tags/LLM/">#LLM</a>
-            
-          </div>
-        
-      </div>
-    </article>
-  </div>
-
-  <div class="row mx-auto index-card">
-    
-    
-      <div class="col-12 col-md-4 m-auto index-img">
-        <a href="/2026/08/20/20260820_SSE_WebSocket_WebRTC%E5%AF%B9%E6%AF%94/" target="_self">
-          <img src="https://sukicdn.com/wyx/i/2026/08/17/lho.jpg" srcset="https://sukicdn.com/wyx/i/2025/01/10/dlz.gif" lazyload alt="「Agent Tool」LLM 通信协议怎么选：SSE、WebSocket 与 WebRTC">
-        </a>
-      </div>
-    
-    <article class="col-12 col-md-8 mx-auto index-info">
-      <h2 class="index-header">
-        
-        <a href="/2026/08/20/20260820_SSE_WebSocket_WebRTC%E5%AF%B9%E6%AF%94/" target="_self">
-          「Agent Tool」LLM 通信协议怎么选：SSE、WebSocket 与 WebRTC
-        </a>
-      </h2>
-
-      
-      <a class="index-excerpt " href="/2026/08/20/20260820_SSE_WebSocket_WebRTC%E5%AF%B9%E6%AF%94/" target="_self">
-        <div>
-          LLM 对话里的通信协议按数据流分两类选型。文字流方面——SSE 是 HTTP 原生单向长连接，客户端以 Accept 头声明 text/event-stream、服务端沿连接持续推送 data 文本流、EventSource 免手写解析，适合流式输出与多轮对话（ChatGPT、OpenAI API 皆如此），局限是单向双通道复杂、HTTP/1.1 同域 6 连接上限、只能传文本（Base64 膨
-        </div>
-      </a>
-
-      <div class="index-btm post-metas">
-        
-          <div class="post-meta mr-3">
-            <i class="iconfont icon-date"></i>
-            <time datetime="2026-08-20 12:25" pubdate>
               2026-08-20
             </time>
           </div>

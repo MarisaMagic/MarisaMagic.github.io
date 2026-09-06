@@ -1,0 +1,1000 @@
+
+
+<!DOCTYPE html>
+<html lang="zh-CN" data-default-color-scheme=auto>
+
+
+
+<head>
+  <meta charset="UTF-8">
+
+  <link rel="apple-touch-icon" sizes="76x76" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  <link rel="icon" href="https://sukicdn.com/wyx/i/2025/01/10/3lc6t.png">
+  
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, shrink-to-fit=no">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  
+  <meta name="theme-color" content="#FFB90F">
+  <meta name="author" content="MarisaMagic">
+  <meta name="keywords" content="">
+  
+    <meta name="description" content="Kura-AI 没有单独的知识库实体表，也没有按用户各建一个向量集合。知识库挂在单个智能体上，隔离靠 kb_scope，全站共用一个 Milvus 集合 kura_ai_kb。文档先按页再按段落和句子切成父子树，相邻块大约重叠 13%，只有叶子进向量库；父块和图片索引进 PostgreSQL，原件进对象存储。同名替换先算完全部向量再删旧。删除没有数据库外键，按层清向量、父块、元数据和文件。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="「Kura-AI」知识库构建设计">
+<meta property="og:url" content="https://marisamagic.github.io/2026/09/06/20260906_KuraAI_%E7%9F%A5%E8%AF%86%E5%BA%93%E6%9E%84%E5%BB%BA/index.html">
+<meta property="og:site_name" content="MarisaMagic&#39;s Blog">
+<meta property="og:description" content="Kura-AI 没有单独的知识库实体表，也没有按用户各建一个向量集合。知识库挂在单个智能体上，隔离靠 kb_scope，全站共用一个 Milvus 集合 kura_ai_kb。文档先按页再按段落和句子切成父子树，相邻块大约重叠 13%，只有叶子进向量库；父块和图片索引进 PostgreSQL，原件进对象存储。同名替换先算完全部向量再删旧。删除没有数据库外键，按层清向量、父块、元数据和文件。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
+<meta property="article:published_time" content="2026-09-05T16:53:56.374Z">
+<meta property="article:modified_time" content="2026-09-06T05:57:07.906Z">
+<meta property="article:author" content="MarisaMagic">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Agent">
+<meta property="article:tag" content="大模型">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="Kura-AI">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
+  
+  
+  
+  <title>「Kura-AI」知识库构建设计 - MarisaMagic&#39;s Blog</title>
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/twitter-bootstrap/4.6.1/css/bootstrap.min.css" />
+
+
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/github-markdown-css/4.0.0/github-markdown.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/hint.css/2.7.0/hint.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.css" />
+
+  <link  rel="stylesheet" href="https://lib.baomitu.com/KaTeX/0.16.2/katex.min.css" />
+
+
+
+<!-- 主题依赖的图标库，不要自行修改 -->
+<!-- Do not modify the link that theme dependent icons -->
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1749284_5i9bdhy70f8.css">
+
+
+
+<link rel="stylesheet" href="//at.alicdn.com/t/c/font_1736178_k526ubmyhba.css">
+
+
+<link  rel="stylesheet" href="/css/main.css" />
+
+
+  <link id="highlight-css" rel="stylesheet" href="/css/highlight.css" />
+  
+    <link id="highlight-css-dark" rel="stylesheet" href="/css/highlight-dark.css" />
+  
+
+
+
+  
+<link rel="stylesheet" href="/css/scrollAnimation.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.1.0/style.css">
+
+
+
+  <script id="fluid-configs">
+    var Fluid = window.Fluid || {};
+    Fluid.ctx = Object.assign({}, Fluid.ctx)
+    var CONFIG = {"hostname":"marisamagic.github.io","root":"/","version":"1.9.8","typing":{"enable":true,"typeSpeed":70,"cursorChar":"_","loop":false,"scope":[]},"anchorjs":{"enable":true,"element":"h1,h2,h3,h4,h5,h6","placement":"left","visible":"hover","icon":""},"progressbar":{"enable":true,"height_px":3,"color":"#F9B002","options":{"showSpinner":false,"trickleSpeed":100}},"code_language":{"enable":true,"default":"TEXT"},"copy_btn":true,"image_caption":{"enable":true},"image_zoom":{"enable":true,"img_url_replace":["",""]},"toc":{"enable":true,"placement":"right","headingSelector":"h1,h2,h3,h4,h5,h6","collapseDepth":0},"lazyload":{"enable":true,"loading_img":"https://sukicdn.com/wyx/i/2025/01/10/dlz.gif","onlypost":false,"offset_factor":2},"web_analytics":{"enable":false,"follow_dnt":true,"baidu":null,"google":{"measurement_id":null},"tencent":{"sid":null,"cid":null},"leancloud":{"app_id":null,"app_key":null,"server_url":null,"path":"window.location.pathname","ignore_local":false},"umami":{"src":null,"website_id":null,"domains":null,"start_time":"2024-01-01T00:00:00.000Z","token":null,"api_server":null}},"search_path":"/local-search.xml","include_content_in_search":true};
+
+    if (CONFIG.web_analytics.follow_dnt) {
+      var dntVal = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+      Fluid.ctx.dnt = dntVal && (dntVal.startsWith('1') || dntVal.startsWith('yes') || dntVal.startsWith('on'));
+    }
+  </script>
+  <script  src="/js/utils.js" ></script>
+  <script  src="/js/color-schema.js" ></script>
+  
+
+
+  
+<!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+  
+
+  <header>
+    
+
+<div class="header-inner" style="height: 90vh;">
+  <nav id="navbar" class="navbar fixed-top  navbar-expand-lg navbar-dark scrolling-navbar">
+  <div class="container">
+    <a class="navbar-brand" href="/">
+      <strong>MarisaMagic | 雾雨魔法店</strong>
+    </a>
+
+    <button id="navbar-toggler-btn" class="navbar-toggler" type="button" data-toggle="collapse"
+            data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <div class="animated-icon"><span></span><span></span><span></span></div>
+    </button>
+
+    <!-- Collapsible content -->
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav ml-auto text-center">
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/" target="_self">
+                <i class="iconfont icon-home-fill"></i>
+                <span>首页</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/archives/" target="_self">
+                <i class="iconfont icon-archive-fill"></i>
+                <span>归档</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/categories/" target="_self">
+                <i class="iconfont icon-category-fill"></i>
+                <span>分类</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/tags/" target="_self">
+                <i class="iconfont icon-tags-fill"></i>
+                <span>标签</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/about/" target="_self">
+                <i class="iconfont icon-user-fill"></i>
+                <span>关于</span>
+              </a>
+            </li>
+          
+        
+          
+          
+          
+          
+            <li class="nav-item">
+              <a class="nav-link" href="/links/" target="_self">
+                <i class="iconfont icon-link-fill"></i>
+                <span>友链</span>
+              </a>
+            </li>
+          
+        
+        
+          <li class="nav-item" id="search-btn">
+            <a class="nav-link" target="_self" href="javascript:;" data-toggle="modal" data-target="#modalSearch" aria-label="Search">
+              <i class="iconfont icon-search"></i>
+            </a>
+          </li>
+          
+        
+        
+          <li class="nav-item" id="color-toggle-btn">
+            <a class="nav-link" target="_self" href="javascript:;" aria-label="Color Toggle">
+              <i class="iconfont icon-dark" id="color-toggle-icon"></i>
+            </a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+</nav>
+
+  
+
+<div id="banner" class="banner" parallax=true
+     style="background: url('https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg') no-repeat center center; background-size: cover;">
+  <div class="full-bg-img">
+    <div class="mask flex-center" style="background-color: rgba(0, 0, 0, 0.3)">
+      <div class="banner-text text-center fade-in-up">
+        <div class="h2">
+          
+            <span id="subtitle" data-typed-text="「Kura-AI」知识库构建设计"></span>
+          
+        </div>
+
+        
+          
+  <div class="mt-3">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-author" aria-hidden="true"></i>
+        MarisaMagic
+      </span>
+    
+    
+      <span class="post-meta">
+        <i class="iconfont icon-date-fill" aria-hidden="true"></i>
+        <time datetime="2026-09-06 00:53" pubdate>
+          2026年9月6日 凌晨
+        </time>
+      </span>
+    
+  </div>
+
+  <div class="mt-1">
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-chart"></i>
+        
+          5.4k 字
+        
+      </span>
+    
+
+    
+      <span class="post-meta mr-2">
+        <i class="iconfont icon-clock-fill"></i>
+        
+        
+        
+          46 分钟
+        
+      </span>
+    
+
+    
+    
+  </div>
+
+
+        
+      </div>
+
+      
+        <div class="scroll-down-bar">
+          <i class="iconfont icon-arrowdown"></i>
+        </div>
+      
+    </div>
+  </div>
+</div>
+
+</div>
+
+  </header>
+
+  <main>
+    
+      
+
+<div class="container-fluid nopadding-x">
+  <div class="row nomargin-x">
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+
+    </div>
+
+    <div class="col-lg-8 nopadding-x-md">
+      <div class="container nopadding-x-md" id="board-ctn">
+        <div id="board">
+          <article class="post-content mx-auto">
+            <h1 id="seo-header">「Kura-AI」知识库构建设计</h1>
+            
+            
+              <div class="markdown-body">
+                
+                <p>⭐ Kura-AI 项目链接: <a target="_blank" rel="noopener" href="https://github.com/MarisaMagic/Kura-AI">https://github.com/MarisaMagic/Kura-AI</a></p>
+<h2 id="0-前言">0 前言</h2>
+<p>这篇文章讲的是 Kura-AI <strong>知识库是如何构建的</strong>：一份文档怎么变成可检索的叶子块，对应的向量和原文分别存储在哪，以及删掉或替换时为什么不能把正在用的旧库直接删除。</p>
+<p>Kura-AI 选的是 <strong>一份智能体一份库，先切成三层分级树状的结构，然后只把叶子切块进行向量化</strong>。「这份知识库属于谁」交给 <code>kb_scope</code> 隔离；「切多细、重叠多少、怎么少切断语义」交给页内递归切分；「失败了会不会把旧文档清掉」则由后台流水线在算完向量之后再安全替换清除。混合检索、查询改写、检索结果打分和是否拒答留给后文。</p>
+<hr>
+<h2 id="1-知识库三部分构成">1 知识库三部分构成</h2>
+<h3 id="1-1-策略选择">1.1 策略选择</h3>
+<p>Kura-AI 中的知识库由三部分构成：<strong>元数据进 PostgreSQL，叶子向量进 Milvus，文件本体进 MinIO 对象存储</strong>。项目里没有单独的「知识库」表，也没有 <code>kb_id</code> 外键——隔离靠一个字符串 <code>kb_scope = u&#123;user_id&#125;_a&#123;agent_id&#125;</code>。一个用户多个智能体，就是多套互不可见的库。</p>
+<h3 id="1-2-如何实现">1.2 如何实现</h3>
+<p>隔离函数就一行，写在 <code>app/kb/kb_scope.py</code>：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/kb/kb_scope.py · kb_scope_for</span><br><span class="hljs-keyword">return</span> <span class="hljs-string">f&quot;u<span class="hljs-subst">&#123;<span class="hljs-built_in">int</span>(user_id)&#125;</span>_a<span class="hljs-subst">&#123;<span class="hljs-built_in">int</span>(agent_id)&#125;</span>&quot;</span><br></code></pre></td></tr></table></figure>
+<p>对话检索用的是 <code>kb_scope_for(ua.user_id, ua.id)</code>，写在 <code>build_model_and_agent</code> 里。</p>
+<p>三层各管一截：</p>
+<table>
+<thead>
+<tr>
+<th>层</th>
+<th>技术</th>
+<th>存什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>元数据</strong></td>
+<td>PostgreSQL</td>
+<td>文档行、L1 / L2 父块全文、图片索引</td>
+</tr>
+<tr>
+<td><strong>叶子向量</strong></td>
+<td>Milvus 集合 <code>kura_ai_kb</code></td>
+<td>L3 文本 + L4 图片</td>
+</tr>
+<tr>
+<td><strong>文件本体</strong></td>
+<td>MinIO</td>
+<td>原文档、从 PDF / Word 抽出的图片</td>
+</tr>
+</tbody>
+</table>
+<p>启动时会预热集合。<code>MilvusManager().init_collection</code> 写在应用启动阶段，第一次连得慢，提前做完，避免首个上传任务卡在建表。管理页只对属主开放：上传、取消、删除、看进度。被分享用户没有管理入口，只能在对话里检索。</p>
+<h3 id="1-3-为什么这样做">1.3 为什么这样做</h3>
+<p>三套存储各管检索里真正不同的一件事：<strong>叶子负责被找到，父块负责被读回来，原件负责被取走。</strong> 问「GPT Plus 年费怎么退」的时候，这三件事不会落在同一套引擎上。</p>
+<p><strong>叶子进 Milvus。</strong> 真正拿去近邻搜索的，是「开通未满 7 天可全额退」这类 L3 短句，以及同一页抽出来的 L4 图。集合只要把这件事做稳：写入 dense 向量，由服务端按 <code>text</code> 算出 BM25，再按 <code>kb_scope</code>、<code>filename</code> 先圈定范围再搜。全站共用一个 <code>kura_ai_kb</code>，隔离写在字段上，schema、HNSW 和 BM25 Function 只建一次。启动时预热的也是这一份，不必每来一个智能体就再建一张表。</p>
+<p><strong>父块进 PostgreSQL。</strong> L1 / L2 不是拿来搜的。检索打中那句退款叶子之后，若要把整段退款规则一并读给模型，后文会按 <code>chunk_id</code> 回表，把更大的 L2、L1 捞回来。入库时只有 L3 / L4 会走 embedding；父块用 <code>Text</code> 存全文就够。把 1800 字的根块再向量化一遍，既多花钱，也会和短叶子抢召回。Milvus 的 <code>text</code> 字段上限是 2000 字符，本来就是给可检索的短叶子用的，不是给大段正文准备的。</p>
+<p><strong>原件进 MinIO。</strong> <code>kb_service.py</code> 模块头写得很直白：文档和图片本体存对象存储，PostgreSQL 只留元数据。上传上限 50MB，原 PDF 要下载、抽图要按路径取，这些按对象 key 处理更合适。向量行里只留 <code>image_path</code> 这类字符串，不把整份文件塞进集合。应用用的 MinIO 和 Milvus 内部那套是分开的，互不抢盘。</p>
+<p>不做一张独立的知识库实体表，是因为「这份库是谁的」用 <code>kb_scope</code> 就能定下来。共享集合省运维，代价是每条写入都必须带对隔离键。被分享的人没有管理入口，对话里搜到的仍是属主那一份——隔离键比再复制一份库更合适。</p>
+<h3 id="1-4-其它方案">1.4 其它方案</h3>
+<ol>
+<li>
+<p><strong>每个智能体一个 Milvus collection</strong>。</p>
+<ul>
+<li>优点：隔离写在集合名上，过滤条件更短，误写也不容易串到别人的库。</li>
+<li>缺点：每多一个智能体，就要多建一份 schema、HNSW 和 BM25 Function。启动预热、备份、升 schema 都得逐个做。现在清空一个智能体，是按 <code>kb_scope</code> 删行，不是丢掉整个集合。Kura-AI 目前还只是一个小项目，一个集合加字段过滤够用。</li>
+</ul>
+</li>
+<li>
+<p><strong>pgvector，向量也进 Postgres</strong>。</p>
+<ul>
+<li>优点：文档行、父块和向量可以放进同一套事务，删除时一条 SQL 就能对齐。</li>
+<li>缺点：项目要的是 dense 近邻再加服务端 BM25，还要和会话记忆共用同一套 Milvus 运维。官方 <code>postgres:17</code> 镜像没有向量扩展；pgvector 能和业务表做 JOIN，但混合检索和 HNSW 仍弱于专用向量库。再在 Postgres 里自建一套，等于把向量库的活搬进文档关系库。</li>
+</ul>
+</li>
+<li>
+<p><strong>本地 Chroma / FAISS，自己拼 BM25</strong>。</p>
+<ul>
+<li>优点：依赖少，单机就能跑，原型验证更快。</li>
+<li>缺点：按 <code>kb_scope</code> 过滤、多智能体隔离、词法检索都要自己扛。本地向量索引能做近邻，但服务端 BM25、标量过滤这些还是得另写。项目里走过进程内自建 BM25：重启一次词表会漂，IDF 也会歪。后来才把稀疏检索交给 Milvus，dense 原样复制，不再维护那份本地词表。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="2-三级分块，叶子进向量库">2 三级分块，叶子进向量库</h2>
+<h3 id="2-1-策略选择">2.1 策略选择</h3>
+<p>文档切分走的是 <strong>按页递归、按自然边界下刀切块</strong>。先把 PDF 的一页、Excel 的一张表、或 txt / md 的整篇当成一个切分单位，再用三套字符级 <code>RecursiveCharacterTextSplitter</code>（<strong>递归字符切分</strong>：先找段落，找不到再找句子）嵌套切出 L1 → L2 → L3。</p>
+<p>这里其实有两层递归：分隔符从粗到细试，直到这块能塞进这一层的窗口；层级上则是页切完 L1，再对每个 L1 切 L2，再对每个 L2 切 L3。某一层的文本如果已经不超过窗口，就原样留下，不再往下切——但三层还是都会各写一行，不会因为够短就跳过 L2 或 L3。</p>
+<p>页内不按 Markdown 标题切，也不按 token 切。知识库里大量是 PDF 和 Word，没有可靠的 heading 树；<code>.md</code> 也和 txt 走同一条 <code>_load_text_pages</code>，不会先抽一级、二级标题。页和页之间也不合并，短页就是一页一条链，长页才在页内分出多个根。</p>
+<p>分隔符的意图是：段落 → 换行 → 中英文句号问号 → 逗号顿号 → 空格 → 实在不行再硬切。相邻块大约重叠 13%，避免一句话被拦腰截成两半之后两边都检索不上。</p>
+<p><strong>检索只打叶子。</strong> 细的 L3 用来近邻搜索，粗的 L1 / L2 留在 PostgreSQL，命中碎了再升到更大上下文——那是后文 Auto-merge 的事，构建阶段先把父子关系留下。PDF 和 Word 里抽出的图单独做成 L4，整张一块，不参与这段文本切分。</p>
+<h3 id="2-2-如何实现">2.2 如何实现</h3>
+<p>默认 <code>chunk_size=900</code>、<code>chunk_overlap=90</code>，推导出三层窗口。重叠大约都是窗口的 13%，落在常见的 10%～20% 区间里：</p>
+<table>
+<thead>
+<tr>
+<th>层级</th>
+<th>角色</th>
+<th>窗口</th>
+<th>重叠</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>L1</td>
+<td>根块 / 粗上下文</td>
+<td>1800</td>
+<td>240</td>
+</tr>
+<tr>
+<td>L2</td>
+<td>中间父块</td>
+<td>900</td>
+<td>120</td>
+</tr>
+<tr>
+<td>L3</td>
+<td>检索叶子</td>
+<td>450</td>
+<td>60</td>
+</tr>
+<tr>
+<td>L4</td>
+<td>图片叶子</td>
+<td>整张图</td>
+<td>无</td>
+</tr>
+</tbody>
+</table>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/kb/multimodal_document_loader.py · MultimodalDocumentLoader</span><br>level_1_size = <span class="hljs-built_in">max</span>(<span class="hljs-number">1200</span>, chunk_size * <span class="hljs-number">2</span>)      <span class="hljs-comment"># 1800</span><br>level_1_overlap = <span class="hljs-built_in">max</span>(<span class="hljs-number">240</span>, chunk_overlap * <span class="hljs-number">2</span>)  <span class="hljs-comment"># 240</span><br>level_2_size = <span class="hljs-built_in">max</span>(<span class="hljs-number">600</span>, chunk_size)           <span class="hljs-comment"># 900</span><br>level_3_size = <span class="hljs-built_in">max</span>(<span class="hljs-number">300</span>, chunk_size // <span class="hljs-number">2</span>)      <span class="hljs-comment"># 450</span><br></code></pre></td></tr></table></figure>
+<p>切的时候尽量停在段、句上；切完之后，跨边界的半句会靠重叠出现在下一块里。真正切开 L1 的门槛是 <strong>1800 字</strong>，不是 Milvus 那个 2000 字的字段上限——2000 管的是后来进集合的叶子，L1 根本不进向量库。</p>
+<p>还是「GPT-Plus退款说明.pdf」。第 2 页如果字不多，比如只有 400 字，三层窗口都切不动（400 小于 1800、900、450），就会退化成一条链：一个 L1 下面挂一个 L2，再挂一个 L3，三段正文几乎就是整页。父子关系还在，只是三层内容重合。</p>
+<p>第 2 页如果很长，比如 2500 字，超过 L1 窗口，就会在页内切成多个根，相邻 L1 重叠约 240 字；每个 L1 再切自己的 L2 / L3。这一页是两棵树并排，不是一条链：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs text">GPT-Plus退款说明.pdf 第 2 页（2500 字）<br> ├─ L1-a（约 1800，重叠约 240）<br> │   ├─ L2 …<br> │   │   └─ L3 …  ← 只有 L3 进 Milvus<br> │   └─ L2 …<br> └─ L1-b<br>     └─ …<br></code></pre></td></tr></table></figure>
+<p>中间长度按窗口决定在哪一层分叉。一页 600 字仍是一个 L1、一个 L2，但 600 大于 450，叶子可能切成两块；一页 1000 字仍是一个 L1，但会先分出多个 L2。</p>
+<p>「开通未满 7 天可全额退」如果刚好落在两个 L3 的交界上，前一块会带上后半句的开头，后一块会带上前半句的尾巴。父子靠 <code>parent_chunk_id</code> / <code>root_chunk_id</code> 串起来。L1 / L2 全文进 PostgreSQL；后文检索若同一父块命中够密，再升到更大段——构建时已经把这个钩子留下了。</p>
+<p>格式分流在 <code>load_document</code>。先按类型读成「页」，再对每一页走同一套三级切：</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>怎么读</th>
+<th>切分单位</th>
+<th>图</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PDF</td>
+<td><code>PyPDFLoader</code> 抽文本，PyMuPDF 抽图</td>
+<td>每页独立三级切</td>
+<td>小于 100×100 丢掉</td>
+</tr>
+<tr>
+<td>Word</td>
+<td><code>Docx2txtLoader</code> + <code>python-docx</code> 抽图</td>
+<td>按 loader 的页</td>
+<td>有，位置只能估算</td>
+</tr>
+<tr>
+<td>Excel</td>
+<td>每个可见 sheet 转 Markdown 表</td>
+<td>一 sheet 当一页</td>
+<td>不抽</td>
+</tr>
+<tr>
+<td>TXT / MD</td>
+<td>整文件当成 <code>page=0</code></td>
+<td>同一套三级切</td>
+<td>无</td>
+</tr>
+</tbody>
+</table>
+<p>只接受 pdf / docx / doc / xlsx / xls / txt / md。代码文件进不来。<code>chunk_id</code> 带上 scope、文件名指纹、页码和层级。文本叶子长得像 <code>u1_a3::&#123;fingerprint&#125;::p2::l3::0</code>，图片再加 <code>::i&#123;序号&#125;</code>。图文关联写在图片行的 <code>related_text_ids</code> 里：PDF 优先按页面位置找图上方最近的 L3；对不上坐标的，按阅读序配对。同一页如果有流程图，会再出一块 L4，并记下它关联了哪几个 L3。</p>
+<h3 id="2-3-为什么这样做">2.3 为什么这样做</h3>
+<p>语义被切断，往往不是字丢了，而是一句话被拆成两半之后，每一半单独看都不够像答案。退款说明里如果写成「开通未满 7 天可全额退，超过则按剩余整月折算」，切刀刚好落在逗号上，前半只有「可全额退」，后半只有「按剩余整月折算」——问「年费怎么退」，两边的相关度都可能不够，检索会两边都落空。</p>
+<p>只叠一层固定窗口，解决不了这件事。块太大，退款条款和免责声明挤在一起，相似度会被冲淡；块太小，模型看见的是半句话。Kura-AI 把三件事叠在一起：<strong>递归边界尽量停在段和句上，相邻块重叠约 13% 把跨界的半句补回去，细叶子负责检索、粗父块负责把上下文捞回来。</strong></p>
+<p>L1 / L2 不向量化，检索只检索 L3 叶子块（特别的，还有 L4 图片块），命中多个上级分块的子块，才会 Auto-merge 合并成大的文档块作为检索结果返回。另外，也少算两层 embedding，集合也更小。图不能单独当文档上传：没有页内位置，就挂不上旁边的文字。</p>
+<h3 id="2-4-其它方案">2.4 其它方案</h3>
+<ol>
+<li>
+<p><strong>按 Markdown heading / AST 切</strong>。</p>
+<ul>
+<li>优点：章节边界清楚，标题不会被拦腰截断。</li>
+<li>缺点：不是不能按标题切，而是知识库里的 PDF、Word、Excel 撑不起 heading 树。txt 更没有结构。一套按页、按段落和句子的切法，能覆盖现在允许的全部格式。</li>
+</ul>
+</li>
+<li>
+<p><strong>固定窗口一层切到底</strong>。</p>
+<ul>
+<li>优点：实现短，块大小均匀。</li>
+<li>缺点：检索和阅读用同一粒度。没有重叠时，切刀落在句中，语义会直接断掉；没有父块时，命中碎了也补不回上下文。</li>
+</ul>
+</li>
+<li>
+<p><strong>父子块都进向量库</strong>。</p>
+<ul>
+<li>优点：检索可以直接打到大段上下文，少一次回表。</li>
+<li>缺点：embedding 费用和集合体积都会上去。父块本来就不是拿来近邻搜索的，放进 PostgreSQL 按 id 回捞就够。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="3-图文多模态稠密向量，BM25-稀疏检索">3 图文多模态稠密向量，BM25 稀疏检索</h2>
+<h3 id="3-1-策略选择">3.1 策略选择</h3>
+<p>叶子分块进 Milvus 集合之后，检索会走多路召回。</p>
+<ul>
+<li><strong>稠密向量</strong>，主要看语义相似度：问「年费怎么退」，也能撞上写着「全额退款」的句子，以及同一页里那张退款流程图。文本和图共用 DashScope <code>qwen3-vl-embedding</code>，都是 1536 维，落在同一套空间里。</li>
+<li><strong>BM25 稀疏向量</strong>，主要看关键词匹配：问「GPT Plus」，就要靠这两个词本身把叶子分块召回。</li>
+</ul>
+<p>稠密向量由客户端算完再写入。BM25 那条稀疏向量交给 Milvus 的服务端 Function：写入时从 <code>text</code> 字段自动生成 <code>bm25_sparse</code>。图片块的 <code>text</code> 是空的，词法检索基本只服务文本叶子；图主要靠同一空间里的稠密向量被找到。</p>
+<h3 id="3-2-如何实现">3.2 如何实现</h3>
+<p>一份文件落库以后长这样：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><code class="hljs text">GPT-Plus退款说明.pdf<br> ├─ mg_kb_documents        1 行（content_hash、叶子数）<br> ├─ mg_kb_parent_chunks    L1 / L2 全文<br> ├─ kura_ai_kb             L3 文本 + L4 图片<br> ├─ mg_kb_images           抽图索引 + related_text_ids<br> └─ MinIO                  原件 + 抽图<br></code></pre></td></tr></table></figure>
+<p>写入拆成两段，写在 <code>app/kb/multimodal_milvus_writer.py</code> 的文件头里：<code>embed_documents</code> 只算稠密向量，<code>write_documents</code> 才 insert。文本按 <code>EMBEDDING_BATCH_SIZE=10</code> 一批；图一张一请求，失败填零向量，不中断整篇。单次嵌入 HTTP 超时 90 秒，避免 SDK 默认 300 秒把任务挂死。稀疏那一侧不用客户端填数，insert 带上 <code>text</code> 即可，集合里的 <code>bm25_fn</code> 会现场算好。</p>
+<p>检索真正用到的字段是 <code>dense_embedding</code>（HNSW + 内积）和 <code>bm25_sparse</code>。隔离、文件名、层级、内容类型都是普通字段，给过滤用。<code>filename</code> 是展示名，主要用于删除和选档。分词用的是内置 <code>standard</code> 分析器：英文按词切开，中文精确的单字对上主要还是靠稠密向量兜底。</p>
+<h3 id="3-3-为什么这样做">3.3 为什么这样做</h3>
+<p>图片和文本采用同一套多模态向量化，文本查询也能检索到相似度高的图片。退款说明里如果有一张流程图，问「年费怎么退」不一定非要先命中旁边的句子。</p>
+<p>服务端 BM25 是后来补上的。BM25 要两样东西：一份词表，给每个词编一个编号；以及 IDF，也就是这个词在多少篇文档里出现过——越稀有，越能把文档区分开，「的」几乎每篇都有，权重接近零，「退款」只在少数叶子里，权重就高。旧方案把这两样放在 Kura-AI 进程的内存里，先算出每个叶子的稀疏向量（一串「词编号 → 权重」），再写进 Milvus。查询时也必须用同一份词表，编号对得上才能搜到。</p>
+<p>词表活在进程里，不跟集合绑死。应用一重启，内存清空，词表往往要按当时库里的文档重新建。重建顺序、后来新上传的文件只要有一点不一样，「退款」就可能从 42 号变成 87 号。库里旧叶子还写着「42 号很重要」，查询却按 87 号去对，对错了号。这就是注释里说的跨重启索引漂移：索引还在，语义编号已经换了。多开几个进程时，每份词表还可以各编各的，同一句查询编出来的编号都不一样。</p>
+<p>IDF 还会慢慢对不齐。它依赖写入那一刻整个库有多少篇、这个词出现在几篇里。后来又传了二十份文档，「退款」从很稀有变成挺常见，新查询按新库算权重，旧叶子里却还是老数字，对不齐就是 IDF 失真。</p>
+<p>现在改成客户端只写原文 <code>text</code>。Milvus 在插入时自己生成 <code>bm25_sparse</code>，查询也直接喂这句话，由同一套函数编码。词表和 IDF 跟集合走，不跟 Python 进程走，应用重启，编号不会换。<code>migrate_bm25.py</code> 换的是集合的 schema，不是 embedding 模型：已经算过的 1536 维稠密向量原样搬到新集合，不再打 DashScope；旧的进程内稀疏向量丢掉，插入时带上 <code>text</code>，由 <code>bm25_fn</code> 重新生成。</p>
+<h3 id="3-4-其它方案">3.4 其它方案</h3>
+<ol>
+<li>
+<p><strong>客户端自己维护 BM25 词表</strong>。</p>
+<ul>
+<li>优点：不依赖 Milvus 版本，换向量库也能把这套编号带走。</li>
+<li>缺点：词表跟进程走。重启一次、多开几个实例，编号和 IDF 都可能对不齐，召回就会飘。项目里走过这条路，后来才把稀疏检索交给集合，正是不想再维护那份本地词表。</li>
+</ul>
+</li>
+<li>
+<p><strong>文本、图片各用一套 embedding 模型</strong>。</p>
+<ul>
+<li>优点：各自可以选更「专」的模型。</li>
+<li>缺点：文本查询打不到图，还要维护两套维度和两套失败重试。多模态同一个空间，入库和检索都只走一条路。</li>
+</ul>
+</li>
+<li>
+<p><strong>每份文档一个 collection，或把分区当主键</strong>。</p>
+<ul>
+<li>优点：删一份文件等于丢一个集合，级联最干净。</li>
+<li>缺点：文档一多，集合爆炸。按文件名字段过滤就够，现有字段已经能做到。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="4-失败不毁旧库，删除按层清干净">4 失败不毁旧库，删除按层清干净</h2>
+<h3 id="4-1-策略选择">4.1 策略选择</h3>
+<p>一份文档同时存储在四层：Milvus 里的叶子、PostgreSQL 里的父块和文档行、Redis 里的父块缓存，以及 MinIO 里的原件和抽图。这几套存储之间没有外键，也没有 <code>ON DELETE CASCADE</code>。删一份文件、清空一个智能体、或者用同名文件覆盖，都只能由应用按 <code>kb_scope</code> 和文件名，一层一层清干净。</p>
+<p><strong>同名替换不是「先删再解析」，而是先建好再级联删除旧的数据。</strong> 新版本还没算完向量之前，对话里仍能搜到旧的退款说明；只有新叶子确实正常写入数据库，旧的数据才会被安全清除。</p>
+<h3 id="4-2-如何实现">4.2 如何实现</h3>
+<p>上传接口只负责受理。<code>POST /kb/upload</code> 做完魔数校验和 50MB 上限，立刻返回 <code>task_id</code>。解析和嵌入会堵住事件循环，所以丢进 <code>kb_job</code> 的线程池，最多 8 路并行。进度按阶段往前走：<code>queued → parsing → chunking → embedding → writing</code>。</p>
+<p>真正入库的是 <code>run_ingest_pipeline_sync</code>。注释把顺序写死了：解析和全部向量都成功之前，不碰正在用的旧数据；成功之后才进替换临界区，删旧、写父块、插入叶子、补图片元数据、最后写下文档行。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/kb/kb_service.py · run_ingest_pipeline_sync</span><br><span class="hljs-comment"># 「先处理后替换」：</span><br><span class="hljs-comment"># - 解析 + 全部向量生成成功之前不碰旧数据</span><br><span class="hljs-comment"># - 成功后进入替换临界区：删旧 → 父块 → 叶子插入 → 图片元数据 → 文档行</span><br></code></pre></td></tr></table></figure>
+<p>如果这份 <code>GPT-Plus退款说明.pdf</code> 的内容哈希没变，直接标 <code>unchanged</code> 跳过，省掉一次 embedding。内容变了，才用 Redis 的 NX 锁走进临界区，后完成的那一次生效，避免两个人同时传同名文件把半成品交错写进去。失败、超时或用户取消，只清掉这次的临时文件，旧文档原样留着。</p>
+<p>用户主动删掉这一份时，走 <code>delete_kb_document</code>：先按 <code>kb_scope</code> 和文件名删向量，再删父块和缓存，再删文档行，再删抽图——同名替换时可以把新图正在用的 key 排除掉，免得刚传上去的图被一起清掉——最后删原件。删整个智能体时，<code>delete_user_agent</code> 在 <code>obj.delete()</code> 之后调用 <code>purge_kb_for_scope</code>，按 scope 把上面这几步做完。账号删除目前不走这条清空。</p>
+<h3 id="4-3-为什么这样做">4.3 为什么这样做</h3>
+<p>嵌入是整条流水线里最慢、也最贵的一步。如果一上来先把旧行删掉，再去解析和算向量，超时或用户点了取消，对话这边就会出现空档：刚才还能搜到的退款说明突然没了，进度条上却只看得到失败。先把新版本完整准备好，再替换，空档只会落在「删旧到写新」这一小段临界区里。</p>
+<p>PostgreSQL、Milvus、MinIO、Redis 也没有统一事务。数据库里就算给三张表加上外键，也管不到向量集合和对象存储。所以删除只能写在应用层，按层清。图片对象的 key 带了内容哈希，同名文件覆盖时删旧图，才不会误伤刚写进去的新图。</p>
+<h3 id="4-4-其它方案">4.4 其它方案</h3>
+<ol>
+<li>
+<p><strong>数据库 <code>ON DELETE CASCADE</code></strong>。</p>
+<ul>
+<li>优点：PostgreSQL 里的文档行、父块和图片索引可以跟着主表一次清掉，应用少写几步。</li>
+<li>缺点：清不了 Milvus，也清不了 MinIO。这几套存储不在同一个数据库事务里，外键帮不上忙。级联还是得写在应用层。</li>
+</ul>
+</li>
+<li>
+<p><strong>先删再解析</strong>。</p>
+<ul>
+<li>优点：同名文件不会短暂并存，实现也短。</li>
+<li>缺点：解析失败或 embedding 超时，正在用的旧库就被砸空。用户刷新进度条看到的是失败，对话里搜到的是空白。</li>
+</ul>
+</li>
+<li>
+<p><strong>只软删除，后台再回收</strong>。</p>
+<ul>
+<li>优点：删除可以回滚，页面也能做「回收站」。</li>
+<li>缺点：检索过滤要一直带着「未删除」条件，对象存储会堆一批垃圾。管理页现在很薄，没有回收站，硬删除按层清更直接。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="收束">收束</h2>
+<p>知识库是挂在智能体上的，不是全局文件夹。知识库存储的时候分成三部分：叶子进向量库，父块和索引进 PostgreSQL，原件进对象存储。切的时候先按页，再按段落和句子往下找边界，相邻块留约 13% 重叠，只把叶子送去 embedding。写的时候先算完再替换，删的时候按层清。</p>
+<pre><code class=" mermaid">graph TD
+    A[&quot;上传受理 kb.py&quot;] --&gt; B[&quot;后台线程 kb_job&quot;]
+    B --&gt; C[&quot;解析抽图三级分块&quot;]
+    C --&gt; D[&quot;只算向量 不碰旧库&quot;]
+    D --&gt; E&#123;&quot;同名 Redis 锁&quot;&#125;
+    E --&gt; F[&quot;删旧&quot;]
+    F --&gt; G[&quot;写父块 / 叶子 / 图片 / 文档行&quot;]
+</code></pre>
+
+                
+              </div>
+            
+            <hr/>
+            <div>
+              <div class="post-metas my-3">
+  
+    <div class="post-meta mr-3 d-flex align-items-center">
+      <i class="iconfont icon-category"></i>
+      
+
+<span class="category-chains">
+  
+  
+    
+      <span class="category-chain">
+        
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/" class="category-chain-item">追逐繁星</a>
+  
+  
+    <span>></span>
+    
+  <a href="/categories/%E8%BF%BD%E9%80%90%E7%B9%81%E6%98%9F/Kura-AI/" class="category-chain-item">Kura-AI</a>
+  
+  
+
+  
+
+      </span>
+    
+  
+</span>
+
+    </div>
+  
+  
+    <div class="post-meta">
+      <i class="iconfont icon-tags"></i>
+      
+        <a href="/tags/AI/" class="print-no-link">#AI</a>
+      
+        <a href="/tags/Agent/" class="print-no-link">#Agent</a>
+      
+        <a href="/tags/%E5%A4%A7%E6%A8%A1%E5%9E%8B/" class="print-no-link">#大模型</a>
+      
+        <a href="/tags/LLM/" class="print-no-link">#LLM</a>
+      
+        <a href="/tags/Kura-AI/" class="print-no-link">#Kura-AI</a>
+      
+    </div>
+  
+</div>
+
+
+              
+  
+
+  <div class="license-box my-3">
+    <div class="license-title">
+      <div>「Kura-AI」知识库构建设计</div>
+      <div>https://marisamagic.github.io/2026/09/06/20260906_KuraAI_知识库构建/</div>
+    </div>
+    <div class="license-meta">
+      
+        <div class="license-meta-item">
+          <div>作者</div>
+          <div>MarisaMagic</div>
+        </div>
+      
+      
+        <div class="license-meta-item license-meta-date">
+          <div>发布于</div>
+          <div>2026年9月6日</div>
+        </div>
+      
+      
+      
+        <div class="license-meta-item">
+          <div>许可协议</div>
+          <div>
+            
+              
+              
+                <a class="print-no-link" target="_blank" href="https://creativecommons.org/licenses/by/4.0/">
+                  <span class="hint--top hint--rounded" aria-label="BY - 署名">
+                    <i class="iconfont icon-cc-by"></i>
+                  </span>
+                </a>
+              
+            
+          </div>
+        </div>
+      
+    </div>
+    <div class="license-icon iconfont"></div>
+  </div>
+
+
+
+              
+                <div class="post-prevnext my-3">
+                  <article class="post-prev col-6">
+                    
+                    
+                  </article>
+                  <article class="post-next col-6">
+                    
+                    
+                      <a href="/2026/09/05/20260905_KuraAI_Agent%E5%B7%A5%E5%85%B7%E8%AE%BE%E8%AE%A1/" title="「Kura-AI」Agent 工具设计">
+                        <span class="hidden-mobile">「Kura-AI」Agent 工具设计</span>
+                        <span class="visible-mobile">下一篇</span>
+                        <i class="iconfont icon-arrowright"></i>
+                      </a>
+                    
+                  </article>
+                </div>
+              
+            </div>
+
+            
+          </article>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-col d-none d-lg-block col-lg-2">
+      
+  <aside class="sidebar" style="margin-left: -1rem">
+    <div id="toc">
+  <p class="toc-header">
+    <i class="iconfont icon-list"></i>
+    <span>目录</span>
+  </p>
+  <div class="toc-body" id="toc-body"></div>
+</div>
+
+
+
+  </aside>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+
+  
+
+
+  
+  
+
+
+
+
+  <script>
+  Fluid.utils.createScript('https://lib.baomitu.com/mermaid/8.14.0/mermaid.min.js', function() {
+    mermaid.initialize({"theme":"default"});
+
+    Fluid.utils.listenDOMLoaded(function() {
+      Fluid.events.registerRefreshCallback(function() {
+        if ('mermaid' in window) {
+          mermaid.init();
+        }
+      });
+    });
+  });
+</script>
+
+
+
+
+
+
+    
+
+    
+      <a id="scroll-top-button" aria-label="TOP" href="#" role="button">
+        <i class="iconfont icon-arrowup" aria-hidden="true"></i>
+      </a>
+    
+
+    
+      <div class="modal fade" id="modalSearch" tabindex="-1" role="dialog" aria-labelledby="ModalLabel"
+     aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header text-center">
+        <h4 class="modal-title w-100 font-weight-bold">搜索</h4>
+        <button type="button" id="local-search-close" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body mx-3">
+        <div class="md-form mb-5">
+          <input type="text" id="local-search-input" class="form-control validate">
+          <label data-error="x" data-success="v" for="local-search-input">关键词</label>
+        </div>
+        <div class="list-group" id="local-search-result"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+    
+
+    
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+  
+    <div class="footer-content">
+           <div style="font-size: 1rem"> <span id="timeDate">载入天数...</span> <span id="times">载入时分秒...</span> <script src="/js/duration.js"></script> </div> Blog by MarisaMagic <br/> Made with  <a href="https://hexo.io" target="_blank" rel="nofollow noopener"><span>Hexo</span></a> <i class="iconfont icon-love"></i> <a href="https://github.com/fluid-dev/hexo-theme-fluid" target="_blank" rel="nofollow noopener"><span>Fluid</span></a> 
+    </div>
+  
+  
+  
+</div>
+
+  </footer>
+
+  <!-- Scripts -->
+  
+  <script  src="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.js" ></script>
+  <link  rel="stylesheet" href="https://lib.baomitu.com/nprogress/0.2.0/nprogress.min.css" />
+
+  <script>
+    NProgress.configure({"showSpinner":false,"trickleSpeed":100})
+    NProgress.start()
+    window.addEventListener('load', function() {
+      NProgress.done();
+    })
+  </script>
+
+
+<script  src="https://lib.baomitu.com/jquery/3.6.4/jquery.min.js" ></script>
+<script  src="https://lib.baomitu.com/twitter-bootstrap/4.6.1/js/bootstrap.min.js" ></script>
+<script  src="/js/events.js" ></script>
+<script  src="/js/plugins.js" ></script>
+
+
+  <script  src="https://lib.baomitu.com/typed.js/2.0.12/typed.min.js" ></script>
+  <script>
+    (function (window, document) {
+      var typing = Fluid.plugins.typing;
+      var subtitle = document.getElementById('subtitle');
+      if (!subtitle || !typing) {
+        return;
+      }
+      var text = subtitle.getAttribute('data-typed-text');
+      
+        typing(text);
+      
+    })(window, document);
+  </script>
+
+
+
+
+  
+    <script  src="/js/img-lazyload.js" ></script>
+  
+
+
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/tocbot/4.20.1/tocbot.min.js', function() {
+    var toc = jQuery('#toc');
+    if (toc.length === 0 || !window.tocbot) { return; }
+    var boardCtn = jQuery('#board-ctn');
+    var boardTop = boardCtn.offset().top;
+
+    window.tocbot.init(Object.assign({
+      tocSelector     : '#toc-body',
+      contentSelector : '.markdown-body',
+      linkClass       : 'tocbot-link',
+      activeLinkClass : 'tocbot-active-link',
+      listClass       : 'tocbot-list',
+      isCollapsedClass: 'tocbot-is-collapsed',
+      collapsibleClass: 'tocbot-is-collapsible',
+      scrollSmooth    : true,
+      includeTitleTags: true,
+      headingsOffset  : -boardTop,
+    }, CONFIG.toc));
+    if (toc.find('.toc-list-item').length > 0) {
+      toc.css('visibility', 'visible');
+    }
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('tocbot' in window) {
+        tocbot.refresh();
+        var toc = jQuery('#toc');
+        if (toc.length === 0 || !tocbot) {
+          return;
+        }
+        if (toc.find('.toc-list-item').length > 0) {
+          toc.css('visibility', 'visible');
+        }
+      }
+    });
+  });
+</script>
+
+
+  <script src=https://lib.baomitu.com/clipboard.js/2.0.11/clipboard.min.js></script>
+
+  <script>Fluid.plugins.codeWidget();</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/anchor-js/5.0.0/anchor.min.js', function() {
+    window.anchors.options = {
+      placement: CONFIG.anchorjs.placement,
+      visible  : CONFIG.anchorjs.visible
+    };
+    if (CONFIG.anchorjs.icon) {
+      window.anchors.options.icon = CONFIG.anchorjs.icon;
+    }
+    var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+    var res = [];
+    for (var item of el) {
+      res.push('.markdown-body > ' + item.trim());
+    }
+    if (CONFIG.anchorjs.placement === 'left') {
+      window.anchors.options.class = 'anchorjs-link-left';
+    }
+    window.anchors.add(res.join(', '));
+
+    Fluid.events.registerRefreshCallback(function() {
+      if ('anchors' in window) {
+        anchors.removeAll();
+        var el = (CONFIG.anchorjs.element || 'h1,h2,h3,h4,h5,h6').split(',');
+        var res = [];
+        for (var item of el) {
+          res.push('.markdown-body > ' + item.trim());
+        }
+        if (CONFIG.anchorjs.placement === 'left') {
+          anchors.options.class = 'anchorjs-link-left';
+        }
+        anchors.add(res.join(', '));
+      }
+    });
+  });
+</script>
+
+
+  
+<script>
+  Fluid.utils.createScript('https://lib.baomitu.com/fancybox/3.5.7/jquery.fancybox.min.js', function() {
+    Fluid.plugins.fancyBox();
+  });
+</script>
+
+
+  <script>Fluid.plugins.imageCaption();</script>
+
+  <script  src="/js/local-search.js" ></script>
+
+
+
+
+  
+<script src="/js/scrollAnimation.js"></script>
+
+
+
+<!-- 主题的启动项，将它保持在最底部 -->
+<!-- the boot of the theme, keep it at the bottom -->
+<script  src="/js/boot.js" ></script>
+
+
+  
+
+  <noscript>
+    <div class="noscript-warning">博客在允许 JavaScript 运行的环境下浏览效果更佳</div>
+  </noscript>
+</body>
+</html>

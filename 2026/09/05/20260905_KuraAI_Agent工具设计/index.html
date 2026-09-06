@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
 <meta property="article:published_time" content="2026-09-05T13:55:56.192Z">
-<meta property="article:modified_time" content="2026-09-05T16:30:08.716Z">
+<meta property="article:modified_time" content="2026-09-06T03:48:58.929Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="Agent">
@@ -314,7 +314,8 @@
             
               <div class="markdown-body">
                 
-                <h2 id="0-前言">0 前言</h2>
+                <p>⭐ Kura-AI 项目链接: <a target="_blank" rel="noopener" href="https://github.com/MarisaMagic/Kura-AI">https://github.com/MarisaMagic/Kura-AI</a></p>
+<h2 id="0-前言">0 前言</h2>
 <p>这篇文章讲的是 Kura-AI <strong>对话智能体的工具怎么设计</strong>。</p>
 <p>工具对模型是一份契约：LLM 决定调用什么工具、填写什么参数。首先是需要大模型拥有原生的 Function Calling 能力，其次还需要工具函数有完整的 <code>name</code>、<code>description</code> 和 <code>args_schema</code>。模型只负责决定调哪个工具、参数填什么。工具内部具体执行逻辑、次数上限、接口凭据都在服务端，模型既看不到，也改不了。</p>
 <p>每个部分告诉模型「这轮该不该调工具」，分工是这样的：</p>
@@ -676,6 +677,12 @@
                 <div class="post-prevnext my-3">
                   <article class="post-prev col-6">
                     
+                    
+                      <a href="/2026/09/06/20260906_KuraAI_%E7%9F%A5%E8%AF%86%E5%BA%93%E6%9E%84%E5%BB%BA/" title="「Kura-AI」知识库构建设计">
+                        <i class="iconfont icon-arrowleft"></i>
+                        <span class="hidden-mobile">「Kura-AI」知识库构建设计</span>
+                        <span class="visible-mobile">上一篇</span>
+                      </a>
                     
                   </article>
                   <article class="post-next col-6">
