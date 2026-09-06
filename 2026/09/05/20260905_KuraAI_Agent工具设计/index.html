@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
 <meta property="article:published_time" content="2026-09-05T13:55:56.192Z">
-<meta property="article:modified_time" content="2026-09-06T13:11:35.672Z">
+<meta property="article:modified_time" content="2026-09-06T15:57:50.393Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="Agent">
@@ -257,7 +257,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          4.7k 字
+          4.8k 字
         
       </span>
     
@@ -268,7 +268,7 @@
         
         
         
-          40 分钟
+          41 分钟
         
       </span>
     
@@ -318,6 +318,8 @@
 <h2 id="0-前言">0 前言</h2>
 <p>这篇文章讲的是 Kura-AI <strong>对话智能体的工具怎么设计</strong>。</p>
 <p>工具对模型是一份契约：LLM 决定调用什么工具、填写什么参数。首先是需要大模型拥有原生的 Function Calling 能力，其次还需要工具函数有完整的 <code>name</code>、<code>description</code> 和 <code>args_schema</code>。模型只负责决定调哪个工具、参数填什么。工具内部具体执行逻辑、次数上限、接口凭据都在服务端，模型既看不到，也改不了。</p>
+<p>Function Calling 机制：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/17/20260817_FunctionCalling%E6%9C%BA%E5%88%B6/">「Agent Tool」什么是 Function Calling？原理是什么？</a>。<br>
+模型决策与执行：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/17/20260817_LLM%E5%AD%A6%E4%BC%9A%E8%B0%83%E7%94%A8%E5%A4%96%E9%83%A8%E5%B7%A5%E5%85%B7/">「Agent Tool」LLM 如何学会调用外部工具？</a>。</p>
 <p>每个部分告诉模型「这轮该不该调工具」，分工是这样的：</p>
 <ul>
 <li><strong>System</strong>：主要包括 <strong>预定人设和长期纪律</strong>。知识库开着时，它会告诉模型：引用要怎么标，工具报了错误码时该怎么跟用户说。</li>
@@ -326,6 +328,7 @@
 <li><strong>工具函数</strong>：LLM 如果调用了不该调用的工具，工具会返回 <code>TOOL_DISABLED_THIS_TURN</code> 或 <code>TOOL_CALL_LIMIT_REACHED</code>。</li>
 </ul>
 <p>工具列表始终挂着，本轮能不能用靠返回值拦住。挂载策略不在这里展开。挂到 <code>create_agent</code> 上的工具分两类：系统自己带的，以及按智能体配置加载的 MCP。</p>
+<p>Function Calling 与 MCP 场景：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/19/20260819_FC%E4%B8%8EMCP%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF/">「Agent Tool」Function Calling 和 MCP 的适用场景？</a>。</p>
 <p><strong>系统工具</strong></p>
 <table>
 <thead>
@@ -429,6 +432,7 @@
 <p>本轮开了知识库的话，模型看见的 <code>search_knowledge_base</code> 只有一个参数：<code>query</code>。该查哪几份文档，对话开始前就已经由选档子模型圈好，写进本轮 Human，并注入工具闭包。主模型第一跳只需决定「要不要搜、搜什么词」。</p>
 <h3 id="1-2-如何实现">1.2 如何实现</h3>
 <p>工具在 <code>build_model_and_agent</code> 里一次性拼好，按名字排序后交给 <code>create_agent</code>。该让模型填的字段就留在参数表里，不该填的关在闭包里。</p>
+<p>工具注册：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/26/20260826_LangChain%E5%B7%A5%E5%85%B7%E6%B3%A8%E5%86%8C/">「LangChain」LangChain 如何为 Agent 注册工具？</a>。</p>
 <p>以 <code>web_search</code> 为例，参数表中保留的参数除了 <code>query</code>，还有 <code>freshness</code>、<code>site</code>、<code>extra_query</code>。<code>extra_query</code> 写得很直白：同一意图的第二种说法，并行搜完再合并，不要为同一意图再调一次。</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/chat/web_search_tool.py · _WebSearchArgs</span><br>extra_query: <span class="hljs-built_in">str</span> | <span class="hljs-literal">None</span> = Field(<br>    default=<span class="hljs-literal">None</span>,<br>    description=(<br>        <span class="hljs-string">&quot;可选：同一意图的第二种检索说法，与 query 并行搜索后合并。&quot;</span><br>        <span class="hljs-string">&quot;不要为同一意图再单独调用一次 web_search。&quot;</span><br>    ),<br>)<br></code></pre></td></tr></table></figure>
 <p>以知识库为例，<code>make_search_knowledge_tool</code> 的注释写明：前置选档注入 <code>knowledge_base_document_filter</code>，避免和前置范围冲突。模型看见的参数表只有 <code>query</code>。</p>
@@ -534,6 +538,8 @@
 <h2 id="4-MCP：同一套约定的外延">4 MCP：同一套约定的外延</h2>
 <h3 id="4-1-策略选择">4.1 策略选择</h3>
 <p>外部工具也必须遵守这份契约：<strong>列表尽量稳定，失败回字符串，高风险先停下来</strong>。MCP 不是另一套 Agent，只是 <code>extra_tools</code>。单服务挂了不能把整张表拆掉，也不能让共享用户的一句话去驱动属主凭据。</p>
+<p>MCP 定义：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/18/20260818_MCP%E5%AE%9A%E4%B9%89%E4%B8%8E%E6%A0%B8%E5%BF%83%E7%BB%84%E6%88%90/">「Agent Tool」什么是 MCP？它由哪几部分组成？</a>。<br>
+MCP 与 Function Calling：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/18/20260818_MCP%E4%B8%8EFunctionCalling%E5%8C%BA%E5%88%AB/">「Agent Tool」MCP 和 Function Calling 有什么区别？有没有实际跑过 MCP？</a>。</p>
 <h3 id="4-2-如何实现">4.2 如何实现</h3>
 <p>加载在 <code>load_agent_mcp_tools</code>。<strong>只拉该智能体已启用的服务</strong>；连不上时记下错误，对话继续。若缓存里还有上次成功的 schema，就挂一层 stub，调用时返回 <code>MCP_UNAVAILABLE</code>，名字和参数表还在。没有缓存，这个服务跳过，别的继续。工具名和内置九个名字冲突，或者彼此重名，直接跳过，避免把 <code>web_search</code> 换掉。</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/mcp_client/service.py · _stub_mcp_tools_from_snapshot</span><br>err_text = <span class="hljs-string">f&quot;MCP_UNAVAILABLE: 服务「<span class="hljs-subst">&#123;server_name&#125;</span>」当前不可用：<span class="hljs-subst">&#123;error[:<span class="hljs-number">200</span>]&#125;</span>&quot;</span><br><span class="hljs-comment"># stub 的 name / description / args_schema 与上次成功快照一致</span><br><span class="hljs-comment"># 真正调用只返回上面这句，不连远程</span><br></code></pre></td></tr></table></figure>

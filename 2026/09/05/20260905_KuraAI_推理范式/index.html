@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
 <meta property="article:published_time" content="2026-09-05T08:58:39.781Z">
-<meta property="article:modified_time" content="2026-09-06T13:11:18.502Z">
+<meta property="article:modified_time" content="2026-09-06T15:57:44.674Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="Agent">
@@ -257,7 +257,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          3.3k 字
+          3.4k 字
         
       </span>
     
@@ -268,7 +268,7 @@
         
         
         
-          28 分钟
+          29 分钟
         
       </span>
     
@@ -318,22 +318,28 @@
 <h2 id="0-前言">0 前言</h2>
 <p>这篇文章讲的是 Kura-AI <strong>对话智能体怎么推理</strong>：模型怎么一步步判断「还要不要再调工具，还是已经可以回答了」，以及这条循环外面还有哪些约束。</p>
 <p>Kura-AI 选的是 <strong>Tool-Use-Loop</strong>（工具使用循环）。「下一步该干什么」交给支持原生工具调用（Function Calling）的模型自己判断；「这一轮能不能调、最多调几次、模型能看见哪些材料」则由服务端在本轮对话中进行约束。项目并没有使用手写 ReAct 文本解析，也没有先让模型写出完整计划再执行。</p>
+<p>Function Calling 机制：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/17/20260817_FunctionCalling%E6%9C%BA%E5%88%B6/">「Agent Tool」什么是 Function Calling？原理是什么？</a>。</p>
 <hr>
 <h2 id="1-Agent-主循环">1 Agent 主循环</h2>
 <h3 id="1-1-策略选择">1.1 策略选择</h3>
 <p>对话智能体走的是 <strong>LangChain <code>create_agent</code> 驱动的 Tool-Use-Loop</strong>。模型通过原生工具调用决定下一步——调哪个工具、参数填什么，都写在结构化字段里，而不是混在一段自由文本中。工具跑完后，结果再喂回模型。模型觉得不用再调工具了，就输出正式回答。</p>
+<p>Agent 组装：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/24/20260824_LangChain%E6%9E%84%E5%BB%BAAgent/">「LangChain」使用 LangChain 构建 Agent 的核心步骤？</a>。</p>
 <h3 id="1-2-如何实现">1.2 如何实现</h3>
 <p>入口在 <code>app/api/v1/user_agents/chat.py</code>。日常对话走的是流式路径：<code>chat_stream_endpoint</code> → <code>chat_with_agent_stream</code> → <code>iter_chat_stream_events</code>。</p>
 <p>真正把模型和 Agent 拼起来的，是 <code>app/chat/agent_service.py</code> 里的 <code>build_model_and_agent</code>。它用 <code>init_chat_model</code>（OpenAI 兼容协议）建好模型，带上工具列表和系统提示，再交给 <code>langchain.agents.create_agent</code>。</p>
 <p>循环本身和工具执行都交给 LangChain / LangGraph，项目里没有另写一套调度器。</p>
+<p>LangChain 底层架构：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/24/20260824_LangChain%E5%BA%95%E5%B1%82%E6%9E%B6%E6%9E%84/">「LangChain」LangChain 的底层架构与实现原理是什么？</a>。</p>
 <figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs python"><span class="hljs-comment"># app/chat/agent_service.py · build_model_and_agent</span><br><span class="hljs-keyword">from</span> langchain.agents <span class="hljs-keyword">import</span> create_agent<br><br>agent_kwargs = &#123;<br>    <span class="hljs-string">&quot;model&quot;</span>: model,<br>    <span class="hljs-string">&quot;tools&quot;</span>: tools,<br>    <span class="hljs-string">&quot;system_prompt&quot;</span>: system_prompt,<br>&#125; <br>agent = create_agent(**agent_kwargs)<br></code></pre></td></tr></table></figure>
 <p>本轮如果开了知识库，循环通常走两轮就结束。模型不会输出 Thought / Action 这种文本，服务端也就没什么可解析的：</p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><code class="hljs text">产品：GPT Plus<br>本轮：知识库开 / 联网关<br>用户：GPT Plus 年费怎么退？<br><br>第 1 轮模型 → tool_calls:<br>  search_knowledge_base(query=&quot;GPT Plus 年费退款&quot;)<br>工具回喂 → [来源1] 开通未满 7 天可全额退，超过则按剩余整月折算……<br>第 2 轮模型 → （不再要工具）<br>  根据知识库，开通未满 7 天可全额退；超过 7 天按剩余整月折算。[来源1]<br></code></pre></td></tr></table></figure>
 <h3 id="1-3-为什么这样做">1.3 为什么这样做</h3>
 <p><strong>下一步交给原生工具调用，而不是一段自由文本。</strong> 调哪个工具、参数填什么，写在结构化字段里，服务端就不必再解析 Thought / Action 这种格式。主流对话模型已经支持 Function Calling；自己写解析器，还要处理格式漂移、半截流式和多工具并行，后面很难维护。</p>
+<p>模型决策与执行：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/17/20260817_LLM%E5%AD%A6%E4%BC%9A%E8%B0%83%E7%94%A8%E5%A4%96%E9%83%A8%E5%B7%A5%E5%85%B7/">「Agent Tool」LLM 如何学会调用外部工具？</a>。</p>
 <p><strong>循环交给 <code>create_agent</code>，项目里不另写调度器。</strong> Kura-AI 要管住的是本轮能不能调、最多调几次、模型能看见哪些材料，不是自己实现一套 Thought-Action-Observation。LangChain / LangGraph 已经把「工具跑完再喂回模型、没有 tool_calls 就出正式回答」这条环跑稳了。</p>
+<p>LangChain 与 LangGraph：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/26/20260826_LangChain%E4%B8%8ELangGraph%E5%8C%BA%E5%88%AB/">「LangChain」LangChain 和 LangGraph 的核心区别？</a>。</p>
 <p><strong>不另加 Planner，也不在主循环外包一层反思。</strong> 当前主要是知识问答，真正要拦住的是检索互斥和工具次数。再加一次规划或 critic，等于每轮多一次完整调用，延迟和 token 都会上去；这些约束写在本轮策略和工具返回值里更划算。</p>
 <h3 id="1-4-其它方案">1.4 其它方案</h3>
+<p>三种范式对比：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/07/20260807_%E4%B8%89%E7%A7%8DAgent%E8%8C%83%E5%BC%8F/">「AI Agent」Agent 的三大范式：ReAct、Plan-and-Execute 与 Reflection</a>。</p>
 <ol>
 <li>
 <p><strong>手写 ReAct 文本循环</strong>（模型输出 Thought / Action / Observation，服务端解析后再拼回去）。</p>
@@ -346,14 +352,16 @@
 <p><strong>Plan-and-Execute</strong>（先单独用 Planner 列出完整步骤，再逐步执行，必要时再规划）。</p>
 <ul>
 <li>优点：更适合复杂的长任务。计划先写清楚，后面执行时不容易跑偏。</li>
-<li>缺点：多一次规划就要多调一次大模型，<strong>延迟更高，token 消耗也更多</strong>。Kura-AI 目前主要是知识问答这类相对简单的场景，每一轮真正要管住的，是检索互斥和工具次数——这些已经写在系统提示里了。对这种对话来说，用工具策略比再加一层规划更划算。</li>
+<li>缺点：多一次规划就要多调一次大模型，<strong>延迟更高，token 消耗也更多</strong>。Kura-AI 目前主要是知识问答这类相对简单的场景，每一轮真正要管住的，是检索互斥和工具次数——这些已经写在系统提示里了。对这种对话来说，用工具策略比再加一层规划更划算。<br>
+规划能力：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/10/20260810_Agent%E8%A7%84%E5%88%92%E8%83%BD%E5%8A%9B/">「AI Agent」如何赋予 LLM 规划能力：CoT、ToT、GoT 与 Plan-and-Execute</a>。</li>
 </ul>
 </li>
 <li>
 <p><strong>Reflection</strong>（做完再检查：生成 → 评估 → 改进，给主循环加一层质量闭环）。</p>
 <ul>
 <li>优点：回答如果出现幻觉或明显错误，多一次 critic 评判可以把坏答案拦下来，让模型重写。</li>
-<li>缺点：不少工具内部已经有很明确的提示（比如知识库检索会告诉模型有没有资料、有没有超限、要不要待确认），系统提示也对回答可靠性做了约束。再加一层反思，等于 <strong>每轮多一次完整调用</strong>，延迟和 token 都会上去。另外，RAG 子图里的文档打分只服务 <code>search_knowledge_base</code> 内部，并不会约束外层最终回答。</li>
+<li>缺点：不少工具内部已经有很明确的提示（比如知识库检索会告诉模型有没有资料、有没有超限、要不要待确认），系统提示也对回答可靠性做了约束。再加一层反思，等于 <strong>每轮多一次完整调用</strong>，延迟和 token 都会上去。另外，RAG 子图里的文档打分只服务 <code>search_knowledge_base</code> 内部，并不会约束外层最终回答。<br>
+反思机制：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/10/20260810_Agent%E5%8F%8D%E6%80%9D%E6%9C%BA%E5%88%B6/">「AI Agent」Agent 的反思机制：评估闭环、两个粒度与防死循环</a>。</li>
 </ul>
 </li>
 </ol>

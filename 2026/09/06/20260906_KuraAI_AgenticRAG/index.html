@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
 <meta property="article:published_time" content="2026-09-06T06:21:32.843Z">
-<meta property="article:modified_time" content="2026-09-06T13:12:22.626Z">
+<meta property="article:modified_time" content="2026-09-06T15:58:04.274Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="Agent">
@@ -257,7 +257,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          6.2k 字
+          6.3k 字
         
       </span>
     
@@ -268,7 +268,7 @@
         
         
         
-          52 分钟
+          53 分钟
         
       </span>
     
@@ -318,10 +318,12 @@
 <h2 id="0-前言">0 前言</h2>
 <p>这篇文章讲的是 Kura-AI <strong>知识库在线怎么检索</strong>：叶子块怎样被找出来，稠密向量和 BM25 两路结果怎样合成一份候选，什么时候再按「问题和这块文档到底有多相关」打一遍分，检索命中的如果只是半句话该怎样回到更大一段，以及第一次问法和资料对不上时，为什么还要再搜一轮。</p>
 <p>外层 Agent 只决定要不要调用 <code>search_knowledge_base</code>，以及 <code>query</code> 里填哪一句话。知识库开着的对话通常两轮结束，这一轮里知识库只许成功占用一次。<strong>召回质量、查询改写和拒答，都在工具里面的 LangGraph 子图</strong> <code>run_rag_graph</code> 里做完，主模型看不见这些节点。<strong>打分、改写路由、生成退步问或假设性文档，都是子图里另起的轻量级子模型调用</strong>：复用智能体的接口地址和密钥，任务很短，不带工具，也不直接写出给用户看的回答。</p>
+<p>RAG 范式演进：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/15/20260815_RAG%E8%8C%83%E5%BC%8F%E6%BC%94%E8%BF%9B/">「RAG」了解哪些更复杂的 RAG 范式？</a>。</p>
 <hr>
 <h2 id="1-先打叶子，融完再重排，够密再升到父块">1 先打叶子，融完再重排，够密再升到父块</h2>
 <h3 id="1-1-策略选择">1.1 策略选择</h3>
 <p><strong>RAG 检索只会直接检索 L3 文本叶子和 L4 图片叶子</strong>。先走 <strong>两路召回</strong>：<strong>稠密向量</strong> 看语义是否接近，<strong>稀疏向量</strong> BM25 看关键词是否对得上，再用 <strong>RRF（倒数排名融合）</strong> 合成一份候选。如果配置了 Rerank 重排模型，再按「问题和这块到底有多相关」打一遍分。最后才看构建时留下的父子关系：同一个父块下面叶子足够多，才把 L2、必要时再把 L1 取回来。</p>
+<p>RAG 在线工作流程：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/14/20260814_RAG%E5%9C%A8%E7%BA%BF%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B/">「RAG」RAG 在线阶段工作流程</a>。</p>
 <p>RRF 不调用大模型，只看两路结果各自排在第几名，排序比较粗略。Rerank 才会调用专门的 <strong>交叉打分接口</strong>（例如 <code>qwen3-vl-rerank</code>），Rerank 后的候选 <strong>相关度更高、更加精准</strong>。</p>
 <h3 id="1-2-如何实现">1.2 如何实现</h3>
 <p>入口是 <code>search_knowledge_base</code>，随后进入 <code>run_rag_graph</code>。过滤条件写在 Milvus 表达式上：当前智能体的 <code>kb_scope</code>，再加上 <code>chunk_level == 3 || 4</code>。选档范围仍是启动前注入的 <code>filename</code>，这里不重写。真正把一批叶子整理成给模型看的那几条，写在 <code>rag_utils.py</code> 的 <code>_finalize_retrieved_docs</code> 里。默认最终只留 5 条（<code>top_k=5</code>），但会先多取一些候选：<code>candidate_k = top_k * 3</code>，也就是 15。L1 和 L2 不会出现在这次近邻搜索里，父块只在后面按 id 从关系库取回。</p>
@@ -429,6 +431,7 @@
 <p><strong>打分和改写是轻量级子模型调用，不是主 Agent。</strong> 子模型复用智能体的地址和密钥，任务很短，不带工具，也不直接写出给用户看的回答。主模型这一轮结束时，手里只应拿到一段可以引用的资料，或者一句拒答。</p>
 <p><strong>子图里固定只扩一轮。</strong> 第一次检索对不上，常常只是问法不对。用户问「年费怎么退」，库里写的是「订阅未满七日可全额退回」，字面差一点，稠密向量和 BM25 都可能打偏。再搜一次值得；按打分结果在子图里循环下去，延迟会叠上去，正式回答却还没开始写。</p>
 <p><strong>两次都无关才拒答。</strong> 再让主模型拿着低相关摘录硬写，还不如如实说库里没有。第一次失败还值得换一种问法；第二次失败就不该再假装有资料。</p>
+<p>规避幻觉：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/15/20260815_RAG%E8%A7%84%E9%81%BF%E5%B9%BB%E8%A7%89/">「RAG」如何缓解 RAG 系统中大模型的幻觉？</a>。</p>
 <p><strong>扩展检索用新结果替换，不和初检做并集。</strong> 初检里已经判过无关的噪声，不应再混进第二次打分。</p>
 <p><strong>二次打分对着用户原来的问题。</strong> 用户要听的仍是「年费怎么退」，不是改写后的那句退步问题，更不是 HyDE 写出来的假文档。</p>
 <p><strong>打分接口失败时，把现有结果交给外层。</strong> 对话要的是一句人话，不是前端一个 500 报错。没有打分模型时先改写再搜，比「没有分数就当成相关」更稳：至少还换过问法。</p>
@@ -460,6 +463,7 @@
 <h2 id="3-改写默认退一步，不默认上复杂组合">3 改写默认退一步，不默认上复杂组合</h2>
 <h3 id="3-1-策略选择">3.1 策略选择</h3>
 <p>初检过不了时，用一次轻量级子模型调用决定怎样扩写查询。路由提示里有三种策略：step-back、HyDE、complex。默认只让 step-back 真正执行；complex 即使被选中，也会降成 step-back。没有路由模型，或者路由失败，同样退回 step-back。路由本身是一次结构化输出，只产出策略名，不在这一步生成检索用的 query。真正的扩写在策略选定之后才发生，仍是子图里另一次短调用，不是主 Agent 换了一个 query。</p>
+<p>Query Rewrite：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/14/20260814_RAG%E6%9F%A5%E8%AF%A2%E9%87%8D%E5%86%99/">「RAG」如何润色用户的 Query（Query Rewrite）？目的是什么？</a>。</p>
 <h3 id="3-2-如何实现">3.2 如何实现</h3>
 <p>路由提示写在 <code>rewrite_question_node</code> 里。<code>_router_model</code> 复用智能体当前模型，temperature 为 0，只要一段 JSON 里的策略名。随后生成退步问或 HyDE 文档，走的是 <code>rag_utils.py</code> 里的 <code>_chat_from_config</code>，同样复用智能体的地址和密钥，temperature 为 0.2，只输出一句话或一段假资料。扩写之后只再检索一轮，不会回到第一次打分，也不会在子图里循环。</p>
 <p>子图里和主 Agent 分开的聊天模型调用可以摊开成下面这张表。</p>

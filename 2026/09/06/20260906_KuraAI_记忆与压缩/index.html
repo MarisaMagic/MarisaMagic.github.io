@@ -28,7 +28,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://sukicdn.com/wyx/i/2026/09/04/5kr8.jpg">
 <meta property="article:published_time" content="2026-09-06T14:01:30.149Z">
-<meta property="article:modified_time" content="2026-09-06T14:05:51.649Z">
+<meta property="article:modified_time" content="2026-09-06T15:58:12.073Z">
 <meta property="article:author" content="MarisaMagic">
 <meta property="article:tag" content="AI">
 <meta property="article:tag" content="Agent">
@@ -257,7 +257,7 @@
       <span class="post-meta mr-2">
         <i class="iconfont icon-chart"></i>
         
-          3.7k 字
+          3.8k 字
         
       </span>
     
@@ -268,7 +268,7 @@
         
         
         
-          31 分钟
+          32 分钟
         
       </span>
     
@@ -318,6 +318,7 @@
 <h2 id="0-前言">0 前言</h2>
 <p>这篇文章讲的是对话变长以后，Kura-AI <strong>还让模型看见什么</strong>。近期的原话怎样收成一份摘要，被挤出窗口的整轮怎样归档，以及「之前那个订单号」这种指代题怎样捞回来。</p>
 <p>Kura-AI 把这件事拆成两层。短期工作记忆是送给主模型的那份视图：一份滚动摘要，加上最近一段原文。长期记忆是已经离开原文窗口的整轮对话，切块后写入独立的向量集合。外层 Agent 只决定要不要调 <code>search_session_memory</code>、query 填什么。压缩阈值、归档水位、预注入都在服务端做完。</p>
+<p>记忆机制：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/08/20260808_Agent%E8%AE%B0%E5%BF%86%E6%9C%BA%E5%88%B6/">「AI Agent」Agent 的记忆机制：四层记忆分类与记忆模块设计</a>。</p>
 <p>记忆是<strong>这一次会话里已经说过的话</strong>。属主知识库里预先入库的退款说明，走 <code>search_knowledge_base</code>；本会话刚上传的 PDF，走附件工具。三者不要混。同一会话里，用户早先说过「订单号是 <code>GP-2026-8841</code>，按开通未满 7 天退」，隔了许多轮再问「之前那个订单号是多少？」——近期原文窗口里往往已经看不见这句话；压缩摘要可能还留着线索，精确编号要靠归档检索。</p>
 <hr>
 <h2 id="1-按字符预算压缩，不用固定-N-轮">1 按字符预算压缩，不用固定 N 轮</h2>
@@ -326,6 +327,7 @@
 <p>压缩只在主循环开始前做一次。工具跑完新产生的回包，这一轮不再压。最后一轮原文永远留下，避免把用户正在问的那句话也摘要掉。</p>
 <h3 id="1-2-如何实现">1.2 如何实现</h3>
 <p>入口是 <code>build_compacted_model_messages</code>。默认 <code>CHAT_COMPACT_ENABLED</code> 打开。估算公式把几块加在一起：工具 schema 粗估 8000、system 人设和检索纪律、已有摘要、原文窗口，再留 12000 给工具回包。加起来达到 <strong>80000</strong> 字符才压；压完后从后往前留大约 <strong>24000</strong> 字符原文。关掉压缩，才回退到最近 10 轮的滑动窗口。记忆总开关也关着时，连窗口都不切，全量历史进模型。</p>
+<p>记忆压缩：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/08/20260808_Agent%E8%AE%B0%E5%BF%86%E5%8E%8B%E7%BC%A9/">「AI Agent」Agent 记忆压缩：四种方法与 Prompt Caching 互补</a>。</p>
 <p>一轮是一条用户消息，加上其后直到下一条用户消息之前的助手和工具回复。被挤出的轮次打成纯文本，和「已有摘要」一起交给子模型，<code>temperature</code> 为 0，滚成一份不超过 4000 字的新摘要。提示要求留下目标、决定、未完成事项，以及文件名、URL、ID、数字这类实体；不要写入本轮检索开关、选档范围或附件名单，也不要抄知识库或网页的大段原文。</p>
 <p>摘要写成一条独立的 Human，插在原文窗口前面，标题是 <code>【会话压缩摘要】</code>。本轮用户原话仍是最后一条。附件名单、读图描述、记忆摘录都贴在那一条上，不入库，也就不会被下次摘要吃掉。</p>
 <figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><code class="hljs text">【会话压缩摘要】<br><br>用户要查 GPT Plus 年费退款。早先报过订单号 GP-2026-8841，约定按开通未满 7 天处理。<br><br>（最近若干轮原文……）<br><br>之前那个订单号是多少？<br></code></pre></td></tr></table></figure>
@@ -365,6 +367,7 @@
 <h2 id="2-离开窗口的整轮，增量归档进独立集合">2 离开窗口的整轮，增量归档进独立集合</h2>
 <h3 id="2-1-策略选择">2.1 策略选择</h3>
 <p><strong>只有压缩已经不再送给主模型的那些轮，才写入 <code>kura_ai_chat_memory</code></strong>。按 <code>turn_key</code> 幂等去重。摘要本身不入库。对话落库后默认在后台做，不挡第一个字。</p>
+<p>LangChain 长短期记忆（Kura 用 metadata 加独立集合，不照搬）：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/26/20260826_LangChain%E9%95%BF%E7%9F%AD%E6%9C%9F%E8%AE%B0%E5%BF%86/">「LangChain」LangChain 如何实现长短期记忆？</a>。</p>
 <p>关掉压缩时，水位线仍读 compact 的 metadata，通常还是 0，<strong>几乎不会归档</strong>。工具说明书里仍写着「滑动窗口之前」，实际能搜到的是：原文窗口之前、并且已经写入归档水位的那些轮。</p>
 <h3 id="2-2-如何实现">2.2 如何实现</h3>
 <p>助手消息写入存储之后，调用 <code>schedule_archive_session_memory</code>。默认 <code>CHAT_MEMORY_ARCHIVE_ASYNC</code> 打开，丢进后台线程。归档函数先问 <code>verbatim_keep_from_for_session</code>：压缩声明从哪一轮开始还留原文。只处理「下标小于这个水位、且 <code>turn_key</code> 还不在 <code>memory_archived_turn_keys</code> 里」的整轮。</p>
@@ -416,6 +419,7 @@
 <p><strong>摘录进本轮 Human，不进 system。</strong> 旧对话是外部文本。写进人设，模型更容易把几年前的一句偏好当成长期指令。跟在用户问句后面，只对这一问有效，刷新后再 <code>load</code> 也不会把摘录当成用户原话。</p>
 <p><strong>工具每轮只许成功一次。</strong> 记忆没有本轮开关，但有次数槽。模型若为同一句指代连调两次，第二次应停下来用已有片段作答，而不是把归档当知识库那样改写再搜。</p>
 <p><strong>先改写再检索。</strong> 「那个订单号」单独做向量检索，打不中早轮里的 <code>GP-2026-8841</code>。改写成「GPT Plus 退款订单号」，语义和字面都更近。改写失败仍用原句，总比这一轮空着强。</p>
+<p>Query Rewrite：<a target="_blank" rel="noopener" href="https://marisamagic.space/2026/08/14/20260814_RAG%E6%9F%A5%E8%AF%A2%E9%87%8D%E5%86%99/">「RAG」如何润色用户的 Query（Query Rewrite）？目的是什么？</a>。</p>
 <p><strong>只搜当前路径上已归档的轮。</strong> 另一条重新生成的旁支里，用户可能报过另一个号。不过滤 <code>turn_key</code>，模型会把分叉里的话当成这一条线的事实。</p>
 <h3 id="3-4-其它方案">3.4 其它方案</h3>
 <ol>
